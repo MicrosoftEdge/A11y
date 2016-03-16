@@ -9,10 +9,9 @@ namespace Microsoft.Edge.A11y
     {
         static void Main(string[] args)
         {
-            var driver = new DriverManager(TimeSpan.Zero);
-            var a11yStrategy = new EdgeStrategy(driver);
+            TestStrategy a11yStrategy = new EdgeStrategy();
 
-            var results = TestData.alltests.Value.Where(td => td._ControlType != null).ToList().ConvertAll(td => a11yStrategy.Execute(driver, td));
+            var results = TestData.alltests.Value.Where(td => td._ControlType != null).ToList().ConvertAll(td => a11yStrategy.Execute(td));
 
             var flatResults = results.Where(r => r.Any()).ToList().ConvertAll(r =>
             {
@@ -45,7 +44,7 @@ namespace Microsoft.Edge.A11y
 
             ResultsToCSV(flatResults);
 
-            driver.Close();
+            a11yStrategy.Close();
         }
 
         public static void ResultsToCSV(List<TestCaseResult> results)
