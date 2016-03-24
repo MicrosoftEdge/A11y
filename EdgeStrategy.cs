@@ -11,7 +11,10 @@ namespace Microsoft.Edge.A11y
     /// </summary>
     internal class EdgeStrategy : TestStrategy
     {
-
+        public EdgeStrategy(string repositoryPath = "https://cdn.rawgit.com/DHBrett/AT-browser-tests/gh-pages/test-files/"){
+            _driverManager = new DriverManager(TimeSpan.FromSeconds(10));
+            _RepositoryPath = repositoryPath;
+        }
 
         /// <summary>
         /// This handles most of the work of the test cases.

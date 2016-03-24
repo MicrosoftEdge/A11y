@@ -14,12 +14,6 @@ namespace Microsoft.Edge.A11y
         protected DriverManager _driverManager;
         protected string _RepositoryPath;
 
-        public TestStrategy(string repositoryPath = "https://cdn.rawgit.com/DHBrett/AT-browser-tests/gh-pages/test-files/")
-        {
-            _driverManager = new DriverManager(TimeSpan.FromSeconds(10));
-            _RepositoryPath = repositoryPath;
-        }
-
         private string BuildTestUrl(string testName)
         {
             return _RepositoryPath + testName;
