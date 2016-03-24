@@ -172,8 +172,7 @@ namespace Microsoft.Edge.A11y
         /// <param name="count">The number of times to send tab</param>
         public static void SendTabs(this DriverManager driver, string element, int count)
         {
-            var tab = '\uE004'.ToString();
-            driver.SendKeys(element, String.Concat(Enumerable.Repeat(tab, count)));
+            driver.SendSpecialKeys(element, String.Concat(Enumerable.Repeat("Tab", count)));
         }
 
         /// <summary>
@@ -183,8 +182,94 @@ namespace Microsoft.Edge.A11y
         /// <param name="element">The element to submit</param>
         public static void SendSubmit(this DriverManager driver, string element)
         {
-            var enter = '\uE007'.ToString();
-            driver.SendKeys(element, enter);
+            driver.SendSpecialKeys(element, "Enter");
+        }
+
+        /// <summary>
+        /// This allows the SendSpecialKeys function to take friendly names instead of
+        /// character codes
+        /// </summary>
+        public static Lazy<Dictionary<string, string>> specialKeys = new Lazy<Dictionary<string, string>>(() =>
+        {
+            var keys = new Dictionary<string, string>();
+
+            keys.Add("Null", '\uE000'.ToString());
+            keys.Add("Cancel", '\uE001'.ToString());
+            keys.Add("Help", '\uE002'.ToString());
+            keys.Add("Back_space", '\uE003'.ToString());
+            keys.Add("Tab", '\uE004'.ToString());
+            keys.Add("Clear", '\uE005'.ToString());
+            keys.Add("Return", '\uE006'.ToString());
+            keys.Add("Enter", '\uE007'.ToString());
+            keys.Add("Shift", '\uE008'.ToString());
+            keys.Add("Control", '\uE009'.ToString());
+            keys.Add("Alt", '\uE00A'.ToString());
+            keys.Add("Pause", '\uE00B'.ToString());
+            keys.Add("Escape", '\uE00C'.ToString());
+            keys.Add("Space", '\uE00D'.ToString());
+            keys.Add("Page_up", '\uE00E'.ToString());
+            keys.Add("Page_down", '\uE00F'.ToString());
+            keys.Add("End", '\uE010'.ToString());
+            keys.Add("Home", '\uE011'.ToString());
+            keys.Add("Arrow_left", '\uE012'.ToString());
+            keys.Add("Arrow_up", '\uE013'.ToString());
+            keys.Add("Arrow_right", '\uE014'.ToString());
+            keys.Add("Arrow_down", '\uE015'.ToString());
+            keys.Add("Insert", '\uE016'.ToString());
+            keys.Add("Delete", '\uE017'.ToString());
+            keys.Add("Semicolon", '\uE018'.ToString());
+            keys.Add("Equals", '\uE019'.ToString());
+            keys.Add("Numpad0", '\uE01A'.ToString());
+            keys.Add("Numpad1", '\uE01B'.ToString());
+            keys.Add("Numpad2", '\uE01C'.ToString());
+            keys.Add("Numpad3", '\uE01D'.ToString());
+            keys.Add("Numpad4", '\uE01E'.ToString());
+            keys.Add("Numpad5", '\uE01F'.ToString());
+            keys.Add("Numpad6", '\uE020'.ToString());
+            keys.Add("Numpad7", '\uE021'.ToString());
+            keys.Add("Numpad8", '\uE022'.ToString());
+            keys.Add("Numpad9", '\uE023'.ToString());
+            keys.Add("Multiply", '\uE024'.ToString());
+            keys.Add("Add", '\uE025'.ToString());
+            keys.Add("Separator", '\uE026'.ToString());
+            keys.Add("Subtract", '\uE027'.ToString());
+            keys.Add("Decimal", '\uE028'.ToString());
+            keys.Add("Divide", '\uE029'.ToString());
+            keys.Add("F1", '\uE031'.ToString());
+            keys.Add("F2", '\uE032'.ToString());
+            keys.Add("F3", '\uE033'.ToString());
+            keys.Add("F4", '\uE034'.ToString());
+            keys.Add("F5", '\uE035'.ToString());
+            keys.Add("F6", '\uE036'.ToString());
+            keys.Add("F7", '\uE037'.ToString());
+            keys.Add("F8", '\uE038'.ToString());
+            keys.Add("F9", '\uE039'.ToString());
+            keys.Add("F10", '\uE03A'.ToString());
+            keys.Add("F11", '\uE03B'.ToString());
+            keys.Add("F12", '\uE03C'.ToString());
+            keys.Add("Meta", '\uE03D'.ToString());
+            keys.Add("Command", '\uE03D'.ToString());
+            keys.Add("Zenkaku_hankaku", '\uE040'.ToString());
+
+            return keys;
+        });
+
+        /// <summary>
+        /// A wrapper which converts strings with friendly-named special keys to be
+        /// converted into the appropriate character codes.
+        ///
+        /// E.G. "Arrow_left" becomes '\uE012'.toString()
+        /// </summary>
+        /// <param name="driver"></param>
+        /// <param name="elementId"></param>
+        /// <param name="keysToSend"></param>
+        public static void SendSpecialKeys(this DriverManager driver, string elementId, string keysToSend)
+        {
+            foreach (var key in specialKeys.Value)
+            {
+                keysToSend = keysToSend.Replace(key.Key, key.Value);
+            }
+            driver.SendKeys(elementId, keysToSend);
         }
 
         /// <summary>

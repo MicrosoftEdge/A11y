@@ -13,9 +13,6 @@ scores.csv
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
-# Test Files
-Protractor.Web/Suites/
-
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
@@ -235,6 +232,5 @@ _Pvt_Extensions
 # FAKE - F# Make
 .fake/
 
-#Binaries from other projects that get copied to Protractor.Web
-Protractor.Web/UpdaterBinaries/*.*
-Protractor.Web/FilesToCopy/angular.js/AngularKarma/
+# Powershell scripts used internally
+*.ps1
