@@ -123,10 +123,12 @@ namespace Microsoft.Edge.A11y
                 new TestData("footer", "Group", "footer", "Custom", "content information"),
                 new TestData("header", "Group", "header", "Custom", "banner"),
                 new TestData("input-color", "Edit", "color picker"),
-                new TestData("input-date", "Calendar", keyboardElements: new List<string> { "input1", "input2" }),
+                new TestData("input-date", "Calendar", keyboardElements: new List<string> { "input1", "input2" },
+                    additionalRequirement: CheckCalendarKeyboard(3)),
                 new TestData("input-datetime-local", "Calendar"),
                 new TestData("input-email", "Edit", "email", keyboardElements: new List<string> { "input1", "input2" }, additionalRequirement: CheckValidation()),
-                new TestData("input-month", "Calendar", keyboardElements: new List<string> { "input1", "input2" }),
+                new TestData("input-month", "Calendar", keyboardElements: new List<string> { "input1", "input2" },
+                    additionalRequirement: CheckCalendarKeyboard(2)),
                 new TestData("input-number", "Edit", "number", keyboardElements: new List<string> { "input1", "input2" }, additionalRequirement: CheckValidation()),
                 new TestData("input-range", "Slider", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: (elements, driver, ids) => ids.All(id => {
@@ -159,9 +161,11 @@ namespace Microsoft.Edge.A11y
                     })),
                 new TestData("input-search", "Edit", "search", keyboardElements: new List<string> { "input1", "input2" }),
                 new TestData("input-tel", "Edit", "telephone", keyboardElements: new List<string> { "input1", "input2" }),
-                new TestData("input-time", "Spinner", keyboardElements: new List<string> { "input1", "input2" }),
+                new TestData("input-time", "Spinner", keyboardElements: new List<string> { "input1", "input2" },
+                    additionalRequirement: CheckCalendarKeyboard(3)),
                 new TestData("input-url", "Edit", "url", keyboardElements: new List<string> { "input1", "input2" }, additionalRequirement: CheckValidation()),
-                new TestData("input-week", "Calendar", keyboardElements: new List<string> { "input1", "input2" }),
+                new TestData("input-week", "Calendar", keyboardElements: new List<string> { "input1", "input2" },
+                    additionalRequirement: CheckCalendarKeyboard(2)),
                 new TestData("main", "Group", "main", "Main", "main"),
                 new TestData("mark", "Text"),
                 new TestData("meter", "Progressbar", "meter", keyboardElements: new List<string> { "meter1" },
@@ -381,17 +385,20 @@ namespace Microsoft.Edge.A11y
             }
 
             //Case 2: Seek
-            if (AudioPlaying()){
+            if (AudioPlaying())
+            {
                 return false;
             }
             driver.SendTabs(audioId, 3);
             var initial = AudioElapsed();
             driver.SendSpecialKeys(audioId, "Arrow_right");
-            if(initial == AudioElapsed()){
+            if (initial == AudioElapsed())
+            {
                 return false;
             }
             driver.SendSpecialKeys(audioId, "Arrow_left");
-            if(initial != AudioElapsed()){
+            if (initial != AudioElapsed())
+            {
                 return false;
             }
 
@@ -400,28 +407,85 @@ namespace Microsoft.Edge.A11y
             driver.SendTabs(audioId, 5);
             initial = AudioVolume();
             driver.SendSpecialKeys(audioId, "Arrow_down");
-            if(initial == AudioVolume()){
+            if (initial == AudioVolume())
+            {
                 return false;
             }
 
             driver.SendSpecialKeys(audioId, "Arrow_up");
-            if(initial != AudioVolume()){
+            if (initial != AudioVolume())
+            {
                 return false;
             }
 
             driver.SendSpecialKeys(audioId, "Space");
-            if(!AudioMuted()){
+            if (!AudioMuted())
+            {
                 return false;
             }
 
             driver.SendSpecialKeys(audioId, "Enter");
-            if(AudioMuted()){
+            if (AudioMuted())
+            {
                 return false;
             }
 
             return true;
         }
 
+        /// <summary>
+        /// Generic func factory for all the calendar elements
+        /// </summary>
+        /// <param name="fields">A count of how many fields there are in the calendar element</param>
+        /// <returns>A func that tests the element</returns>
+        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, bool> CheckCalendarKeyboard(int fields)
+        {
+            return new Func<List<IUIAutomationElement>, DriverManager, List<string>, bool>((elements, driver, ids) =>
+                ids.All(id =>
+                {
+                    Func<string> DateValue = () => (string)driver.ExecuteScript("return document.getElementById('" + id + "').value", 0);
+
+                    //Open the calendar and close it without changing anything
+                    var initial = DateValue();
+                    driver.SendSpecialKeys(id, "EnterEscape");
+                    if (initial != DateValue())
+                    {
+                        return false;
+                    }
+
+                    //Accept the default value
+                    driver.SendSpecialKeys(id, "EnterEnter");
+                    var today = DateValue();
+                    if (today == initial)
+                    {
+                        return false;
+                    }
+
+                    //Open the menu
+                    driver.SendSpecialKeys(id, "Enter");
+                    //Change each field in the calendar
+                    for (int i = 0; i < fields; i++)
+                    {
+                        driver.SendSpecialKeys(id, "Arrow_downTab");
+                    }
+                    //Get the altered value, which should be one less than the default
+                    //for each field
+                    var newdate = DateValue();
+                    var newdatesplit = newdate.Split('-');
+                    var initialsplit = initial.Split('-');
+
+                    //ensure that all fields have been changed
+                    for (int i = 0; i < fields; i++)
+                    {
+                        if (newdatesplit[i] == initialsplit[i])
+                        {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                }));
+        }
         /// <summary>
         /// Func factory for checking that when invalid input is entered into a form,
         /// an error message appears.
