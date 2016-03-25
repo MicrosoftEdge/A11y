@@ -38,7 +38,7 @@ namespace Microsoft.Edge.A11y
                 }
             });
 
-            var score = scores.Average() * (scores.Count / 39.0);
+            var score = scores.Average() * (scores.Count / 40.0);
 
             Console.WriteLine("Edge Score: " + score * 100);
 
