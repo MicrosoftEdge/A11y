@@ -234,3 +234,6 @@ _Pvt_Extensions
 
 # Powershell scripts used internally
 *int.ps1
+
+# Nuget executable
+nuget.exe
