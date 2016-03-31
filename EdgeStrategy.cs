@@ -41,7 +41,7 @@ namespace Microsoft.Edge.A11y
             {
                 return Fail(testData._TestName, "Unable to find the element");
             }
-            
+
             //This is used if the test passes but there is something to report
             string note = null;
             var elementConverter = new ElementConverter();
