@@ -1,5 +1,5 @@
 if(-Not (Test-Path .\nuget.exe)){
-    (New-Object net.WebClient).DownloadFile('https://nuget.org/nuget.exe', 'nuget2.exe')
+    (New-Object net.WebClient).DownloadFile('https://nuget.org/nuget.exe', 'nuget.exe')
 }
 
 nuget.exe restore A11y.sln
