@@ -5,7 +5,7 @@ for Microsoft Edge.
 ## Running
 If you have Visual Studio, simply open A11y.sln and run.
 
-Otherwise you can build and run in one step by calling run.ps1 within powershell.
+Otherwise you can build and run in one step by calling run.ps1 within PowerShell.
 
 ### Building and running manually
 It's also possible to run manually without Visual Studio or PowerShell.
