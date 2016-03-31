@@ -21,7 +21,7 @@ namespace Microsoft.Edge.A11y
                 return element;
             });
 
-            flatResults.OrderBy(r => r.Result).ToList().ForEach(r => Console.WriteLine(r.ToString()));
+            flatResults.OrderBy(r => r.Result).ToList().ForEach(r => Console.WriteLine(r));
 
             var scores = flatResults.ConvertAll(r =>
             {

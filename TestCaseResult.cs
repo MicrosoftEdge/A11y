@@ -15,16 +15,18 @@
         public string MoreInfo { get; set; }
         public string Browser { get; set; }
 
+        const int TRUNCATION = 80;
+
         public override string ToString()
         {
-            return Name + ":\n\t" + Result + (MoreInfo != null ? " (" + Truncate(MoreInfo, 30) + ")" : "");
+            return Name + ":\n\t" + Result + (MoreInfo != null ? " (" + Truncate(MoreInfo, TRUNCATION) + ")" : "");
         }
 
         public string ToCSVString()
         {
-            return Name + "," + Result + (MoreInfo != null ? "," + Truncate(MoreInfo, 30) : "");
+            return Name + "," + Result + (MoreInfo != null ? "," + Truncate(MoreInfo, TRUNCATION) : "");
         }
-        
+
         public static string Truncate(string value, int length)
         {
             return value!= null && value.Length > length ? value.Substring(0, length) : value;

@@ -177,7 +177,7 @@ namespace Microsoft.Edge.A11y
                 new TestData("nav", "Group", "navigation", "Navigation", "navigation"),
                 new TestData("output", "Group"),
                 new TestData("progress", "Progressbar"),
-                new TestData("section", "Text", "section", "Custom", "region"),
+                new TestData("section", "Group", "section", "Custom", "region"),
                 new TestData("summary", null),
                 //alltests.Add(new TestData("time", "time"));//currently marked as ? in the spec
                 new TestData("track", "track",
