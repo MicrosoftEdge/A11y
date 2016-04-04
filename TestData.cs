@@ -246,7 +246,7 @@ namespace Microsoft.Edge.A11y
         /// <param name="elements"></param>
         /// <param name="driver"></param>
         /// <param name="ids"></param>
-        /// <returns>True if the element passes, false othersie</returns>
+        /// <returns>True if the element passes, false otherwise</returns>
         private static bool CheckVideoKeyboardInteractions(List<IUIAutomationElement> elements, DriverManager driver, List<string> ids)
         {
             string videoId = "video1";
