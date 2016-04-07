@@ -1,9 +1,10 @@
 ﻿using Interop.UIAutomationCore;
+using Microsoft.Edge.HTML5AccessibilityTests;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Microsoft.Edge.A11y
+namespace Microsoft.Edge.HTML5AccessibilityTests
 {
 
     /// <summary>
@@ -433,6 +434,12 @@ namespace Microsoft.Edge.A11y
             return true;
         }
 
+        /// <summary>
+        /// Test all date/time elements except for datetime-local, which is tested by the
+        /// amended method below.
+        /// </summary>
+        /// <param name="fields">A count of the number of fields to test</param>
+        /// <returns></returns>
         public static Func<List<IUIAutomationElement>, DriverManager, List<string>, bool> CheckCalendarKeyboard(int fields)
         {
             return new Func<List<IUIAutomationElement>, DriverManager, List<string>, bool>((elements, driver, ids) =>
@@ -471,6 +478,11 @@ namespace Microsoft.Edge.A11y
                 }));
         }
 
+        /// <summary>
+        /// Test the datetime-local input element with an amended version of the method
+        /// above.
+        /// </summary>
+        /// <returns></returns>
         public static Func<List<IUIAutomationElement>, DriverManager, List<string>, bool> CheckDatetimeLocalKeyboard()
         {
             return new Func<List<IUIAutomationElement>, DriverManager, List<string>, bool>((elements, driver, ids) =>
