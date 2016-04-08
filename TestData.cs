@@ -1,10 +1,9 @@
 ﻿using Interop.UIAutomationCore;
-using Microsoft.Edge.HTML5AccessibilityTests;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Microsoft.Edge.HTML5AccessibilityTests
+namespace Microsoft.Edge.A11y
 {
 
     /// <summary>
@@ -120,7 +119,7 @@ namespace Microsoft.Edge.HTML5AccessibilityTests
                 new TestData("dialog", null),
                 new TestData("figure", "Group", "figure"),
                 new TestData("figure-figcaption", "Image",
-                    additionalRequirement: ((elements, driver, ids) => elements.All(element => element.CurrentName == "HTML5 logo caption"))),
+                    additionalRequirement: ((elements, driver, ids) => elements.All(element => element.CurrentName == "HTML5 logo"))),
                 new TestData("footer", "Group", "footer", "Custom", "content information"),
                 new TestData("header", "Group", "header", "Custom", "banner"),
                 new TestData("input-color", "Edit", "color picker"),

@@ -101,6 +101,7 @@ namespace Microsoft.Edge.A11y
                 //If necessary, check any additional requirements
                 if (testData._AdditionalRequirement != null)
                 {
+                    testElements = EdgeA11yTools.SearchDocumentChildren(browserElement, testData._ControlType, testData._SearchStrategy);
                     if (!testData._AdditionalRequirement(testElements, _driverManager, tabbable))
                     {
                         return Half(testData._TestName, "Failed additional requirement");
