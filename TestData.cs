@@ -100,7 +100,7 @@ namespace Microsoft.Edge.A11y
             var converter = new ElementConverter();
             const int timeout = 0;
             var alltests = new List<TestData>{
-                new TestData("article", "Document", "article"),
+                new TestData("article", "Group", "article"),
                 new TestData("aside", "Group", "aside", "Custom", "complementary"),
                 new TestData("audio", "Group", "audio",
                     additionalRequirement: ((elements, driver, ids) => CheckChildNames(
