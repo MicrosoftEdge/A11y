@@ -162,7 +162,7 @@ namespace Microsoft.Edge.A11y
                 new TestData("input-search", "Edit", "search", keyboardElements: new List<string> { "input1", "input2" }),
                 new TestData("input-tel", "Edit", "telephone", keyboardElements: new List<string> { "input1", "input2" }),
                 new TestData("input-time", "Edit", keyboardElements: new List<string> { "input1", "input2" },
-                    additionalRequirement: CheckCalendarKeyboard(3)),
+                    additionalRequirement: CheckCalendarKeyboard(2)),
                 new TestData("input-url", "Edit", "url", keyboardElements: new List<string> { "input1", "input2" }, additionalRequirement: CheckValidation()),
                 new TestData("input-week", "Edit", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: CheckCalendarKeyboard(2)),
@@ -457,12 +457,13 @@ namespace Microsoft.Edge.A11y
                     {
                         driver.SendSpecialKeys(id, "Arrow_downTab");
                     }
+                    driver.SendSpecialKeys(id, "Enter");
 
                     //Get the altered value, which should be one off the default
                     //for each field
                     var newdate = DateValue();
-                    var newdatesplit = newdate.Split('-');
-                    var todaysplit = today.Split('-');
+                    var newdatesplit = newdate.Split('-', ':');
+                    var todaysplit = today.Split('-', ':');
 
                     //ensure that all fields have been changed
                     for (int i = 0; i < fields; i++)
