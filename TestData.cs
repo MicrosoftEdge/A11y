@@ -113,7 +113,7 @@ namespace Microsoft.Edge.A11y
                                 "Volume"})(elements, driver, ids) &&
                         CheckAudioKeyboardInteractions(elements, driver, ids))),//TODO get full list when it's decided
                 new TestData("canvas", "Image"),
-                new TestData("datalist", "Edit", keyboardElements: new List<string> { "input1" },
+                new TestData("datalist", "Combobox", keyboardElements: new List<string> { "input1" },
                     additionalRequirement: ((elements, driver, ids) => elements.All(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0))),
                 new TestData("details", null),
                 new TestData("dialog", null),
@@ -457,6 +457,7 @@ namespace Microsoft.Edge.A11y
                     {
                         driver.SendSpecialKeys(id, "Arrow_downTab");
                     }
+                    //Close the menu (only necessary for time)
                     driver.SendSpecialKeys(id, "Enter");
 
                     //Get the altered value, which should be one off the default
