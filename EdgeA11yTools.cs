@@ -83,14 +83,20 @@ namespace Microsoft.Edge.A11y
         /// <param name="browserElement">The browser element to search. </param>
         /// <param name="controlType">The tag to search for</param>
         /// <param name="searchStrategy">An alternative search strategy for elements which are not found by their controltype</param>
+        /// <param name="foundControlTypes">A list of all control types found on the page, for error reporting</param>
         /// <returns>The elements found which match the tag given</returns>
-        public static List<IUIAutomationElement> SearchDocumentChildren(IUIAutomationElement browserElement, string controlType, Func<IUIAutomationElement, bool> searchStrategy)
+        public static List<IUIAutomationElement> SearchDocumentChildren(
+            IUIAutomationElement browserElement, 
+            string controlType, 
+            Func<IUIAutomationElement, bool> searchStrategy, 
+            out HashSet<string> foundControlTypes)
         {
             var uia = new CUIAutomation8();
 
             var walker = uia.RawViewWalker;
             var tosearch = new List<Tuple<IUIAutomationElement, int>>();
             var toreturn = new List<IUIAutomationElement>();
+            foundControlTypes = new HashSet<string>();
 
             //We use a 0 here to signify the depth in the BFS search tree. The root element will have depth of 0.
             tosearch.Add(new Tuple<IUIAutomationElement, int>(browserElement, 0));
@@ -102,6 +108,7 @@ namespace Microsoft.Edge.A11y
                 var currentdepth = tosearch.First().Item2;
 
                 var convertedRole = automationElementConverter.GetElementNameFromCode(current.CurrentControlType);
+                foundControlTypes.Add(convertedRole);
 
                 if (searchStrategy == null ? convertedRole.Equals(controlType, StringComparison.OrdinalIgnoreCase) : searchStrategy(current))
                 {

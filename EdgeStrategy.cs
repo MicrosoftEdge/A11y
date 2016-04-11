@@ -36,10 +36,13 @@ namespace Microsoft.Edge.A11y
             }
 
             //Find elements using ControlType or the alternate search strategy
-            var testElements = EdgeA11yTools.SearchDocumentChildren(browserElement, testData._ControlType, testData._SearchStrategy);
+            HashSet<string> foundControlTypes;
+            var testElements = EdgeA11yTools.SearchDocumentChildren(browserElement, testData._ControlType, testData._SearchStrategy, out foundControlTypes);
             if (testElements.Count == 0)
             {
-                return Fail(testData._TestName, "Unable to find the element");
+                return Fail(testData._TestName, testData._SearchStrategy == null ? 
+                    "Unable to find the element, found these instead: " + foundControlTypes.Aggregate((a, b) => a + ", " + b):
+                    "Unable to find the element using the alternate search strategy");
             }
 
             //This is used if the test passes but there is something to report
@@ -101,7 +104,7 @@ namespace Microsoft.Edge.A11y
                 //If necessary, check any additional requirements
                 if (testData._AdditionalRequirement != null)
                 {
-                    testElements = EdgeA11yTools.SearchDocumentChildren(browserElement, testData._ControlType, testData._SearchStrategy);
+                    testElements = EdgeA11yTools.SearchDocumentChildren(browserElement, testData._ControlType, testData._SearchStrategy, out foundControlTypes);
                     if (!testData._AdditionalRequirement(testElements, _driverManager, tabbable))
                     {
                         return Half(testData._TestName, "Failed additional requirement");
