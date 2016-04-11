@@ -125,7 +125,7 @@ namespace Microsoft.Edge.A11y
                 new TestData("input-color", "Edit", "color picker"),
                 new TestData("input-date", "Edit", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: CheckCalendarKeyboard(3)),
-                new TestData("input-datetime-local", "Edit", additionalRequirement: CheckDatetimeLocalKeyboard()),
+                new TestData("input-datetime-local", "Text", additionalRequirement: CheckDatetimeLocalKeyboard()),
                 new TestData("input-email", "Edit", "email", keyboardElements: new List<string> { "input1", "input2" }, additionalRequirement: CheckValidation()),
                 new TestData("input-month", "Edit", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: CheckCalendarKeyboard(2)),
