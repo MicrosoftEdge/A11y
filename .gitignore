@@ -4,6 +4,9 @@
 # The output of the test
 scores.csv
 
+# The UIAutomation dll
+Interop.UIAutomationCore.dll
+
 # User-specific files
 *.suo
 *.user
