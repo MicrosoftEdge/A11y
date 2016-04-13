@@ -2,15 +2,7 @@
 An automated implementation of [html5accessibility.com](http://html5accessibility.com/)
 for Microsoft Edge.
 
-## Setting up
-### Generating the API wrapper
-First you need to generate a dll for your machine that will allow you to access
-accessibility APIs.
-
-You can do this with PowerShell and the included generate_dll.ps1 or manually with
-TlbImp.exe.
-
-## Running the tests
+## Running
 If you have Visual Studio, simply open A11y.sln and run.
 
 Otherwise you can build and run in one step by calling run.ps1 within PowerShell.
