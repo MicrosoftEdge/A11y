@@ -129,7 +129,7 @@ namespace Microsoft.Edge.A11y
                 new TestData("input-email", "Edit", "email", keyboardElements: new List<string> { "input1", "input2" }, additionalRequirement: CheckValidation()),
                 new TestData("input-month", "Edit", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: CheckCalendarKeyboard(2)),
-                new TestData("input-number", "Edit", "number", keyboardElements: new List<string> { "input1", "input2" }, additionalRequirement: CheckValidation()),
+                new TestData("input-number", "Spinner", "number", keyboardElements: new List<string> { "input1", "input2" }, additionalRequirement: CheckValidation()),
                 new TestData("input-range", "Slider", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: (elements, driver, ids) => ids.All(id => {
                         Func<int> RangeValue = () => (int) Int32.Parse((string) driver.ExecuteScript("return document.getElementById('" + id + "').value", 0));
@@ -168,8 +168,8 @@ namespace Microsoft.Edge.A11y
                     additionalRequirement: CheckCalendarKeyboard(2)),
                 new TestData("main", "Group", "main", "Main", "main"),
                 new TestData("mark", "Text"),
-                new TestData("meter", "Progressbar", "meter", keyboardElements: new List<string> { "meter1" },
-                    additionalRequirement: ((elements, driver, ids) => elements.All(element => element.GetProperties().Contains("IsReadOnly"))),
+                new TestData("meter", "Progressbar", "meter",
+                    additionalRequirement: ((elements, driver, ids) => elements.All(element => element.GetProperties().Any(p => p.Contains("IsReadOnly")))),
                     searchStrategy: (element => element.GetPatterns().Contains("RangeValuePattern"))),//NB the ControlType is not used for searching this element
                 new TestData("menuitem", null),
                 new TestData("menupopup", null),
@@ -251,7 +251,23 @@ namespace Microsoft.Edge.A11y
         {
             string videoId = "video1";
             Func<bool> VideoPlaying = () => (bool)driver.ExecuteScript("return !document.getElementById('" + videoId + "').paused", 0);
-            Func<double> VideoVolume = () => (double)driver.ExecuteScript("return document.getElementById('" + videoId + "').volume", 0);
+            Func<double> VideoVolume = () =>
+            {
+                var volume = driver.ExecuteScript("return document.getElementById('" + videoId + "').volume", 0);
+                try
+                {
+                    return (int)volume;
+                }
+                catch { }
+
+                try
+                {
+                    return (double)volume;
+                }
+                catch { }
+
+                throw new ArgumentException("Unable to cast to int or double");
+            };
             Func<bool> VideoMuted = () => (bool)driver.ExecuteScript("return document.getElementById('" + videoId + "').muted", 0);
             Func<double> VideoElapsed = () => (double)driver.ExecuteScript("return document.getElementById('" + videoId + "').currentTime", 0);
 
@@ -366,7 +382,23 @@ namespace Microsoft.Edge.A11y
         {
             string audioId = "audio1";
             Func<bool> AudioPlaying = () => (bool)driver.ExecuteScript("return !document.getElementById('" + audioId + "').paused", 0);
-            Func<double> AudioVolume = () => (double)driver.ExecuteScript("return document.getElementById('" + audioId + "').volume", 0);
+            Func<double> AudioVolume = () =>
+            {
+                var volume = driver.ExecuteScript("return document.getElementById('" + audioId + "').volume", 0);
+                try
+                {
+                    return (int)volume;
+                }
+                catch { }
+
+                try
+                {
+                    return (double)volume;
+                }
+                catch { }
+
+                throw new ArgumentException("Unable to cast to int or double");
+            };
             Func<bool> AudioMuted = () => (bool)driver.ExecuteScript("return document.getElementById('" + audioId + "').muted", 0);
             Func<double> AudioElapsed = () => (double)driver.ExecuteScript("return document.getElementById('" + audioId + "').currentTime", 0);
 
