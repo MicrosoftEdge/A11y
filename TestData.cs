@@ -179,7 +179,7 @@ namespace Microsoft.Edge.A11y
                 new TestData("progress", "Progressbar"),
                 new TestData("section", "Group", "section", "Custom", "region"),
                 new TestData("summary", null),
-                //alltests.Add(new TestData("time", "time"));//currently marked as ? in the spec
+                new TestData("time", "Spinner"),//TODO change to whatever we want it to be//currently marked as ? in the spec
                 new TestData("track", "track",
                     additionalRequirement: ((elements, driver, ids) =>
                     {
