@@ -485,8 +485,8 @@ namespace Microsoft.Edge.A11y
         /// <returns></returns>
         public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckCalendarKeyboard(int fields)
         {
-            return new Func<List<IUIAutomationElement>, DriverManager, List<string>, string>((elements, driver, ids) =>
-                ids.All(id =>
+            return new Func<List<IUIAutomationElement>, DriverManager, List<string>, string>((elements, driver, ids) => {
+                var result = ids.DefaultIfEmpty(ARPASS).FirstOrDefault(id =>
                 {
                     driver.SendSpecialKeys(id, "EnterEscapeEnterEnter");//TODO remove when possible
 
@@ -520,7 +520,12 @@ namespace Microsoft.Edge.A11y
                     }
 
                     return true;
-                }) ? ARPASS : ARFAIL);
+                });
+                if(result == ARPASS){
+                    return result;
+                }
+                return "Keyboard interaction failed for element with id: " + result;
+            });
         }
 
         /// <summary>
@@ -531,7 +536,8 @@ namespace Microsoft.Edge.A11y
         public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckDatetimeLocalKeyboard()
         {
             return new Func<List<IUIAutomationElement>, DriverManager, List<string>, string>((elements, driver, ids) =>
-                ids.All(id =>
+            {
+                var result = ids.DefaultIfEmpty(ARPASS).FirstOrDefault(id =>
                 {
                     driver.SendSpecialKeys(id, "EnterEscape");//TODO remove when possible
 
@@ -571,7 +577,13 @@ namespace Microsoft.Edge.A11y
                     }
 
                     return true;
-                }) ? ARPASS : ARFAIL);
+                });
+                if (result == ARPASS)
+                {
+                    return result;
+                }
+                return "Keyboard interaction failed for element with id: " + result;
+            });
         }
 
         /// <summary>
