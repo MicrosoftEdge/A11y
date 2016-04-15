@@ -105,16 +105,19 @@ namespace Microsoft.Edge.A11y
                 new TestData("article", "Group", "article"),
                 new TestData("aside", "Group", "aside", "Custom", "complementary"),
                 new TestData("audio", "Group", "audio",
-                    additionalRequirement: ((elements, driver, ids) => CheckChildNames(
-                        new List<string> {
+                    additionalRequirement: ((elements, driver, ids) => {
+                        var childNames = CheckChildNames(new List<string> {
                                 "Play",
                                 "Time elapsed",
                                 "Seek",
                                 "Time remaining",
                                 "Mute",
-                                "Volume"})(elements, driver, ids) == "" ? 
-                        CheckAudioKeyboardInteractions(elements, driver, ids) : 
-                        ARFAIL)),//TODO get full list when it's decided
+                                "Volume"})(elements, driver, ids);
+                        if(childNames != ""){
+                            return childNames;
+                        } 
+                        return CheckAudioKeyboardInteractions(elements, driver, ids);
+                    })),//TODO get full list when it's decided
                 new TestData("canvas", "Image"),
                 new TestData("datalist", "Combobox", keyboardElements: new List<string> { "input1" },
                     additionalRequirement: ((elements, driver, ids) => elements.All(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0) ? "" : ARFAIL)),
@@ -172,25 +175,30 @@ namespace Microsoft.Edge.A11y
                 new TestData("main", "Group", "main", "Main", "main"),
                 new TestData("mark", "Text"),
                 new TestData("meter", "Progressbar", "meter",
-                    additionalRequirement: ((elements, driver, ids) => elements.All(element => element.GetProperties().Any(p => p.Contains("IsReadOnly"))) ? ARPASS : ARFAIL),
+                    additionalRequirement: 
+                        ((elements, driver, ids) => elements.All(element => element.GetProperties().Any(p => p.Contains("IsReadOnly"))) ? ARPASS :
+                        "Not all elements were read only"),
                     searchStrategy: (element => element.GetPatterns().Contains("RangeValuePattern"))),//NB the ControlType is not used for searching this element
                 new TestData("menuitem", null),
                 new TestData("menupopup", null),
                 new TestData("menutoolbar", null),
                 new TestData("nav", "Group", "navigation", "Navigation", "navigation"),
                 new TestData("output", "Group",
-                    additionalRequirement: ((elements, driver, ids) => elements.All(element => ((IUIAutomationElement5)element).CurrentLiveSetting == LiveSetting.Polite) ? ARPASS : ARFAIL)),
+                    additionalRequirement: ((elements, driver, ids) => elements.All(element => ((IUIAutomationElement5)element).CurrentLiveSetting == LiveSetting.Polite) ? ARPASS : 
+                        "Element did not have LiveSetting = Polite")),
                 new TestData("progress", "Progressbar"),
                 new TestData("section", "Group", "section", "Custom", "region"),
                 new TestData("summary", null),
                 new TestData("time", "Group",
-                    additionalRequirement: ((elements, driver, ids) => elements.All(element => ((IUIAutomationElement5)element).CurrentLiveSetting == LiveSetting.Polite) ? ARPASS : ARFAIL)),
+                    additionalRequirement: ((elements, driver, ids) => elements.All(element => ((IUIAutomationElement5)element).CurrentLiveSetting == LiveSetting.Polite) ? ARPASS : 
+                        "Element did not have LiveSetting = Polite")),
                 new TestData("track", "track",
                     additionalRequirement: ((elements, driver, ids) =>
                     {
                         driver.ExecuteScript(Javascript.Track, timeout);
 
-                        return (bool)driver.ExecuteScript("return Modernizr.track && Modernizr.texttrackapi", timeout) ? ARPASS : ARFAIL;
+                        return (bool)driver.ExecuteScript("return Modernizr.track && Modernizr.texttrackapi", timeout) ? ARPASS : 
+                            "Element was not found to be supported by Modernizr";
                     }),
                     searchStrategy: (element => true)),
                 new TestData("video", "Group", null, keyboardElements: new List<string> { "video1" },
@@ -239,7 +247,6 @@ namespace Microsoft.Edge.A11y
                             names => names.Contains(""),
                         }.All(f => f(elementNames)) ? ARPASS : ARFAIL;
                     }))
-                //TODO add Description check once it's been figured out
             };
 
             return alltests;
@@ -280,24 +287,24 @@ namespace Microsoft.Edge.A11y
             driver.SendSpecialKeys(videoId, "Space");
             if (!VideoPlaying())
             {
-                return ARFAIL;
+                return "Video was not playing after spacebar on root element";
             }
             driver.SendSpecialKeys(videoId, "Space");
             if (VideoPlaying())
             {
-                return ARFAIL;
+                return "Video was not paused after spacebar on root element";
             }
 
             //Case 2: tab to play button and play/pause
             driver.SendSpecialKeys(videoId, "TabSpace");
             if (!VideoPlaying())
             {
-                return ARFAIL;
+                return "Video was not playing after spacebar on play button";
             }
             driver.SendSpecialKeys(videoId, "Enter");
             if (VideoPlaying())
             {
-                return ARFAIL;
+                return "Video was not paused after enter on play button";
             }
 
             //TODO remove when the test file is resized
@@ -307,25 +314,25 @@ namespace Microsoft.Edge.A11y
             Javascript.ClearFocus(driver, 0);
             driver.SendTabs(videoId, 6);//tab to volume control //TODO make this more resilient to UI changes
             var initial = VideoVolume();
-            driver.SendSpecialKeys(videoId, "Arrow_downArrow_down");//volume up
+            driver.SendSpecialKeys(videoId, "Arrow_downArrow_down");//volume down
             if (initial == VideoVolume())
             {
-                return ARFAIL;
+                return "Volume did not decrease with arrow keys";
             }
-            driver.SendSpecialKeys(videoId, "Arrow_upArrow_up");//volume down
+            driver.SendSpecialKeys(videoId, "Arrow_upArrow_up");//volume up
             if (VideoVolume() != initial)
             {
-                return ARFAIL;
+                return "Volume did not increase with arrow keys";
             }
             driver.SendSpecialKeys(videoId, "Enter");//mute//TODO switch back to original order once space works
             if (!VideoMuted())
             {
-                return ARFAIL;
+                return "Enter did not mute the video";
             }
             driver.SendSpecialKeys(videoId, "Space");//unmute
             if (VideoMuted())
             {
-                return ARFAIL;
+                return "Space did not unmute the video";
             }
 
             //Case 4: Audio selection
@@ -336,7 +343,7 @@ namespace Microsoft.Edge.A11y
             //Case 5: Progress and seek
             if (VideoPlaying())
             { //this should not be playing
-                return ARFAIL;
+                return "Video was playing when it shouldn't have been";
             }
             Javascript.ClearFocus(driver, 0);
             driver.SendTabs(videoId, 3);//tab to seek//TODO make this more resilient to UI changes
@@ -344,19 +351,19 @@ namespace Microsoft.Edge.A11y
             driver.SendSpecialKeys(videoId, "Arrow_right"); //skip ahead
             if (initial != VideoElapsed() - 10)
             {
-                return ARFAIL;
+                return "Video did not skip forward with arrow right";
             }
 
             driver.SendSpecialKeys(videoId, "Arrow_left"); //skip back
             if (initial != VideoElapsed())
             {
-                return ARFAIL;
+                return "Video did not skip back with arrow left";
             }
 
             //Case 6: Progress and seek on remaining time
             if (VideoPlaying())
             { //this should not be playing
-                return ARFAIL;
+                return "Video was playing when it shouldn't have been";
             }
             Javascript.ClearFocus(driver, 0);
             driver.SendTabs(videoId, 4);//tab to seek//TODO make this more resilient to UI changes
@@ -364,13 +371,13 @@ namespace Microsoft.Edge.A11y
             driver.SendSpecialKeys(videoId, "Arrow_right"); //skip ahead
             if (initial != VideoElapsed() - 10)
             {
-                return ARFAIL;
+                return "Video did not skip forward with arrow right";
             }
 
             driver.SendSpecialKeys(videoId, "Arrow_left"); //skip back
             if (initial != VideoElapsed())
             {
-                return ARFAIL;
+                return "Video did not skip back with arrow left";
             }
 
             return ARPASS;
@@ -412,31 +419,31 @@ namespace Microsoft.Edge.A11y
             driver.SendSpecialKeys(audioId, "Enter");
             if (!AudioPlaying())
             {
-                return ARFAIL;
+                return "Audio did not play with enter";
             }
 
             driver.SendSpecialKeys(audioId, "Space");
             if (AudioPlaying())
             {
-                return ARFAIL;
+                return "Audio did not pause with space";
             }
 
             //Case 2: Seek
             if (AudioPlaying())
             {
-                return ARFAIL;
+                return "Audio was playing when it shouldn't have been";
             }
             driver.SendTabs(audioId, 3);
             var initial = AudioElapsed();
             driver.SendSpecialKeys(audioId, "Arrow_right");
             if (initial == AudioElapsed())
             {
-                return ARFAIL;
+                return "Audio did not skip forward with arrow right";
             }
             driver.SendSpecialKeys(audioId, "Arrow_left");
             if (initial != AudioElapsed())
             {
-                return ARFAIL;
+                return "Audio did not skip back with arrow left";
             }
 
             //Case 3: Volume and mute
@@ -446,25 +453,25 @@ namespace Microsoft.Edge.A11y
             driver.SendSpecialKeys(audioId, "Arrow_down");
             if (initial == AudioVolume())
             {
-                return ARFAIL;
+                return "Volume did not decrease with arrow down";
             }
 
             driver.SendSpecialKeys(audioId, "Arrow_up");
             if (initial != AudioVolume())
             {
-                return ARFAIL;
+                return "Volume did not increase with arrow up";
             }
 
             driver.SendSpecialKeys(audioId, "Space");
             if (!AudioMuted())
             {
-                return ARFAIL;
+                return "Audio was not muted by space on the volume control";
             }
 
             driver.SendSpecialKeys(audioId, "Enter");
             if (AudioMuted())
             {
-                return ARFAIL;
+                return "Audio was not unmuted by enter on the volume control";
             }
 
             return ARPASS;
@@ -593,7 +600,7 @@ namespace Microsoft.Edge.A11y
                         var newInvalid = invalid.DefaultIfEmpty(-1).FirstOrDefault(inv => !previouslyInvalid.Contains(inv));
                         if(newInvalid == -1)
                         {
-                            return ARFAIL;
+                            return "Element failed to validate improper input";
                         }
                         previouslyInvalid.Add(newInvalid);
                     }
@@ -613,9 +620,10 @@ namespace Microsoft.Edge.A11y
                 foreach (var element in elements)
                 {
                     var names = element.GetChildNames();
-                    if (!requiredNames.All(rn => names.Any(n => n.Contains(rn))))
+                    var firstFail = requiredNames.DefaultIfEmpty("").First(rn => !names.Any(n => n.Contains(rn)));
+                    if (firstFail != "")
                     {
-                        return ARFAIL;
+                        return "Failed to find " + firstFail;
                     }
                 }
                 return ARPASS;
