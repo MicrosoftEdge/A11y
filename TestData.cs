@@ -183,7 +183,8 @@ namespace Microsoft.Edge.A11y
                 new TestData("progress", "Progressbar"),
                 new TestData("section", "Group", "section", "Custom", "region"),
                 new TestData("summary", null),
-                new TestData("time", "Spinner"),//TODO change to whatever we want it to be//currently marked as ? in the spec
+                new TestData("time", "Group",
+                    additionalRequirement: ((elements, driver, ids) => elements.All(element => ((IUIAutomationElement5)element).CurrentLiveSetting == LiveSetting.Polite) ? ARPASS : ARFAIL)),
                 new TestData("track", "track",
                     additionalRequirement: ((elements, driver, ids) =>
                     {
