@@ -571,15 +571,23 @@ namespace Microsoft.Edge.A11y
         {
             return (elements, driver, ids) =>
                 {
+                    //The indices of the elements that have been found to be invalid before
+                    var previouslyInvalid = new HashSet<int>();
                     for (var i = 0; i < elements.Count; i++)
                     {
                         driver.SendKeys("input" + (i + 1), "invalid");
                         driver.SendSubmit("input" + (i + 1));
                         System.Threading.Thread.Sleep(TimeSpan.FromMilliseconds(500));
-                        if (!(elements[i].CurrentControllerFor != null && elements[i].CurrentControllerFor.Length > 0 && elements[i].CurrentIsDataValidForForm == 0))
+
+                        var invalid = elements.Where(e => e.CurrentControllerFor != null &&
+                                        e.CurrentControllerFor.Length > 0 &&
+                                        e.CurrentIsDataValidForForm == 0).Select(e => elements.IndexOf(e));
+                        var newInvalid = invalid.DefaultIfEmpty(-1).FirstOrDefault(inv => !previouslyInvalid.Contains(inv));
+                        if(newInvalid == -1)
                         {
                             return false;
                         }
+                        previouslyInvalid.Add(newInvalid);
                     }
                     return true;
                 };
