@@ -579,9 +579,12 @@ namespace Microsoft.Edge.A11y
                         driver.SendSubmit("input" + (i + 1));
                         System.Threading.Thread.Sleep(TimeSpan.FromMilliseconds(500));
 
+                        //Everything that is invalid on the page
                         var invalid = elements.Where(e => e.CurrentControllerFor != null &&
                                         e.CurrentControllerFor.Length > 0 &&
                                         e.CurrentIsDataValidForForm == 0).Select(e => elements.IndexOf(e));
+
+                        //Elements that are invalid for the first time
                         var newInvalid = invalid.DefaultIfEmpty(-1).FirstOrDefault(inv => !previouslyInvalid.Contains(inv));
                         if(newInvalid == -1)
                         {
