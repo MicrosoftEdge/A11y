@@ -11,6 +11,8 @@ namespace Microsoft.Edge.A11y
     /// </summary>
     class TestData
     {
+        public const string ARFAIL = "Failed additional requirement";
+        public const string ARPASS = "";
         /// <summary>
         /// The name of the test, which corresponds to the name of the html element
         /// </summary>
@@ -39,10 +41,10 @@ namespace Microsoft.Edge.A11y
         /// </summary>
         public List<string> _KeyboardElements;
         /// <summary>
-        /// If not null, this func will be run as part of the test. If it returns false, 
-        /// the test will score 50%; if true, 100%
+        /// A func that allows extending the tests for specific elements. If an empty string is
+        /// returned, the element passes. Otherwise, an explanation of its failure is returned.
         /// </summary>
-        public Func<List<IUIAutomationElement>, DriverManager, List<string>, bool> _AdditionalRequirement;
+        public Func<List<IUIAutomationElement>, DriverManager, List<string>, string> _AdditionalRequirement;
         /// <summary>
         /// If not null, this func will be used to test elements to see if they should be
         /// tested (instead of matching _ControlType).
@@ -65,7 +67,7 @@ namespace Microsoft.Edge.A11y
             string landmarkType = null,
             string localizedLandmarkType = null,
             List<string> keyboardElements = null,
-            Func<List<IUIAutomationElement>, DriverManager, List<string>, bool> additionalRequirement = null,
+            Func<List<IUIAutomationElement>, DriverManager, List<string>, string> additionalRequirement = null,
             Func<IUIAutomationElement, bool> searchStrategy = null)
         {
             _TestName = testName;
@@ -110,16 +112,17 @@ namespace Microsoft.Edge.A11y
                                 "Seek",
                                 "Time remaining",
                                 "Mute",
-                                "Volume"})(elements, driver, ids) &&
-                        CheckAudioKeyboardInteractions(elements, driver, ids))),//TODO get full list when it's decided
+                                "Volume"})(elements, driver, ids) == "" ? 
+                        CheckAudioKeyboardInteractions(elements, driver, ids) : 
+                        ARFAIL)),//TODO get full list when it's decided
                 new TestData("canvas", "Image"),
                 new TestData("datalist", "Combobox", keyboardElements: new List<string> { "input1" },
-                    additionalRequirement: ((elements, driver, ids) => elements.All(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0))),
+                    additionalRequirement: ((elements, driver, ids) => elements.All(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0) ? "" : ARFAIL)),
                 new TestData("details", null),
                 new TestData("dialog", null),
                 new TestData("figure", "Group", "figure"),
                 new TestData("figure-figcaption", "Image",
-                    additionalRequirement: ((elements, driver, ids) => elements.All(element => element.CurrentName == "HTML5 logo"))),
+                    additionalRequirement: ((elements, driver, ids) => elements.All(element => element.CurrentName == "HTML5 logo") ? ARPASS : ARFAIL)),
                 new TestData("footer", "Group", "footer", "Custom", "content information"),
                 new TestData("header", "Group", "header", "Custom", "banner"),
                 new TestData("input-color", "Edit", "color picker"),
@@ -158,7 +161,7 @@ namespace Microsoft.Edge.A11y
                         }
 
                         return true;
-                    })),
+                    }) ? ARPASS : ARFAIL),
                 new TestData("input-search", "Edit", "search", keyboardElements: new List<string> { "input1", "input2" }),
                 new TestData("input-tel", "Edit", "telephone", keyboardElements: new List<string> { "input1", "input2" }),
                 new TestData("input-time", "Edit", keyboardElements: new List<string> { "input1", "input2" },
@@ -169,14 +172,14 @@ namespace Microsoft.Edge.A11y
                 new TestData("main", "Group", "main", "Main", "main"),
                 new TestData("mark", "Text"),
                 new TestData("meter", "Progressbar", "meter",
-                    additionalRequirement: ((elements, driver, ids) => elements.All(element => element.GetProperties().Any(p => p.Contains("IsReadOnly")))),
+                    additionalRequirement: ((elements, driver, ids) => elements.All(element => element.GetProperties().Any(p => p.Contains("IsReadOnly"))) ? ARPASS : ARFAIL),
                     searchStrategy: (element => element.GetPatterns().Contains("RangeValuePattern"))),//NB the ControlType is not used for searching this element
                 new TestData("menuitem", null),
                 new TestData("menupopup", null),
                 new TestData("menutoolbar", null),
                 new TestData("nav", "Group", "navigation", "Navigation", "navigation"),
                 new TestData("output", "Group",
-                    additionalRequirement: ((elements, driver, ids) => elements.All(element => ((IUIAutomationElement5)element).CurrentLiveSetting == LiveSetting.Polite))),
+                    additionalRequirement: ((elements, driver, ids) => elements.All(element => ((IUIAutomationElement5)element).CurrentLiveSetting == LiveSetting.Polite) ? ARPASS : ARFAIL)),
                 new TestData("progress", "Progressbar"),
                 new TestData("section", "Group", "section", "Custom", "region"),
                 new TestData("summary", null),
@@ -186,7 +189,7 @@ namespace Microsoft.Edge.A11y
                     {
                         driver.ExecuteScript(Javascript.Track, timeout);
 
-                        return (bool)driver.ExecuteScript("return Modernizr.track && Modernizr.texttrackapi", timeout);
+                        return (bool)driver.ExecuteScript("return Modernizr.track && Modernizr.texttrackapi", timeout) ? ARPASS : ARFAIL;
                     }),
                     searchStrategy: (element => true)),
                 new TestData("video", "Group", null, keyboardElements: new List<string> { "video1" },
@@ -202,10 +205,10 @@ namespace Microsoft.Edge.A11y
                                     "Show captioning",
                                     "Mute",
                                     "Volume",
-                                    "Full screen" })(elements, driver, ids) &&
-                        CheckVideoKeyboardInteractions(elements, driver, ids))),
+                                    "Full screen" })(elements, driver, ids) == ARPASS ? 
+                        CheckVideoKeyboardInteractions(elements, driver, ids) : ARFAIL)),
                 new TestData("hidden-att", "Button", null,
-                    additionalRequirement: ((elements, driver, ids) => elements.Count(e => e.CurrentControlType == converter.GetElementCodeFromName("Button")) == 1 && !ids.Any()),
+                    additionalRequirement: ((elements, driver, ids) => elements.Count(e => e.CurrentControlType == converter.GetElementCodeFromName("Button")) == 1 && !ids.Any() ? ARPASS : ARFAIL),
                     searchStrategy: (element => element.CurrentControlType != converter.GetElementCodeFromName("Pane"))),//take all elements other than the window
                 new TestData("required-att", "Edit",
                     additionalRequirement: (elements, driver, ids) =>
@@ -215,14 +218,14 @@ namespace Microsoft.Edge.A11y
                         return elements.Count() == 1 && elements.All(
                                                             e => e.CurrentControllerFor != null
                                                             && e.CurrentControllerFor.Length > 0
-                                                            && e.CurrentIsDataValidForForm == 0);
+                                                            && e.CurrentIsDataValidForForm == 0) ? ARPASS : ARFAIL;
                     }),
                 new TestData("placeholder-att", "Edit",
                     additionalRequirement: ((elements, driver, ids) =>
                     {
                         if (elements.Count() != 6)
                         {
-                            return false;
+                            return ARFAIL;
                         }
 
                         var elementNames = elements.Select(element => element.CurrentName).ToList();
@@ -233,7 +236,7 @@ namespace Microsoft.Edge.A11y
                             names => names.Contains("placeholder text 4"),
                             names => names.Contains("placeholder text 5"),
                             names => names.Contains(""),
-                        }.All(f => f(elementNames));
+                        }.All(f => f(elementNames)) ? ARPASS : ARFAIL;
                     }))
                 //TODO add Description check once it's been figured out
             };
@@ -247,8 +250,8 @@ namespace Microsoft.Edge.A11y
         /// <param name="elements"></param>
         /// <param name="driver"></param>
         /// <param name="ids"></param>
-        /// <returns>True if the element passes, false otherwise</returns>
-        private static bool CheckVideoKeyboardInteractions(List<IUIAutomationElement> elements, DriverManager driver, List<string> ids)
+        /// <returns>An empty string if an element fails, otherwise an explanation</returns>
+        private static string CheckVideoKeyboardInteractions(List<IUIAutomationElement> elements, DriverManager driver, List<string> ids)
         {
             string videoId = "video1";
             Func<bool> VideoPlaying = () => (bool)driver.ExecuteScript("return !document.getElementById('" + videoId + "').paused", 0);
@@ -276,24 +279,24 @@ namespace Microsoft.Edge.A11y
             driver.SendSpecialKeys(videoId, "Space");
             if (!VideoPlaying())
             {
-                return false;
+                return ARFAIL;
             }
             driver.SendSpecialKeys(videoId, "Space");
             if (VideoPlaying())
             {
-                return false;
+                return ARFAIL;
             }
 
             //Case 2: tab to play button and play/pause
             driver.SendSpecialKeys(videoId, "TabSpace");
             if (!VideoPlaying())
             {
-                return false;
+                return ARFAIL;
             }
             driver.SendSpecialKeys(videoId, "Enter");
             if (VideoPlaying())
             {
-                return false;
+                return ARFAIL;
             }
 
             //TODO remove when the test file is resized
@@ -306,22 +309,22 @@ namespace Microsoft.Edge.A11y
             driver.SendSpecialKeys(videoId, "Arrow_downArrow_down");//volume up
             if (initial == VideoVolume())
             {
-                return false;
+                return ARFAIL;
             }
             driver.SendSpecialKeys(videoId, "Arrow_upArrow_up");//volume down
             if (VideoVolume() != initial)
             {
-                return false;
+                return ARFAIL;
             }
             driver.SendSpecialKeys(videoId, "Enter");//mute//TODO switch back to original order once space works
             if (!VideoMuted())
             {
-                return false;
+                return ARFAIL;
             }
             driver.SendSpecialKeys(videoId, "Space");//unmute
             if (VideoMuted())
             {
-                return false;
+                return ARFAIL;
             }
 
             //Case 4: Audio selection
@@ -332,7 +335,7 @@ namespace Microsoft.Edge.A11y
             //Case 5: Progress and seek
             if (VideoPlaying())
             { //this should not be playing
-                return false;
+                return ARFAIL;
             }
             Javascript.ClearFocus(driver, 0);
             driver.SendTabs(videoId, 3);//tab to seek//TODO make this more resilient to UI changes
@@ -340,19 +343,19 @@ namespace Microsoft.Edge.A11y
             driver.SendSpecialKeys(videoId, "Arrow_right"); //skip ahead
             if (initial != VideoElapsed() - 10)
             {
-                return false;
+                return ARFAIL;
             }
 
             driver.SendSpecialKeys(videoId, "Arrow_left"); //skip back
             if (initial != VideoElapsed())
             {
-                return false;
+                return ARFAIL;
             }
 
             //Case 6: Progress and seek on remaining time
             if (VideoPlaying())
             { //this should not be playing
-                return false;
+                return ARFAIL;
             }
             Javascript.ClearFocus(driver, 0);
             driver.SendTabs(videoId, 4);//tab to seek//TODO make this more resilient to UI changes
@@ -360,16 +363,16 @@ namespace Microsoft.Edge.A11y
             driver.SendSpecialKeys(videoId, "Arrow_right"); //skip ahead
             if (initial != VideoElapsed() - 10)
             {
-                return false;
+                return ARFAIL;
             }
 
             driver.SendSpecialKeys(videoId, "Arrow_left"); //skip back
             if (initial != VideoElapsed())
             {
-                return false;
+                return ARFAIL;
             }
 
-            return true;
+            return ARPASS;
         }
 
         /// <summary>
@@ -378,8 +381,8 @@ namespace Microsoft.Edge.A11y
         /// <param name="elements"></param>
         /// <param name="driver"></param>
         /// <param name="ids"></param>
-        /// <returns>True if the element passes, false othersie</returns>
-        private static bool CheckAudioKeyboardInteractions(List<IUIAutomationElement> elements, DriverManager driver, List<string> ids)
+        /// <returns>An empty string if an element fails, otherwise an explanation</returns>
+        private static string CheckAudioKeyboardInteractions(List<IUIAutomationElement> elements, DriverManager driver, List<string> ids)
         {
             string audioId = "audio1";
             Func<bool> AudioPlaying = () => (bool)driver.ExecuteScript("return !document.getElementById('" + audioId + "').paused", 0);
@@ -408,31 +411,31 @@ namespace Microsoft.Edge.A11y
             driver.SendSpecialKeys(audioId, "Enter");
             if (!AudioPlaying())
             {
-                return false;
+                return ARFAIL;
             }
 
             driver.SendSpecialKeys(audioId, "Space");
             if (AudioPlaying())
             {
-                return false;
+                return ARFAIL;
             }
 
             //Case 2: Seek
             if (AudioPlaying())
             {
-                return false;
+                return ARFAIL;
             }
             driver.SendTabs(audioId, 3);
             var initial = AudioElapsed();
             driver.SendSpecialKeys(audioId, "Arrow_right");
             if (initial == AudioElapsed())
             {
-                return false;
+                return ARFAIL;
             }
             driver.SendSpecialKeys(audioId, "Arrow_left");
             if (initial != AudioElapsed())
             {
-                return false;
+                return ARFAIL;
             }
 
             //Case 3: Volume and mute
@@ -442,28 +445,28 @@ namespace Microsoft.Edge.A11y
             driver.SendSpecialKeys(audioId, "Arrow_down");
             if (initial == AudioVolume())
             {
-                return false;
+                return ARFAIL;
             }
 
             driver.SendSpecialKeys(audioId, "Arrow_up");
             if (initial != AudioVolume())
             {
-                return false;
+                return ARFAIL;
             }
 
             driver.SendSpecialKeys(audioId, "Space");
             if (!AudioMuted())
             {
-                return false;
+                return ARFAIL;
             }
 
             driver.SendSpecialKeys(audioId, "Enter");
             if (AudioMuted())
             {
-                return false;
+                return ARFAIL;
             }
 
-            return true;
+            return ARPASS;
         }
 
         /// <summary>
@@ -472,9 +475,9 @@ namespace Microsoft.Edge.A11y
         /// </summary>
         /// <param name="fields">A count of the number of fields to test</param>
         /// <returns></returns>
-        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, bool> CheckCalendarKeyboard(int fields)
+        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckCalendarKeyboard(int fields)
         {
-            return new Func<List<IUIAutomationElement>, DriverManager, List<string>, bool>((elements, driver, ids) =>
+            return new Func<List<IUIAutomationElement>, DriverManager, List<string>, string>((elements, driver, ids) =>
                 ids.All(id =>
                 {
                     driver.SendSpecialKeys(id, "EnterEscapeEnterEnter");//TODO remove when possible
@@ -509,7 +512,7 @@ namespace Microsoft.Edge.A11y
                     }
 
                     return true;
-                }));
+                }) ? ARPASS : ARFAIL);
         }
 
         /// <summary>
@@ -517,9 +520,9 @@ namespace Microsoft.Edge.A11y
         /// above.
         /// </summary>
         /// <returns></returns>
-        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, bool> CheckDatetimeLocalKeyboard()
+        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckDatetimeLocalKeyboard()
         {
-            return new Func<List<IUIAutomationElement>, DriverManager, List<string>, bool>((elements, driver, ids) =>
+            return new Func<List<IUIAutomationElement>, DriverManager, List<string>, string>((elements, driver, ids) =>
                 ids.All(id =>
                 {
                     driver.SendSpecialKeys(id, "EnterEscape");//TODO remove when possible
@@ -560,7 +563,7 @@ namespace Microsoft.Edge.A11y
                     }
 
                     return true;
-                }));
+                }) ? ARPASS : ARFAIL);
         }
 
         /// <summary>
@@ -568,7 +571,7 @@ namespace Microsoft.Edge.A11y
         /// an error message appears.
         /// </summary>
         /// <returns></returns>
-        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, bool> CheckValidation()
+        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckValidation()
         {
             return (elements, driver, ids) =>
                 {
@@ -589,11 +592,11 @@ namespace Microsoft.Edge.A11y
                         var newInvalid = invalid.DefaultIfEmpty(-1).FirstOrDefault(inv => !previouslyInvalid.Contains(inv));
                         if(newInvalid == -1)
                         {
-                            return false;
+                            return ARFAIL;
                         }
                         previouslyInvalid.Add(newInvalid);
                     }
-                    return true;
+                    return ARPASS;
                 };
         }
 
@@ -602,7 +605,7 @@ namespace Microsoft.Edge.A11y
         /// </summary>
         /// <param name="requiredNames">The names of the elements to search for</param>
         /// <returns>A Func that can be used to verify whether the elements in the list are child elements</returns>
-        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, bool> CheckChildNames(List<string> requiredNames)
+        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckChildNames(List<string> requiredNames)
         {
             return (elements, driver, ids) =>
             {
@@ -611,10 +614,10 @@ namespace Microsoft.Edge.A11y
                     var names = element.GetChildNames();
                     if (!requiredNames.All(rn => names.Any(n => n.Contains(rn))))
                     {
-                        return false;
+                        return ARFAIL;
                     }
                 }
-                return true;
+                return ARPASS;
             };
         }
     }

@@ -105,9 +105,10 @@ namespace Microsoft.Edge.A11y
                 if (testData._AdditionalRequirement != null)
                 {
                     testElements = EdgeA11yTools.SearchDocumentChildren(browserElement, testData._ControlType, testData._SearchStrategy, out foundControlTypes);
-                    if (!testData._AdditionalRequirement(testElements, _driverManager, tabbable))
+                    var result = testData._AdditionalRequirement(testElements, _driverManager, tabbable);
+                    if (result != TestData.ARFAIL)
                     {
-                        return Half(testData._TestName, "Failed additional requirement");
+                        return Half(testData._TestName, result);
                     }
                 }
             }
