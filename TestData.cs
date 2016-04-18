@@ -635,8 +635,8 @@ namespace Microsoft.Edge.A11y
                 foreach (var element in elements)
                 {
                     var names = element.GetChildNames();
-                    var firstFail = requiredNames.DefaultIfEmpty("").First(rn => !names.Any(n => n.Contains(rn)));
-                    if (firstFail != ARPASS)
+                    var firstFail = requiredNames.FirstOrDefault(rn => !names.Any(n => n.Contains(rn)));
+                    if (firstFail != null)
                     {
                         return "Failed to find " + firstFail;
                     }
