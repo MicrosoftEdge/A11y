@@ -24,7 +24,15 @@ namespace Microsoft.Edge.A11y
         /// <param name="searchTimeout">How long to search for elements</param>
         public DriverManager(TimeSpan searchTimeout)
         {
-            _driver = new EdgeDriver(EdgeDriverService.CreateDefaultService(DriverExecutablePath, "MicrosoftWebDriver.exe", 17556));
+            try
+            {
+                _driver = new EdgeDriver(EdgeDriverService.CreateDefaultService(DriverExecutablePath, "MicrosoftWebDriver.exe", 17556));
+            }
+            catch (InvalidOperationException)
+            {
+                Console.WriteLine("Unable to start a WebDriver session. Ensure that the previous server window is closed.");
+                Environment.Exit(1);
+            }
             _searchTimeout = searchTimeout;
         }
 
