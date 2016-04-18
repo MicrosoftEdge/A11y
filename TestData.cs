@@ -173,7 +173,10 @@ namespace Microsoft.Edge.A11y
                 new TestData("input-week", "Edit", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: CheckCalendarKeyboard(2)),
                 new TestData("main", "Group", "main", "Main", "main"),
-                new TestData("mark", "Text"),
+                new TestData("mark", "Text",
+                    additionalRequirement: ((elements, driver, ids) => 
+                        elements.Count == 6 ? ARPASS : "Could only find " + elements.Count + " of the 6 marks"
+                    )),
                 new TestData("meter", "Progressbar", "meter",
                     additionalRequirement:
                         ((elements, driver, ids) => elements.All(element => element.GetProperties().Any(p => p.Contains("IsReadOnly"))) ? ARPASS :
@@ -486,7 +489,7 @@ namespace Microsoft.Edge.A11y
         public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckCalendarKeyboard(int fields)
         {
             return new Func<List<IUIAutomationElement>, DriverManager, List<string>, string>((elements, driver, ids) => {
-                var result = ids.DefaultIfEmpty(ARPASS).FirstOrDefault(id =>
+                var result = ids.FirstOrDefault(id =>//"first element that fails"
                 {
                     driver.SendSpecialKeys(id, "EnterEscapeEnterEnter");//TODO remove when possible
 
@@ -515,14 +518,14 @@ namespace Microsoft.Edge.A11y
                     {
                         if (newdatesplit[i] == todaysplit[i])
                         {
-                            return false;
+                            return true;//true means this element fails
                         }
                     }
 
-                    return true;
+                    return false;
                 });
-                if(result == ARPASS){
-                    return result;
+                if(result == null){
+                    return ARPASS;
                 }
                 return "Keyboard interaction failed for element with id: " + result;
             });
@@ -537,7 +540,7 @@ namespace Microsoft.Edge.A11y
         {
             return new Func<List<IUIAutomationElement>, DriverManager, List<string>, string>((elements, driver, ids) =>
             {
-                var result = ids.DefaultIfEmpty(ARPASS).FirstOrDefault(id =>
+                var result = ids.FirstOrDefault(id =>//"first element that fails"
                 {
                     driver.SendSpecialKeys(id, "EnterEscape");//TODO remove when possible
 
@@ -572,15 +575,15 @@ namespace Microsoft.Edge.A11y
                     {
                         if (newdatesplit[i] == todaysplit[i])
                         {
-                            return false;
+                            return true;
                         }
                     }
 
-                    return true;
+                    return false;
                 });
-                if (result == ARPASS)
+                if (result == null)
                 {
-                    return result;
+                    return ARPASS;
                 }
                 return "Keyboard interaction failed for element with id: " + result;
             });

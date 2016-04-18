@@ -106,7 +106,7 @@ namespace Microsoft.Edge.A11y
                 {
                     testElements = EdgeA11yTools.SearchDocumentChildren(browserElement, testData._ControlType, testData._SearchStrategy, out foundControlTypes);
                     var result = testData._AdditionalRequirement(testElements, _driverManager, tabbable);
-                    if (result == TestData.ARFAIL)
+                    if (result != TestData.ARPASS)
                     {
                         return Half(testData._TestName, result);
                     }
