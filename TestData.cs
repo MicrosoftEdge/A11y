@@ -298,20 +298,8 @@ namespace Microsoft.Edge.A11y
             Func<bool> VideoPlaying = () => (bool)driver.ExecuteScript("return !document.getElementById('" + videoId + "').paused", 0);
             Func<double> VideoVolume = () =>
             {
-                var volume = driver.ExecuteScript("return document.getElementById('" + videoId + "').volume", 0);
-                try
-                {
-                    return (int)volume;
-                }
-                catch { }
-
-                try
-                {
-                    return (double)volume;
-                }
-                catch { }
-
-                throw new ArgumentException("Unable to cast to int or double");
+                var volume = (string) driver.ExecuteScript("return document.getElementById('" + videoId + "').volume", 0);
+                return double.Parse(volume);
             };
             Func<bool> VideoMuted = () => (bool)driver.ExecuteScript("return document.getElementById('" + videoId + "').muted", 0);
             Func<double> VideoElapsed = () => (double)driver.ExecuteScript("return document.getElementById('" + videoId + "').currentTime", 0);
@@ -429,20 +417,8 @@ namespace Microsoft.Edge.A11y
             Func<bool> AudioPlaying = () => (bool)driver.ExecuteScript("return !document.getElementById('" + audioId + "').paused", 0);
             Func<double> AudioVolume = () =>
             {
-                var volume = driver.ExecuteScript("return document.getElementById('" + audioId + "').volume", 0);
-                try
-                {
-                    return (int)volume;
-                }
-                catch { }
-
-                try
-                {
-                    return (double)volume;
-                }
-                catch { }
-
-                throw new ArgumentException("Unable to cast to int or double");
+                var volume = (string)driver.ExecuteScript("return document.getElementById('" + audioId + "').volume", 0);
+                return double.Parse(volume);
             };
             Func<bool> AudioMuted = () => (bool)driver.ExecuteScript("return document.getElementById('" + audioId + "').muted", 0);
             Func<double> AudioElapsed = () => (double)driver.ExecuteScript("return document.getElementById('" + audioId + "').currentTime", 0);
