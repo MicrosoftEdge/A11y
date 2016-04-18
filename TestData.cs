@@ -296,25 +296,9 @@ namespace Microsoft.Edge.A11y
         {
             string videoId = "video1";
             Func<bool> VideoPlaying = () => (bool)driver.ExecuteScript("return !document.getElementById('" + videoId + "').paused", 0);
-            Func<double> VideoVolume = () =>
-            {
-                var volume = driver.ExecuteScript("return document.getElementById('" + videoId + "').volume", 0);
-                try
-                {
-                    return (int)volume;
-                }
-                catch { }
-
-                try
-                {
-                    return (double)volume;
-                }
-                catch { }
-
-                throw new ArgumentException("Unable to cast to int or double");
-            };
+            Func<double> VideoVolume = () => driver.ExecuteScript("return document.getElementById('" + videoId + "').volume", 0).ParseMystery();
             Func<bool> VideoMuted = () => (bool)driver.ExecuteScript("return document.getElementById('" + videoId + "').muted", 0);
-            Func<double> VideoElapsed = () => (double)driver.ExecuteScript("return document.getElementById('" + videoId + "').currentTime", 0);
+            Func<double> VideoElapsed = () => driver.ExecuteScript("return document.getElementById('" + videoId + "').currentTime", 0).ParseMystery();
 
             //Case 1: tab to video element and play/pause
             driver.SendSpecialKeys(videoId, "Space");
@@ -427,25 +411,9 @@ namespace Microsoft.Edge.A11y
         {
             string audioId = "audio1";
             Func<bool> AudioPlaying = () => (bool)driver.ExecuteScript("return !document.getElementById('" + audioId + "').paused", 0);
-            Func<double> AudioVolume = () =>
-            {
-                var volume = driver.ExecuteScript("return document.getElementById('" + audioId + "').volume", 0);
-                try
-                {
-                    return (int)volume;
-                }
-                catch { }
-
-                try
-                {
-                    return (double)volume;
-                }
-                catch { }
-
-                throw new ArgumentException("Unable to cast to int or double");
-            };
+            Func<double> AudioVolume = () => driver.ExecuteScript("return document.getElementById('" + audioId + "').volume", 0).ParseMystery();
             Func<bool> AudioMuted = () => (bool)driver.ExecuteScript("return document.getElementById('" + audioId + "').muted", 0);
-            Func<double> AudioElapsed = () => (double)driver.ExecuteScript("return document.getElementById('" + audioId + "').currentTime", 0);
+            Func<double> AudioElapsed = () => driver.ExecuteScript("return document.getElementById('" + audioId + "').currentTime", 0).ParseMystery();
 
             //Case 1: Play/Pause
             driver.SendTabs(audioId, 1); //Tab to play button
