@@ -9,9 +9,14 @@ namespace Microsoft.Edge.A11y
     {
         static void Main(string[] args)
         {
+            var testName = args.FirstOrDefault();
+
             TestStrategy a11yStrategy = new EdgeStrategy();
 
-            var results = TestData.alltests.Value.Where(td => td._ControlType != null).ToList().ConvertAll(td => a11yStrategy.Execute(td));
+            var results = TestData.alltests.Value.Where(td =>
+                td._ControlType != null && //Control type == null means skip the test
+                (testName == null || td._TestName == testName)) //Either no test name was provided or the test names match
+                .ToList().ConvertAll(td => a11yStrategy.Execute(td));
 
             var flatResults = results.Where(r => r.Any()).ToList().ConvertAll(r =>
             {
@@ -38,11 +43,18 @@ namespace Microsoft.Edge.A11y
                 }
             });
 
-            var score = scores.Average();
+            if (scores.Any())
+            {
+                var score = scores.Average();
 
-            Console.WriteLine("Edge Score: " + score * 100);
+                Console.WriteLine("Edge Score: " + score * 100);
 
-            ResultsToCSV(flatResults);
+                ResultsToCSV(flatResults);
+            }
+            else
+            {
+                Console.WriteLine("No tests matched the name " + args[0]);
+            }
 
             a11yStrategy.Close();
         }
