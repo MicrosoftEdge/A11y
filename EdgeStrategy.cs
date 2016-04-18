@@ -13,6 +13,7 @@ namespace Microsoft.Edge.A11y
     {
         public EdgeStrategy(string repositoryPath = "https://cdn.rawgit.com/DHBrett/AT-browser-tests/merge/test-files/"){
             _driverManager = new DriverManager(TimeSpan.FromSeconds(10));
+            System.Threading.Thread.Sleep(TimeSpan.FromSeconds(2));//Wait for the browser to load before we start searching
             _RepositoryPath = repositoryPath;
         }
 
