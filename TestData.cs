@@ -117,7 +117,7 @@ namespace Microsoft.Edge.A11y
                             return childNames;
                         }
                         return CheckAudioKeyboardInteractions(elements, driver, ids);
-                    })),//TODO get full list when it's decided
+                    })),//TODO get full list when it's finalized
                 new TestData("canvas", "Image"),
                 new TestData("datalist", "Combobox", keyboardElements: new List<string> { "input1" },
                     additionalRequirement: ((elements, driver, ids) => elements.All(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0) ? ARPASS : ARFAIL)),
@@ -207,7 +207,7 @@ namespace Microsoft.Edge.A11y
                 new TestData("video", "Group", null, keyboardElements: new List<string> { "video1" },
                     additionalRequirement: ((elements, driver, ids) =>
                         CheckChildNames(
-                            new List<string> {//TODO get full list when it's decided
+                            new List<string> {//TODO get full list when it's finalized
                                     "Play",
                                     "Time elapsed",
                                     "Seek",
@@ -220,8 +220,38 @@ namespace Microsoft.Edge.A11y
                                     "Full screen" })(elements, driver, ids) == ARPASS ?
                         CheckVideoKeyboardInteractions(elements, driver, ids) : ARFAIL)),
                 new TestData("hidden-att", "Button", null,
-                    additionalRequirement: ((elements, driver, ids) => elements.Count(e => e.CurrentControlType == converter.GetElementCodeFromName("Button")) == 1 && !ids.Any() ? ARPASS : ARFAIL),
-                    searchStrategy: (element => element.CurrentControlType != converter.GetElementCodeFromName("Pane"))),//take all elements other than the window
+                    additionalRequirement: ((elements, driver, ids) =>
+                    {
+                        var elementConverter = new ElementConverter();
+                        var paneCode = elementConverter.GetElementCodeFromName("Pane");
+
+                        var browserElement = EdgeA11yTools.FindBrowserDocument(0);
+
+                        if (elements.Count(e => e.CurrentControlType != paneCode) != 0)
+                        {
+                            return "Found " + elements.Count(e => e.CurrentControlType != paneCode) + " elements. Expected 0";
+                        }
+
+                        driver.ExecuteScript(Javascript.RemoveHidden, timeout);
+
+                        HashSet<string> foundControlTypes;
+                        elements = EdgeA11yTools.SearchDocumentChildren(browserElement, "Button", null, out foundControlTypes);
+                        if (elements.Count(e => e.CurrentControlType != paneCode) != 1)
+                        {
+                            return "Found " + elements.Count(e => e.CurrentControlType != paneCode) + " elements. Expected 1";
+                        }
+
+                        driver.ExecuteScript(Javascript.RemoveAriaHidden, timeout);
+
+                        elements = EdgeA11yTools.SearchDocumentChildren(browserElement, "Button", null, out foundControlTypes);
+                        if (elements.Count(e => e.CurrentControlType != paneCode) != 2)
+                        {
+                            return "Found " + elements.Count(e => e.CurrentControlType != paneCode) + " elements. Expected 2";
+                        }
+
+                        return ARPASS;
+                    }),
+                    searchStrategy: (element => true)),//take all elements
                 new TestData("required-att", "Edit",
                     additionalRequirement: (elements, driver, ids) =>
                     {
@@ -247,7 +277,7 @@ namespace Microsoft.Edge.A11y
                             names => names.Contains("Label text 3:"),
                             names => names.Contains("placeholder text 4"),
                             names => names.Contains("placeholder text 5"),
-                            names => names.Contains(""),
+                            names => names.Contains("aria-placeholder text 6"),
                         }.All(f => f(elementNames)) ? ARPASS : ARFAIL;
                     }))
             };

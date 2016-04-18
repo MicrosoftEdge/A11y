@@ -16,5 +16,15 @@ namespace Microsoft.Edge.A11y
         /// Clear focus, so that we can start over in the tab order
         /// </summary>
         public static Action<DriverManager, int> ClearFocus = (driverManager, timeout) => driverManager.ExecuteScript("document.activeElement.blur()", timeout);
+
+        /// <summary>
+        /// Remove hidden attribute from all buttons on the page
+        /// </summary>
+        public static string RemoveHidden = "var ps = document.getElementsByTagName('input'); for(i = 0; i < ps.length; i++){ ps[i].hidden = false}";
+
+        /// <summary>
+        /// Change aria-hidden attribute to false for the second hidden element
+        /// </summary>
+        public static string RemoveAriaHidden = "document.getElementById('input2').setAttribute('aria-hidden', false)";
     }
 }
