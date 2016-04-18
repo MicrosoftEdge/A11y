@@ -321,5 +321,28 @@ namespace Microsoft.Edge.A11y
 
             return toreturn;
         }
+
+        public static double ParseMystery(this object o)
+        {
+            try
+            {
+                return (int)o;
+            }
+            catch { }
+
+            try
+            {
+                return (double)o;
+            }
+            catch { }
+
+            try
+            {
+                return double.Parse((string)o);
+            }
+            catch { }
+
+            throw new InvalidCastException("Cannot parse to int, double, or string");
+        }
     }
 }
