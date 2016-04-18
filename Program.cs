@@ -16,40 +16,40 @@ namespace Microsoft.Edge.A11y
             var results = TestData.alltests.Value.Where(td =>
                 td._ControlType != null && //Control type == null means skip the test
                 (testName == null || td._TestName == testName)) //Either no test name was provided or the test names match
-                .ToList().ConvertAll(td => a11yStrategy.Execute(td));
-
-            var flatResults = results.Where(r => r.Any()).ToList().ConvertAll(r =>
-            {
-                var element = r.ElementAt(1);
-                element.Result = element.Result == ResultType.Fail && r.ElementAt(0).Result == ResultType.Pass ? ResultType.Half : element.Result;
-                element.Name = element.Name.Replace("-2", "");
-                return element;
-            });
-
-            flatResults.OrderBy(r => r.Result).ToList().ForEach(r => Console.WriteLine(r));
-
-            var scores = flatResults.ConvertAll(r =>
-            {
-                switch (r.Result)
+                .ToList().ConvertAll(td => a11yStrategy.Execute(td)) //Execute each of the tests
+                .Where(r => r.Any()) //Only keep the ones that were executed
+                .ToList().ConvertAll(r => //Convert results from internal form (Pass/Pass, Pass/Fail, Fail/Fail) to external (Pass, Half, Fail)
                 {
-                    case ResultType.Fail:
-                        return 0;
-                    case ResultType.Half:
-                        return .5;
-                    case ResultType.Pass:
-                        return 1;
-                    default:
-                        throw new InvalidDataException();
-                }
-            });
+                    var first = r.ElementAt(0);
+                    var second = r.ElementAt(1);
+                    second.Result = second.Result == ResultType.Fail && first.Result == ResultType.Pass ? ResultType.Half : second.Result;
+                    second.Name = second.Name.Replace("-2", "");
+                    return second;
+                });
 
-            if (scores.Any())
+            //output results to the console: failures, then halves, then passes
+            results.OrderBy(r => r.Result == ResultType.Pass).ThenBy(r => r.Result == ResultType.Half).ToList().ForEach(r => Console.WriteLine(r));
+
+            if (results.Any())
             {
-                var score = scores.Average();
+                var score = results.ConvertAll(r =>
+                {
+                    switch (r.Result)
+                    {
+                        case ResultType.Fail:
+                            return 0;
+                        case ResultType.Half:
+                            return .5;
+                        case ResultType.Pass:
+                            return 1;
+                        default:
+                            throw new InvalidDataException();
+                    }
+                }).Average() * 100;
 
-                Console.WriteLine("Edge Score: " + score * 100);
+                Console.WriteLine("Edge Score: " + score);
 
-                ResultsToCSV(flatResults);
+                ResultsToCSV(results, score);
             }
             else
             {
@@ -59,17 +59,23 @@ namespace Microsoft.Edge.A11y
             a11yStrategy.Close();
         }
 
-        public static void ResultsToCSV(List<TestCaseResult> results)
+        public static void ResultsToCSV(List<TestCaseResult> results, double score)
         {
+            //Get the file
             var filePath = Path.Combine(DriverManager.ProjectRootFolder, "scores.csv");
-            var resultline = results.Select(r => r.Result.ToString()).Aggregate((s1, s2) => s1 + "," + s2);
+
+            //If this is the first time, write the header line with the test names
             if (!File.Exists(filePath))
             {
-                var headerLine = results.Select(r => r.Name).Aggregate((s1, s2) => s1 + "," + s2) + "\n";
+                var headerLine = "score," + results.Select(r => r.Name).Aggregate((s1, s2) => s1 + "," + s2) + "\n";
                 File.WriteAllText(filePath, headerLine);
             }
+
+            //Write the results
             var writer = File.AppendText(filePath);
+            var resultline = score + "," + results.Select(r => r.Result.ToString()).Aggregate((s1, s2) => s1 + "," + s2);
             writer.WriteLine(resultline);
+
             writer.Flush();
             writer.Close();
         }
