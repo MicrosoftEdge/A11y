@@ -332,6 +332,12 @@ namespace Microsoft.Edge.A11y
 
             try
             {
+                return (Int64)o;
+            }
+            catch { }
+            
+            try
+            {
                 return (double)o;
             }
             catch { }
