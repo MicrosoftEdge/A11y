@@ -113,14 +113,14 @@ namespace Microsoft.Edge.A11y
                                 "Time remaining",
                                 "Mute",
                                 "Volume"})(elements, driver, ids);
-                        if(childNames != ""){
+                        if(childNames != ARPASS){
                             return childNames;
-                        } 
+                        }
                         return CheckAudioKeyboardInteractions(elements, driver, ids);
                     })),//TODO get full list when it's decided
                 new TestData("canvas", "Image"),
                 new TestData("datalist", "Combobox", keyboardElements: new List<string> { "input1" },
-                    additionalRequirement: ((elements, driver, ids) => elements.All(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0) ? "" : ARFAIL)),
+                    additionalRequirement: ((elements, driver, ids) => elements.All(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0) ? ARPASS : ARFAIL)),
                 new TestData("details", null),
                 new TestData("dialog", null),
                 new TestData("figure", "Group", "figure"),
@@ -175,7 +175,7 @@ namespace Microsoft.Edge.A11y
                 new TestData("main", "Group", "main", "Main", "main"),
                 new TestData("mark", "Text"),
                 new TestData("meter", "Progressbar", "meter",
-                    additionalRequirement: 
+                    additionalRequirement:
                         ((elements, driver, ids) => elements.All(element => element.GetProperties().Any(p => p.Contains("IsReadOnly"))) ? ARPASS :
                         "Not all elements were read only"),
                     searchStrategy: (element => element.GetPatterns().Contains("RangeValuePattern"))),//NB the ControlType is not used for searching this element
@@ -184,20 +184,20 @@ namespace Microsoft.Edge.A11y
                 new TestData("menutoolbar", null),
                 new TestData("nav", "Group", "navigation", "Navigation", "navigation"),
                 new TestData("output", "Group",
-                    additionalRequirement: ((elements, driver, ids) => elements.All(element => ((IUIAutomationElement5)element).CurrentLiveSetting == LiveSetting.Polite) ? ARPASS : 
+                    additionalRequirement: ((elements, driver, ids) => elements.All(element => ((IUIAutomationElement5)element).CurrentLiveSetting == LiveSetting.Polite) ? ARPASS :
                         "Element did not have LiveSetting = Polite")),
                 new TestData("progress", "Progressbar"),
                 new TestData("section", "Group", "section", "Custom", "region"),
                 new TestData("summary", null),
                 new TestData("time", "Group",
-                    additionalRequirement: ((elements, driver, ids) => elements.All(element => ((IUIAutomationElement5)element).CurrentLiveSetting == LiveSetting.Polite) ? ARPASS : 
+                    additionalRequirement: ((elements, driver, ids) => elements.All(element => ((IUIAutomationElement5)element).CurrentLiveSetting == LiveSetting.Polite) ? ARPASS :
                         "Element did not have LiveSetting = Polite")),
                 new TestData("track", "track",
                     additionalRequirement: ((elements, driver, ids) =>
                     {
                         driver.ExecuteScript(Javascript.Track, timeout);
 
-                        return (bool)driver.ExecuteScript("return Modernizr.track && Modernizr.texttrackapi", timeout) ? ARPASS : 
+                        return (bool)driver.ExecuteScript("return Modernizr.track && Modernizr.texttrackapi", timeout) ? ARPASS :
                             "Element was not found to be supported by Modernizr";
                     }),
                     searchStrategy: (element => true)),
@@ -214,7 +214,7 @@ namespace Microsoft.Edge.A11y
                                     "Show captioning",
                                     "Mute",
                                     "Volume",
-                                    "Full screen" })(elements, driver, ids) == ARPASS ? 
+                                    "Full screen" })(elements, driver, ids) == ARPASS ?
                         CheckVideoKeyboardInteractions(elements, driver, ids) : ARFAIL)),
                 new TestData("hidden-att", "Button", null,
                     additionalRequirement: ((elements, driver, ids) => elements.Count(e => e.CurrentControlType == converter.GetElementCodeFromName("Button")) == 1 && !ids.Any() ? ARPASS : ARFAIL),
@@ -633,7 +633,7 @@ namespace Microsoft.Edge.A11y
                 {
                     var names = element.GetChildNames();
                     var firstFail = requiredNames.DefaultIfEmpty("").First(rn => !names.Any(n => n.Contains(rn)));
-                    if (firstFail != "")
+                    if (firstFail != ARPASS)
                     {
                         return "Failed to find " + firstFail;
                     }
