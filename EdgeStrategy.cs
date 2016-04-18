@@ -11,7 +11,7 @@ namespace Microsoft.Edge.A11y
     /// </summary>
     internal class EdgeStrategy : TestStrategy
     {
-        public EdgeStrategy(string repositoryPath = "https://cdn.rawgit.com/DHBrett/AT-browser-tests/gh-pages/test-files/"){
+        public EdgeStrategy(string repositoryPath = "https://cdn.rawgit.com/DHBrett/AT-browser-tests/merge/test-files/"){
             _driverManager = new DriverManager(TimeSpan.FromSeconds(10));
             _RepositoryPath = repositoryPath;
         }
