@@ -322,6 +322,9 @@ namespace Microsoft.Edge.A11y
             return toreturn;
         }
 
+        /// <summary>
+        /// Parse the mystery object that is returned from WebDriver ExecuteScript calls.
+        /// </summary>
         public static double ParseMystery(this object o)
         {
             try
@@ -335,7 +338,7 @@ namespace Microsoft.Edge.A11y
                 return (Int64)o;
             }
             catch { }
-            
+
             try
             {
                 return (double)o;
