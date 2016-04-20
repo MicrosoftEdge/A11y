@@ -275,8 +275,25 @@ namespace Microsoft.Edge.A11y
                 new TestData("mark", "Text", "mark"),
                 new TestData("meter", "Progressbar", "meter",
                     additionalRequirement:
-                        ((elements, driver, ids) => elements.All(element => element.GetProperties().Any(p => p.Contains("IsReadOnly"))) ? ARPASS :
-                        "Not all elements were read only"),
+                        ((elements, driver, ids) => {
+                            if(!elements.All(element => element.GetProperties().Any(p => p.Contains("IsReadOnly")))){
+                                return "Not all elements were read only";
+                            }
+                            return CheckElementNames(7,
+                                new List<string>
+                                {
+                                    "aria-label attribute 2",
+                                    "mr-003-labelledby 3",
+                                    "label wrapping meter 4",
+                                    "title attribute 5",
+                                    "label referenced by for/id attributes 7",
+                                },
+                                new List<string>
+                                {
+                                    "p referenced by aria-describedby 6",
+                                    "title attribute 7" 
+                                })(elements, driver, ids);
+                        }),
                     searchStrategy: (element => element.GetPatterns().Contains("RangeValuePattern"))),//NB the ControlType is not used for searching this element
                 new TestData("menuitem", null),
                 new TestData("menupopup", null),
@@ -302,7 +319,19 @@ namespace Microsoft.Edge.A11y
                         }
                         return ARPASS;
                     })),
-                new TestData("progress", "Progressbar"),
+                new TestData("progress", "Progressbar",
+                    additionalRequirement: CheckElementNames(7,
+                    new List<string>{
+                        "aria-label attribute 2",
+                        "p referenced by aria-labelledby 3",
+                        "label wrapping output 4",
+                        "title attribute 5",
+                        "label referenced by for/id attributes 7"
+                    },
+                    new List<string>{
+                        "p referenced by aria-describedby 6",
+                        "title attribute 7" 
+                    })),
                 new TestData("section", "Group", "section", "Custom", "region",
                     additionalRequirement: CheckElementNames(7,
                     new List<string>{
