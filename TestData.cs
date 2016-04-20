@@ -5,7 +5,6 @@ using System.Linq;
 
 namespace Microsoft.Edge.A11y
 {
-
     /// <summary>
     /// This is where the logic of the tests is stored
     /// </summary>
@@ -102,8 +101,28 @@ namespace Microsoft.Edge.A11y
             var converter = new ElementConverter();
             const int timeout = 0;
             var alltests = new List<TestData>{
-                new TestData("article", "Group", "article"),
-                new TestData("aside", "Group", "aside", "Custom", "complementary"),
+                new TestData("article", "Group", "article",
+                    additionalRequirement: CheckElementNames(7,
+                    new List<string>{
+                        "aria-label attribute 3",
+                        "as-004-labelledby 3",
+                        "title attribute 5",
+                        "aria-label attribute 7"},
+                    new List<string>{
+                        "h1 referenced by aria-describedby 6",
+                        "title attribute 7"
+                    })),
+                new TestData("aside", "Group", "aside", "Custom", "complementary",
+                    additionalRequirement: CheckElementNames(7,
+                    new List<string>{
+                        "aria-label attribute 3",
+                        "ar-004-labelledby 3",
+                        "title attribute 5",
+                        "aria-label attribute 7"},
+                    new List<string>{
+                        "h1 referenced by aria-describedby 6",
+                        "title attribute 7"
+                    })),
                 new TestData("audio", "Group", "audio",
                     additionalRequirement: ((elements, driver, ids) => {
                         var childNames = CheckChildNames(new List<string> {
@@ -123,12 +142,73 @@ namespace Microsoft.Edge.A11y
                     additionalRequirement: ((elements, driver, ids) => elements.All(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0) ? ARPASS : ARFAIL)),
                 new TestData("details", null),
                 new TestData("dialog", null),
-                new TestData("figure", "Group", "figure"),
+                new TestData("figure", "Group", "figure",
+                    additionalRequirement: CheckElementNames(6,
+                    new List<string>{
+                        "aria-label attribute 2",
+                        "fg-003-labelledby 3",
+                        "title attribute 4",
+                        "Figcaption element 5",
+                        "Figcaption element 7"},
+                    new List<string>{
+                        "p referenced by aria-describedby 6",
+                        "title attribute 7"
+                    })),
                 new TestData("figure-figcaption", "Image",
                     additionalRequirement: ((elements, driver, ids) => elements.All(element => element.CurrentName == "HTML5 logo") ? ARPASS : ARFAIL)),
-                new TestData("footer", "Group", "footer", "Custom", "content information"),
-                new TestData("header", "Group", "header", "Custom", "banner"),
-                new TestData("input-color", "Edit", "color picker"),
+                new TestData("footer", "Group", "footer", "Custom", "content information",
+                    additionalRequirement: CheckElementNames(7,
+                    new List<string>{
+                        "aria-label attribute 3",
+                        "ft-004-labelledby 4",
+                        "title attribute 5",
+                        "aria-label attribute 7"},
+                    new List<string>{
+                        "small referenced by aria-describedby 6",
+                        "title attribute 7"
+                    })),
+                new TestData("header", "Group", "header", "Custom", "banner",
+                    additionalRequirement: CheckElementNames(7,
+                    new List<string>{
+                        "aria-label attribute 3",
+                        "hd-004-labelledby 4",
+                        "title attribute 5",
+                        "aria-label attribute 7"},
+                    new List<string>{
+                        "small referenced by aria-describedby 6",
+                        "title attribute 7"
+                    })),
+                new TestData("input-color", "Edit", "color picker",
+                    additionalRequirement: (elements, driver, ids) => 
+                        ids.FirstOrDefault(id =>
+                        {
+                            Func<string> CheckColorValue = () => (string) driver.ExecuteScript("return document.getElementById('"+ id + "').value", timeout);
+                            var initial = CheckColorValue();
+
+                            driver.SendSpecialKeys(id, "EnterTabEscape");
+                            if (CheckColorValue() != initial)
+                            {
+                                return true;
+                            }
+
+                            driver.SendSpecialKeys(id, "EnterTabEnter");
+                            if (CheckColorValue() == initial)
+                            {
+                                return true;
+                            }
+
+                            initial = CheckColorValue();
+
+                            driver.SendSpecialKeys(id, "EnterTabTabArrow_rightArrow_rightArrow_right");
+                            if (CheckColorValue() == initial)
+                            {
+                                return true;
+                            }
+                            //TODO add more
+
+                            return false;
+                        }) == null ? ARPASS : "Failed keyboard interaction"
+                    ),
                 new TestData("input-date", "Edit", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: CheckCalendarKeyboard(3)),
                 new TestData("input-datetime-local", "Text", additionalRequirement: CheckDatetimeLocalKeyboard()),
@@ -137,34 +217,52 @@ namespace Microsoft.Edge.A11y
                     additionalRequirement: CheckCalendarKeyboard(2)),
                 new TestData("input-number", "Spinner", "number", keyboardElements: new List<string> { "input1", "input2" }, additionalRequirement: CheckValidation()),
                 new TestData("input-range", "Slider", keyboardElements: new List<string> { "input1", "input2" },
-                    additionalRequirement: (elements, driver, ids) => ids.All(id => {
-                        Func<int> RangeValue = () => (int) Int32.Parse((string) driver.ExecuteScript("return document.getElementById('" + id + "').value", 0));
+                    additionalRequirement: (elements, driver, ids) => {
+                        if(!ids.All(id => {
+                            Func<int> RangeValue = () => (int) Int32.Parse((string) driver.ExecuteScript("return document.getElementById('" + id + "').value", 0));
 
-                        var initial = RangeValue();
-                        driver.SendSpecialKeys(id, "Arrow_up");
-                        if (initial >= RangeValue())
-                        {
-                            return false;
-                        }
-                        driver.SendSpecialKeys(id, "Arrow_down");
-                        if (initial != RangeValue())
-                        {
-                            return false;
-                        }
+                            var initial = RangeValue();
+                            driver.SendSpecialKeys(id, "Arrow_up");
+                            if (initial >= RangeValue())
+                            {
+                                return false;
+                            }
+                            driver.SendSpecialKeys(id, "Arrow_down");
+                            if (initial != RangeValue())
+                            {
+                                return false;
+                            }
 
-                        driver.SendSpecialKeys(id, "Arrow_right");
-                        if (initial >= RangeValue())
-                        {
-                            return false;
-                        }
-                        driver.SendSpecialKeys(id, "Arrow_left");
-                        if (initial != RangeValue())
-                        {
-                            return false;
-                        }
+                            driver.SendSpecialKeys(id, "Arrow_right");
+                            if (initial >= RangeValue())
+                            {
+                                return false;
+                            }
+                            driver.SendSpecialKeys(id, "Arrow_left");
+                            if (initial != RangeValue())
+                            {
+                                return false;
+                            }
 
-                        return true;
-                    }) ? ARPASS : ARFAIL),
+                            return true;
+                        })){
+                           return ARFAIL;
+                        }
+                        return CheckElementNames(7,
+                            new List<string>
+                            {
+                                "aria-label attribute 2",
+                                "ri-003-labelledby 3",
+                                "label wrapping input 4",
+                                "title attribute 5",
+                                "label referenced by for/id attributes 7",
+                            },
+                            new List<string>
+                            {
+                                "p referenced by aria-describedby 6",
+                                "title attribute 7" 
+                            })(elements, driver, ids);
+                    }),
                 new TestData("input-search", "Edit", "search", keyboardElements: new List<string> { "input1", "input2" }),
                 new TestData("input-tel", "Edit", "telephone", keyboardElements: new List<string> { "input1", "input2" }),
                 new TestData("input-time", "Edit", keyboardElements: new List<string> { "input1", "input2" },
@@ -172,29 +270,101 @@ namespace Microsoft.Edge.A11y
                 new TestData("input-url", "Edit", "url", keyboardElements: new List<string> { "input1", "input2" }, additionalRequirement: CheckValidation()),
                 new TestData("input-week", "Edit", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: CheckCalendarKeyboard(2)),
-                new TestData("main", "Group", "main", "Main", "main"),
-                new TestData("mark", "Text",
-                    additionalRequirement: ((elements, driver, ids) => 
-                        elements.Count == 6 ? ARPASS : "Could only find " + elements.Count + " of the 6 marks"
-                    )),
+                new TestData("main", "Group", "main", "Main", "main",
+                    additionalRequirement: CheckElementNames(6,
+                    new List<string>{
+                        "title attribute 1",
+                        "aria-label attribute 2",
+                        "h1 referenced by aria-labelledby 3",
+                        "title attribute 4",
+                        "aria-label attribute 6" 
+                    },
+                    new List<string>{
+                        "h1 referenced by aria-describedby 5",
+                        "title attribute 6"
+                    })),
+                new TestData("mark", "Text", "mark"),
                 new TestData("meter", "Progressbar", "meter",
                     additionalRequirement:
-                        ((elements, driver, ids) => elements.All(element => element.GetProperties().Any(p => p.Contains("IsReadOnly"))) ? ARPASS :
-                        "Not all elements were read only"),
+                        ((elements, driver, ids) => {
+                            if(!elements.All(element => element.GetProperties().Any(p => p.Contains("IsReadOnly")))){
+                                return "Not all elements were read only";
+                            }
+                            return CheckElementNames(7,
+                                new List<string>
+                                {
+                                    "aria-label attribute 2",
+                                    "mr-003-labelledby 3",
+                                    "label wrapping meter 4",
+                                    "title attribute 5",
+                                    "label referenced by for/id attributes 7",
+                                },
+                                new List<string>
+                                {
+                                    "p referenced by aria-describedby 6",
+                                    "title attribute 7" 
+                                })(elements, driver, ids);
+                        }),
                     searchStrategy: (element => element.GetPatterns().Contains("RangeValuePattern"))),//NB the ControlType is not used for searching this element
                 new TestData("menuitem", null),
                 new TestData("menupopup", null),
                 new TestData("menutoolbar", null),
-                new TestData("nav", "Group", "navigation", "Navigation", "navigation"),
-                new TestData("output", "Group",
-                    additionalRequirement: ((elements, driver, ids) => elements.All(element => ((IUIAutomationElement5)element).CurrentLiveSetting == LiveSetting.Polite) ? ARPASS :
-                        "Element did not have LiveSetting = Polite")),
-                new TestData("progress", "Progressbar"),
-                new TestData("section", "Group", "section", "Custom", "region"),
+                new TestData("nav", "Group", "navigation", "Navigation", "navigation",
+                    additionalRequirement: CheckElementNames(6,
+                    new List<string>{
+                        "aria-label attribute 2",
+                        "nv-003-labelledby 3",
+                        "title attribute 4",
+                        "aria-label attribute 6"},
+                    new List<string>{
+                        "h1 referenced by aria-describedby 5",
+                        "title attribute 6"
+                    })),
+                new TestData("output", "Group", "output",
+                    additionalRequirement: ((elements, driver, ids) => {
+                        if (!elements.All(element => ((IUIAutomationElement5)element).CurrentLiveSetting != LiveSetting.Polite)){
+                            return "Element did not have LiveSetting = Polite";
+                        }
+                        if (!elements.All(element => element.CurrentControllerFor != null && element.CurrentControllerFor.Length > 0)){
+                            return "Element did not have ControllerFor set";
+                        }
+                        return ARPASS;
+                    })),
+                new TestData("progress", "Progressbar",
+                    additionalRequirement: CheckElementNames(7,
+                    new List<string>{
+                        "aria-label attribute 2",
+                        "p referenced by aria-labelledby 3",
+                        "label wrapping output 4",
+                        "title attribute 5",
+                        "label referenced by for/id attributes 7"
+                    },
+                    new List<string>{
+                        "p referenced by aria-describedby 6",
+                        "title attribute 7" 
+                    })),
+                new TestData("section", "Group", "section", "Custom", "region",
+                    additionalRequirement: CheckElementNames(7,
+                    new List<string>{
+                        "aria-label attribute 3",
+                        "sc-004-labelledby 3",
+                        "title attribute 5",
+                        "aria-label attribute 7"},
+                    new List<string>{
+                        "h1 referenced by aria-describedby 6",
+                        "title attribute 7"
+                    })),
                 new TestData("summary", null),
-                new TestData("time", "Group",
-                    additionalRequirement: ((elements, driver, ids) => elements.All(element => ((IUIAutomationElement5)element).CurrentLiveSetting == LiveSetting.Polite) ? ARPASS :
-                        "Element did not have LiveSetting = Polite")),
+                new TestData("time", "Group", "time",
+                    additionalRequirement: ((elements, driver, ids) => {
+                        if (!elements.All(element => {
+                            var fullDescription = ((IUIAutomationElement6)element).CurrentFullDescription;
+                            return fullDescription != null && fullDescription == "2015-10-28";}))
+                        {
+                            return "Element did not have the correct FullDescription";
+                        }
+                        return ARPASS;
+                    })),
                 new TestData("track", "track",
                     additionalRequirement: ((elements, driver, ids) =>
                     {
@@ -486,7 +656,8 @@ namespace Microsoft.Edge.A11y
         /// <returns></returns>
         public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckCalendarKeyboard(int fields)
         {
-            return new Func<List<IUIAutomationElement>, DriverManager, List<string>, string>((elements, driver, ids) => {
+            return new Func<List<IUIAutomationElement>, DriverManager, List<string>, string>((elements, driver, ids) =>
+            {
                 var result = ids.FirstOrDefault(id =>//"first element that fails"
                 {
                     driver.SendSpecialKeys(id, "EnterEscapeEnterEnter");//TODO remove when possible
@@ -522,7 +693,8 @@ namespace Microsoft.Edge.A11y
 
                     return false;
                 });
-                if(result == null){
+                if (result == null)
+                {
                     return ARPASS;
                 }
                 return "Keyboard interaction failed for element with id: " + result;
@@ -611,7 +783,7 @@ namespace Microsoft.Edge.A11y
 
                         //Elements that are invalid for the first time
                         var newInvalid = invalid.DefaultIfEmpty(-1).FirstOrDefault(inv => !previouslyInvalid.Contains(inv));
-                        if(newInvalid == -1)
+                        if (newInvalid == -1)
                         {
                             return "Element failed to validate improper input";
                         }
@@ -641,6 +813,65 @@ namespace Microsoft.Edge.A11y
                 }
                 return ARPASS;
             };
+        }
+
+        /// <summary>
+        /// Func factory for checking that elements have the proper Names and FullDescriptions
+        /// </summary>
+        /// <param name="total">How many elements are on the page total, since
+        /// some are supposed to be blank</param>
+        /// <param name="requiredNames">All the names we expect to find</param>
+        /// <param name="requiredDescriptions">All the descriptions we expect
+        /// to find</param>
+        /// <returns>A func that can be used to check the names and descriptions
+        /// of elements</returns>
+        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckElementNames(int total, List<string> requiredNames, List<string> requiredDescriptions)
+        {
+            return (elements, driver, ids) =>
+            {
+                var names = elements.ConvertAll(element => element.CurrentName);
+                var descriptions = elements.ConvertAll(element => ((IUIAutomationElement6)element).CurrentFullDescription);
+
+                //Check names
+                if (total != names.Count(name => name == "") + requiredNames.Count())
+                {
+                    return total - requiredNames.Count() + " names should have been blank. Found " + names.Count(name => name == "");
+                }
+                foreach (var requiredName in requiredNames)
+                {
+                    if (!names.Contains(requiredName))
+                    {
+                        return GuessElementNumber(requiredName) + " had incorrect name";
+                    }
+                }
+
+                //Check descriptions
+                if (total != descriptions.Count(description => description == "") + requiredDescriptions.Count())
+                {
+                    return total - requiredDescriptions.Count() + " descriptions should have been blank. Found " + descriptions.Count(description => description == "");
+                }
+                foreach (var requiredDescription in requiredDescriptions)
+                {
+                    if (!descriptions.Contains(requiredDescription))
+                    {
+                        return GuessElementNumber(requiredDescription) + " had incorrect description";
+                    }
+                }
+
+                return ARPASS;
+            };
+        }
+
+        /// <summary>
+        /// From the name of the string we were supposed to find,
+        /// guess what element failed
+        /// </summary>
+        /// <param name="property">The string we were supposed to find</param>
+        /// <returns></returns>
+        private static string GuessElementNumber(string property)
+        {
+            var digit = property.FirstOrDefault(c => Char.IsNumber(c));
+            return digit == null ? "An element" : digit.ToString();
         }
     }
 }
