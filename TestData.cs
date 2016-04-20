@@ -103,15 +103,15 @@ namespace Microsoft.Edge.A11y
             const int timeout = 0;
             var alltests = new List<TestData>{
                 new TestData("article", "Group", "article",
-                    additionalRequirement: CheckElementNames(3, 
-                    new List<string>{ 
+                    additionalRequirement: CheckElementNames(3,
+                    new List<string>{
                         "aria-label attribute 3",
                         "as-004-labelledby 3",
                         "title attribute 5",
                         "aria-label attribute 7"})),
                 new TestData("aside", "Group", "aside", "Custom", "complementary",
-                    additionalRequirement: CheckElementNames(3, 
-                    new List<string>{ 
+                    additionalRequirement: CheckElementNames(3,
+                    new List<string>{
                         "aria-label attribute 3",
                         "ar-004-labelledby 3",
                         "title attribute 5",
@@ -135,13 +135,20 @@ namespace Microsoft.Edge.A11y
                     additionalRequirement: ((elements, driver, ids) => elements.All(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0) ? ARPASS : ARFAIL)),
                 new TestData("details", null),
                 new TestData("dialog", null),
-                new TestData("figure", "Group", "figure"),
+                new TestData("figure", "Group", "figure",
+                    additionalRequirement: CheckElementNames(2,
+                    new List<string>{
+                        "aria-label attribute 2",
+                        "fg-003-labelledby 3",
+                        "title attribute 4",
+                        "Figcaption element 5",
+                        "Figcaption element 7"})),
                 new TestData("figure-figcaption", "Image",
                     additionalRequirement: ((elements, driver, ids) => elements.All(element => element.CurrentName == "HTML5 logo") ? ARPASS : ARFAIL)),
                 new TestData("footer", "Group", "footer", "Custom", "content information"),
                 new TestData("header", "Group", "header", "Custom", "banner",
-                    additionalRequirement: CheckElementNames(3, 
-                    new List<string>{ 
+                    additionalRequirement: CheckElementNames(3,
+                    new List<string>{
                         "aria-label attribute 3",
                         "hd-004-labelledby 3",
                         "title attribute 5",
@@ -192,7 +199,7 @@ namespace Microsoft.Edge.A11y
                     additionalRequirement: CheckCalendarKeyboard(2)),
                 new TestData("main", "Group", "main", "Main", "main"),
                 new TestData("mark", "Text",
-                    additionalRequirement: ((elements, driver, ids) => 
+                    additionalRequirement: ((elements, driver, ids) =>
                         elements.Count == 6 ? ARPASS : "Could only find " + elements.Count + " of the 6 marks"
                     )),
                 new TestData("meter", "Progressbar", "meter",
@@ -204,8 +211,8 @@ namespace Microsoft.Edge.A11y
                 new TestData("menupopup", null),
                 new TestData("menutoolbar", null),
                 new TestData("nav", "Group", "navigation", "Navigation", "navigation",
-                    additionalRequirement: CheckElementNames(2, 
-                    new List<string>{ 
+                    additionalRequirement: CheckElementNames(2,
+                    new List<string>{
                         "aria-label attribute 2",
                         "nv-003-labelledby 3",
                         "title attribute 4",
@@ -215,8 +222,8 @@ namespace Microsoft.Edge.A11y
                         "Element did not have LiveSetting = Polite")),
                 new TestData("progress", "Progressbar"),
                 new TestData("section", "Group", "section", "Custom", "region",
-                    additionalRequirement: CheckElementNames(3, 
-                    new List<string>{ 
+                    additionalRequirement: CheckElementNames(3,
+                    new List<string>{
                         "aria-label attribute 3",
                         "sc-004-labelledby 3",
                         "title attribute 5",
