@@ -804,6 +804,16 @@ namespace Microsoft.Edge.A11y
             };
         }
 
+        /// <summary>
+        /// Func factory for checking that elements have the proper Names and FullDescriptions
+        /// </summary>
+        /// <param name="total">How many elements are on the page total, since
+        /// some are supposed to be blank</param>
+        /// <param name="requiredNames">All the names we expect to find</param>
+        /// <param name="requiredDescriptions">All the descriptions we expect
+        /// to find</param>
+        /// <returns>A func that can be used to check the names and descriptions
+        /// of elements</returns>
         public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckElementNames(int total, List<string> requiredNames, List<string> requiredDescriptions)
         {
             return (elements, driver, ids) =>
@@ -841,9 +851,16 @@ namespace Microsoft.Edge.A11y
             };
         }
 
-        private static string GuessElementNumber(string requiredName)
+        /// <summary>
+        /// From the name of the string we were supposed to find,
+        /// guess what element failed
+        /// </summary>
+        /// <param name="property">The string we were supposed to find</param>
+        /// <returns></returns>
+        private static string GuessElementNumber(string property)
         {
-            return "An element";//TODO try harder
+            var digit = property.FirstOrDefault(c => Char.IsNumber(c));
+            return digit == null ? "An element" : digit.ToString();
         }
     }
 }
