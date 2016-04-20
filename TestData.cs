@@ -102,8 +102,20 @@ namespace Microsoft.Edge.A11y
             var converter = new ElementConverter();
             const int timeout = 0;
             var alltests = new List<TestData>{
-                new TestData("article", "Group", "article"),
-                new TestData("aside", "Group", "aside", "Custom", "complementary"),
+                new TestData("article", "Group", "article",
+                    additionalRequirement: CheckElementNames(3,
+                    new List<string>{
+                        "aria-label attribute 3",
+                        "as-004-labelledby 3",
+                        "title attribute 5",
+                        "aria-label attribute 7"})),
+                new TestData("aside", "Group", "aside", "Custom", "complementary",
+                    additionalRequirement: CheckElementNames(3,
+                    new List<string>{
+                        "aria-label attribute 3",
+                        "ar-004-labelledby 3",
+                        "title attribute 5",
+                        "aria-label attribute 7"})),
                 new TestData("audio", "Group", "audio",
                     additionalRequirement: ((elements, driver, ids) => {
                         var childNames = CheckChildNames(new List<string> {
@@ -123,11 +135,24 @@ namespace Microsoft.Edge.A11y
                     additionalRequirement: ((elements, driver, ids) => elements.All(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0) ? ARPASS : ARFAIL)),
                 new TestData("details", null),
                 new TestData("dialog", null),
-                new TestData("figure", "Group", "figure"),
+                new TestData("figure", "Group", "figure",
+                    additionalRequirement: CheckElementNames(2,
+                    new List<string>{
+                        "aria-label attribute 2",
+                        "fg-003-labelledby 3",
+                        "title attribute 4",
+                        "Figcaption element 5",
+                        "Figcaption element 7"})),
                 new TestData("figure-figcaption", "Image",
                     additionalRequirement: ((elements, driver, ids) => elements.All(element => element.CurrentName == "HTML5 logo") ? ARPASS : ARFAIL)),
                 new TestData("footer", "Group", "footer", "Custom", "content information"),
-                new TestData("header", "Group", "header", "Custom", "banner"),
+                new TestData("header", "Group", "header", "Custom", "banner",
+                    additionalRequirement: CheckElementNames(3,
+                    new List<string>{
+                        "aria-label attribute 3",
+                        "hd-004-labelledby 3",
+                        "title attribute 5",
+                        "aria-label attribute 7"})),
                 new TestData("input-color", "Edit", "color picker"),
                 new TestData("input-date", "Edit", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: CheckCalendarKeyboard(3)),
@@ -174,7 +199,7 @@ namespace Microsoft.Edge.A11y
                     additionalRequirement: CheckCalendarKeyboard(2)),
                 new TestData("main", "Group", "main", "Main", "main"),
                 new TestData("mark", "Text",
-                    additionalRequirement: ((elements, driver, ids) => 
+                    additionalRequirement: ((elements, driver, ids) =>
                         elements.Count == 6 ? ARPASS : "Could only find " + elements.Count + " of the 6 marks"
                     )),
                 new TestData("meter", "Progressbar", "meter",
@@ -185,12 +210,24 @@ namespace Microsoft.Edge.A11y
                 new TestData("menuitem", null),
                 new TestData("menupopup", null),
                 new TestData("menutoolbar", null),
-                new TestData("nav", "Group", "navigation", "Navigation", "navigation"),
+                new TestData("nav", "Group", "navigation", "Navigation", "navigation",
+                    additionalRequirement: CheckElementNames(2,
+                    new List<string>{
+                        "aria-label attribute 2",
+                        "nv-003-labelledby 3",
+                        "title attribute 4",
+                        "aria-label attribute 6"})),
                 new TestData("output", "Group",
                     additionalRequirement: ((elements, driver, ids) => elements.All(element => ((IUIAutomationElement5)element).CurrentLiveSetting == LiveSetting.Polite) ? ARPASS :
                         "Element did not have LiveSetting = Polite")),
                 new TestData("progress", "Progressbar"),
-                new TestData("section", "Group", "section", "Custom", "region"),
+                new TestData("section", "Group", "section", "Custom", "region",
+                    additionalRequirement: CheckElementNames(3,
+                    new List<string>{
+                        "aria-label attribute 3",
+                        "sc-004-labelledby 3",
+                        "title attribute 5",
+                        "aria-label attribute 7"})),
                 new TestData("summary", null),
                 new TestData("time", "Group",
                     additionalRequirement: ((elements, driver, ids) => elements.All(element => ((IUIAutomationElement5)element).CurrentLiveSetting == LiveSetting.Polite) ? ARPASS :
@@ -486,7 +523,8 @@ namespace Microsoft.Edge.A11y
         /// <returns></returns>
         public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckCalendarKeyboard(int fields)
         {
-            return new Func<List<IUIAutomationElement>, DriverManager, List<string>, string>((elements, driver, ids) => {
+            return new Func<List<IUIAutomationElement>, DriverManager, List<string>, string>((elements, driver, ids) =>
+            {
                 var result = ids.FirstOrDefault(id =>//"first element that fails"
                 {
                     driver.SendSpecialKeys(id, "EnterEscapeEnterEnter");//TODO remove when possible
@@ -522,7 +560,8 @@ namespace Microsoft.Edge.A11y
 
                     return false;
                 });
-                if(result == null){
+                if (result == null)
+                {
                     return ARPASS;
                 }
                 return "Keyboard interaction failed for element with id: " + result;
@@ -611,7 +650,7 @@ namespace Microsoft.Edge.A11y
 
                         //Elements that are invalid for the first time
                         var newInvalid = invalid.DefaultIfEmpty(-1).FirstOrDefault(inv => !previouslyInvalid.Contains(inv));
-                        if(newInvalid == -1)
+                        if (newInvalid == -1)
                         {
                             return "Element failed to validate improper input";
                         }
@@ -641,6 +680,34 @@ namespace Microsoft.Edge.A11y
                 }
                 return ARPASS;
             };
+        }
+
+        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckElementNames(int blanks, List<string> requiredNames)
+        {
+
+            return (elements, driver, ids) =>
+            {
+                var names = elements.ConvertAll(element => element.CurrentName);
+                //var describedbys = elements.ConvertAll(element => element.CurrentDescribedBy.GetElement(0));//TODO figure out the details
+
+                if (names.Count(name => name == "") != blanks)
+                {
+                    return blanks + " names should have been blank. Found " + names.Count(name => name == "");
+                }
+                foreach (var requiredName in requiredNames)
+                {
+                    if (!names.Contains(requiredName))
+                    {
+                        return GuessElementNumber(requiredName) + " had incorrect name";
+                    }
+                }
+                return ARPASS;
+            };
+        }
+
+        private static string GuessElementNumber(string requiredName)
+        {
+            return "An element";//TODO try harder
         }
     }
 }
