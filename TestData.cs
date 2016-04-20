@@ -267,7 +267,7 @@ namespace Microsoft.Edge.A11y
                     additionalRequirement: ((elements, driver, ids) => {
                         if (!elements.All(element => {
                             var fullDescription = ((IUIAutomationElement6)element).CurrentFullDescription;
-                            return fullDescription != null && fullDescription.Length > 0;}))
+                            return fullDescription != null && fullDescription == "2015-10-28";}))
                         {
                             return "Element did not have the correct FullDescription";
                         }
