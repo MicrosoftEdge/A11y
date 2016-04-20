@@ -5,7 +5,6 @@ using System.Linq;
 
 namespace Microsoft.Edge.A11y
 {
-
     /// <summary>
     /// This is where the logic of the tests is stored
     /// </summary>
@@ -271,7 +270,19 @@ namespace Microsoft.Edge.A11y
                 new TestData("input-url", "Edit", "url", keyboardElements: new List<string> { "input1", "input2" }, additionalRequirement: CheckValidation()),
                 new TestData("input-week", "Edit", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: CheckCalendarKeyboard(2)),
-                new TestData("main", "Group", "main", "Main", "main"),
+                new TestData("main", "Group", "main", "Main", "main",
+                    additionalRequirement: CheckElementNames(6,
+                    new List<string>{
+                        "title attribute 1",
+                        "aria-label attribute 2",
+                        "h1 referenced by aria-labelledby 3",
+                        "title attribute 4",
+                        "aria-label attribute 6" 
+                    },
+                    new List<string>{
+                        "h1 referenced by aria-describedby 5",
+                        "title attribute 6"
+                    })),
                 new TestData("mark", "Text", "mark"),
                 new TestData("meter", "Progressbar", "meter",
                     additionalRequirement:
