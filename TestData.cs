@@ -153,7 +153,37 @@ namespace Microsoft.Edge.A11y
                         "hd-004-labelledby 3",
                         "title attribute 5",
                         "aria-label attribute 7"})),
-                new TestData("input-color", "Edit", "color picker"),
+                new TestData("input-color", "Edit", "color picker",
+                    additionalRequirement: (elements, driver, ids) => 
+                        ids.FirstOrDefault(id =>
+                        {
+                            Func<string> CheckColorValue = () => (string) driver.ExecuteScript("return document.getElementById('"+ id + "').value", timeout);
+                            var initial = CheckColorValue();
+
+                            driver.SendSpecialKeys(id, "EnterTabEscape");
+                            if (CheckColorValue() != initial)
+                            {
+                                return true;
+                            }
+
+                            driver.SendSpecialKeys(id, "EnterTabEnter");
+                            if (CheckColorValue() == initial)
+                            {
+                                return true;
+                            }
+
+                            initial = CheckColorValue();
+
+                            driver.SendSpecialKeys(id, "EnterTabTabArrow_rightArrow_rightArrow_right");
+                            if (CheckColorValue() == initial)
+                            {
+                                return true;
+                            }
+                            //TODO add more
+
+                            return false;
+                        }) == null ? ARPASS : "Failed keyboard interaction"
+                    ),
                 new TestData("input-date", "Edit", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: CheckCalendarKeyboard(3)),
                 new TestData("input-datetime-local", "Text", additionalRequirement: CheckDatetimeLocalKeyboard()),
