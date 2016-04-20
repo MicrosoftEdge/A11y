@@ -228,10 +228,7 @@ namespace Microsoft.Edge.A11y
                 new TestData("input-week", "Edit", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: CheckCalendarKeyboard(2)),
                 new TestData("main", "Group", "main", "Main", "main"),
-                new TestData("mark", "Text",
-                    additionalRequirement: ((elements, driver, ids) =>
-                        elements.Count == 6 ? ARPASS : "Could only find " + elements.Count + " of the 6 marks"
-                    )),
+                new TestData("mark", "Text", "mark"),
                 new TestData("meter", "Progressbar", "meter",
                     additionalRequirement:
                         ((elements, driver, ids) => elements.All(element => element.GetProperties().Any(p => p.Contains("IsReadOnly"))) ? ARPASS :
@@ -247,9 +244,16 @@ namespace Microsoft.Edge.A11y
                         "nv-003-labelledby 3",
                         "title attribute 4",
                         "aria-label attribute 6"})),
-                new TestData("output", "Group",
-                    additionalRequirement: ((elements, driver, ids) => elements.All(element => ((IUIAutomationElement5)element).CurrentLiveSetting == LiveSetting.Polite) ? ARPASS :
-                        "Element did not have LiveSetting = Polite")),
+                new TestData("output", "Group", "output",
+                    additionalRequirement: ((elements, driver, ids) => {
+                        if (!elements.All(element => ((IUIAutomationElement5)element).CurrentLiveSetting != LiveSetting.Polite)){
+                            return "Element did not have LiveSetting = Polite";
+                        }
+                        if (!elements.All(element => element.CurrentControllerFor != null && element.CurrentControllerFor.Length > 0)){
+                            return "Element did not have ControllerFor set";
+                        }
+                        return ARPASS;
+                    })),
                 new TestData("progress", "Progressbar"),
                 new TestData("section", "Group", "section", "Custom", "region",
                     additionalRequirement: CheckElementNames(3,
@@ -259,9 +263,16 @@ namespace Microsoft.Edge.A11y
                         "title attribute 5",
                         "aria-label attribute 7"})),
                 new TestData("summary", null),
-                new TestData("time", "Group",
-                    additionalRequirement: ((elements, driver, ids) => elements.All(element => ((IUIAutomationElement5)element).CurrentLiveSetting == LiveSetting.Polite) ? ARPASS :
-                        "Element did not have LiveSetting = Polite")),
+                new TestData("time", "Group", "time",
+                    additionalRequirement: ((elements, driver, ids) => {
+                        if (!elements.All(element => {
+                            var fullDescription = ((IUIAutomationElement6)element).CurrentFullDescription;
+                            return fullDescription != null && fullDescription.Length > 0;}))
+                        {
+                            return "Element did not have the correct FullDescription";
+                        }
+                        return ARPASS;
+                    })),
                 new TestData("track", "track",
                     additionalRequirement: ((elements, driver, ids) =>
                     {
