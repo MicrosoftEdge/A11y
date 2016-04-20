@@ -103,19 +103,27 @@ namespace Microsoft.Edge.A11y
             const int timeout = 0;
             var alltests = new List<TestData>{
                 new TestData("article", "Group", "article",
-                    additionalRequirement: CheckElementNames(3,
+                    additionalRequirement: CheckElementNames(7,
                     new List<string>{
                         "aria-label attribute 3",
                         "as-004-labelledby 3",
                         "title attribute 5",
-                        "aria-label attribute 7"})),
+                        "aria-label attribute 7"},
+                    new List<string>{
+                        "h1 referenced by aria-describedby 6",
+                        "title attribute 7"
+                    })),
                 new TestData("aside", "Group", "aside", "Custom", "complementary",
-                    additionalRequirement: CheckElementNames(3,
+                    additionalRequirement: CheckElementNames(7,
                     new List<string>{
                         "aria-label attribute 3",
                         "ar-004-labelledby 3",
                         "title attribute 5",
-                        "aria-label attribute 7"})),
+                        "aria-label attribute 7"},
+                    new List<string>{
+                        "h1 referenced by aria-describedby 6",
+                        "title attribute 7"
+                    })),
                 new TestData("audio", "Group", "audio",
                     additionalRequirement: ((elements, driver, ids) => {
                         var childNames = CheckChildNames(new List<string> {
@@ -136,23 +144,41 @@ namespace Microsoft.Edge.A11y
                 new TestData("details", null),
                 new TestData("dialog", null),
                 new TestData("figure", "Group", "figure",
-                    additionalRequirement: CheckElementNames(2,
+                    additionalRequirement: CheckElementNames(6,
                     new List<string>{
                         "aria-label attribute 2",
                         "fg-003-labelledby 3",
                         "title attribute 4",
                         "Figcaption element 5",
-                        "Figcaption element 7"})),
+                        "Figcaption element 7"},
+                    new List<string>{
+                        "p referenced by aria-describedby 6",
+                        "title attribute 7"
+                    })),
                 new TestData("figure-figcaption", "Image",
                     additionalRequirement: ((elements, driver, ids) => elements.All(element => element.CurrentName == "HTML5 logo") ? ARPASS : ARFAIL)),
-                new TestData("footer", "Group", "footer", "Custom", "content information"),
-                new TestData("header", "Group", "header", "Custom", "banner",
-                    additionalRequirement: CheckElementNames(3,
+                new TestData("footer", "Group", "footer", "Custom", "content information",
+                    additionalRequirement: CheckElementNames(7,
                     new List<string>{
                         "aria-label attribute 3",
-                        "hd-004-labelledby 3",
+                        "ft-004-labelledby 4",
                         "title attribute 5",
-                        "aria-label attribute 7"})),
+                        "aria-label attribute 7"},
+                    new List<string>{
+                        "small referenced by aria-describedby 6",
+                        "title attribute 7"
+                    })),
+                new TestData("header", "Group", "header", "Custom", "banner",
+                    additionalRequirement: CheckElementNames(7,
+                    new List<string>{
+                        "aria-label attribute 3",
+                        "hd-004-labelledby 4",
+                        "title attribute 5",
+                        "aria-label attribute 7"},
+                    new List<string>{
+                        "small referenced by aria-describedby 6",
+                        "title attribute 7"
+                    })),
                 new TestData("input-color", "Edit", "color picker",
                     additionalRequirement: (elements, driver, ids) => 
                         ids.FirstOrDefault(id =>
@@ -192,34 +218,52 @@ namespace Microsoft.Edge.A11y
                     additionalRequirement: CheckCalendarKeyboard(2)),
                 new TestData("input-number", "Spinner", "number", keyboardElements: new List<string> { "input1", "input2" }, additionalRequirement: CheckValidation()),
                 new TestData("input-range", "Slider", keyboardElements: new List<string> { "input1", "input2" },
-                    additionalRequirement: (elements, driver, ids) => ids.All(id => {
-                        Func<int> RangeValue = () => (int) Int32.Parse((string) driver.ExecuteScript("return document.getElementById('" + id + "').value", 0));
+                    additionalRequirement: (elements, driver, ids) => {
+                        if(!ids.All(id => {
+                            Func<int> RangeValue = () => (int) Int32.Parse((string) driver.ExecuteScript("return document.getElementById('" + id + "').value", 0));
 
-                        var initial = RangeValue();
-                        driver.SendSpecialKeys(id, "Arrow_up");
-                        if (initial >= RangeValue())
-                        {
-                            return false;
-                        }
-                        driver.SendSpecialKeys(id, "Arrow_down");
-                        if (initial != RangeValue())
-                        {
-                            return false;
-                        }
+                            var initial = RangeValue();
+                            driver.SendSpecialKeys(id, "Arrow_up");
+                            if (initial >= RangeValue())
+                            {
+                                return false;
+                            }
+                            driver.SendSpecialKeys(id, "Arrow_down");
+                            if (initial != RangeValue())
+                            {
+                                return false;
+                            }
 
-                        driver.SendSpecialKeys(id, "Arrow_right");
-                        if (initial >= RangeValue())
-                        {
-                            return false;
-                        }
-                        driver.SendSpecialKeys(id, "Arrow_left");
-                        if (initial != RangeValue())
-                        {
-                            return false;
-                        }
+                            driver.SendSpecialKeys(id, "Arrow_right");
+                            if (initial >= RangeValue())
+                            {
+                                return false;
+                            }
+                            driver.SendSpecialKeys(id, "Arrow_left");
+                            if (initial != RangeValue())
+                            {
+                                return false;
+                            }
 
-                        return true;
-                    }) ? ARPASS : ARFAIL),
+                            return true;
+                        })){
+                           return ARFAIL;
+                        }
+                        return CheckElementNames(7,
+                            new List<string>
+                            {
+                                "aria-label attribute 2",
+                                "ri-003-labelledby 3",
+                                "label wrapping input 4",
+                                "title attribute 5",
+                                "label referenced by for/id attributes 7",
+                            },
+                            new List<string>
+                            {
+                                "p referenced by aria-describedby 6",
+                                "title attribute 7" 
+                            })(elements, driver, ids);
+                    }),
                 new TestData("input-search", "Edit", "search", keyboardElements: new List<string> { "input1", "input2" }),
                 new TestData("input-tel", "Edit", "telephone", keyboardElements: new List<string> { "input1", "input2" }),
                 new TestData("input-time", "Edit", keyboardElements: new List<string> { "input1", "input2" },
@@ -238,12 +282,16 @@ namespace Microsoft.Edge.A11y
                 new TestData("menupopup", null),
                 new TestData("menutoolbar", null),
                 new TestData("nav", "Group", "navigation", "Navigation", "navigation",
-                    additionalRequirement: CheckElementNames(2,
+                    additionalRequirement: CheckElementNames(6,
                     new List<string>{
                         "aria-label attribute 2",
                         "nv-003-labelledby 3",
                         "title attribute 4",
-                        "aria-label attribute 6"})),
+                        "aria-label attribute 6"},
+                    new List<string>{
+                        "h1 referenced by aria-describedby 5",
+                        "title attribute 6"
+                    })),
                 new TestData("output", "Group", "output",
                     additionalRequirement: ((elements, driver, ids) => {
                         if (!elements.All(element => ((IUIAutomationElement5)element).CurrentLiveSetting != LiveSetting.Polite)){
@@ -256,12 +304,16 @@ namespace Microsoft.Edge.A11y
                     })),
                 new TestData("progress", "Progressbar"),
                 new TestData("section", "Group", "section", "Custom", "region",
-                    additionalRequirement: CheckElementNames(3,
+                    additionalRequirement: CheckElementNames(7,
                     new List<string>{
                         "aria-label attribute 3",
                         "sc-004-labelledby 3",
                         "title attribute 5",
-                        "aria-label attribute 7"})),
+                        "aria-label attribute 7"},
+                    new List<string>{
+                        "h1 referenced by aria-describedby 6",
+                        "title attribute 7"
+                    })),
                 new TestData("summary", null),
                 new TestData("time", "Group", "time",
                     additionalRequirement: ((elements, driver, ids) => {
@@ -723,17 +775,17 @@ namespace Microsoft.Edge.A11y
             };
         }
 
-        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckElementNames(int blanks, List<string> requiredNames)
+        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckElementNames(int total, List<string> requiredNames, List<string> requiredDescriptions)
         {
-
             return (elements, driver, ids) =>
             {
                 var names = elements.ConvertAll(element => element.CurrentName);
-                //var describedbys = elements.ConvertAll(element => element.CurrentDescribedBy.GetElement(0));//TODO figure out the details
+                var descriptions = elements.ConvertAll(element => ((IUIAutomationElement6)element).CurrentFullDescription);
 
-                if (names.Count(name => name == "") != blanks)
+                //Check names
+                if (total != names.Count(name => name == "") + requiredNames.Count())
                 {
-                    return blanks + " names should have been blank. Found " + names.Count(name => name == "");
+                    return total - requiredNames.Count() + " names should have been blank. Found " + names.Count(name => name == "");
                 }
                 foreach (var requiredName in requiredNames)
                 {
@@ -742,6 +794,20 @@ namespace Microsoft.Edge.A11y
                         return GuessElementNumber(requiredName) + " had incorrect name";
                     }
                 }
+
+                //Check descriptions
+                if (total != descriptions.Count(description => description == "") + requiredDescriptions.Count())
+                {
+                    return total - requiredDescriptions.Count() + " descriptions should have been blank. Found " + descriptions.Count(description => description == "");
+                }
+                foreach (var requiredDescription in requiredDescriptions)
+                {
+                    if (!descriptions.Contains(requiredDescription))
+                    {
+                        return GuessElementNumber(requiredDescription) + " had incorrect description";
+                    }
+                }
+
                 return ARPASS;
             };
         }
