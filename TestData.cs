@@ -456,7 +456,7 @@ namespace Microsoft.Edge.A11y
         }
 
         /// <summary>
-        /// Checks video elements with the requirements outlined by GWhit
+        /// Check basic keyboard interactions for the video control
         /// </summary>
         /// <param name="elements"></param>
         /// <param name="driver"></param>
@@ -571,7 +571,7 @@ namespace Microsoft.Edge.A11y
         }
 
         /// <summary>
-        /// Checks audio elements with the requirements outlined by GWhit
+        /// Check basic keyboard interactions for the audio control
         /// </summary>
         /// <param name="elements"></param>
         /// <param name="driver"></param>
