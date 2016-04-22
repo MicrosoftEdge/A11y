@@ -11,7 +11,12 @@ namespace Microsoft.Edge.A11y
     /// </summary>
     internal class EdgeStrategy : TestStrategy
     {
-        public EdgeStrategy(string repositoryPath = "https://cdn.rawgit.com/DHBrett/AT-browser-tests/gh-pages/test-files/"){
+        public EdgeStrategy(string repositoryPath = null){
+            if (repositoryPath == null)
+            {
+                repositoryPath = "file:///" + AppDomain.CurrentDomain.BaseDirectory.Replace('\\', '/').Replace("/bin/Debug", "");
+            }
+
             _driverManager = new DriverManager(TimeSpan.FromSeconds(10));
             System.Threading.Thread.Sleep(TimeSpan.FromSeconds(2));//Wait for the browser to load before we start searching
             _RepositoryPath = repositoryPath;
