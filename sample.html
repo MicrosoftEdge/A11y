@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sandwich Sample Page</title>
+
+<script>
+function ShowIngredients(){
+    var ingredients = document.getElementById('ingredients');
+    //remove the old list
+    while(ingredients.childNodes.length >= 1)
+    {
+        ingredients.removeChild(ingredients.firstChild);
+    }
+
+    var chooser = document.getElementById('chooser');
+    if(chooser.value != ''){
+        chooser.value.split(',').forEach(function(ingredient){
+            AddToList(ingredient.trim())
+        })
+    }
+}
+
+function AddToList(ingredient){
+    var numberList = document.getElementById("ingredients");
+
+    var newNumberListItem = document.createElement("li");
+
+    var numberListValue = document.createTextNode(ingredient);
+
+    newNumberListItem.appendChild(numberListValue);
+
+    numberList.appendChild(newNumberListItem);
+}
+</script>
+
+<style>
+body {
+    font-family: Sans-serif;
+}
+</style>
+
+</head>
+
+<body>
+<h1>Sandwiches!</h1>
+<div>
+    <label>Choose your favorite sandwich: <input id="chooser"
+        onchange="ShowIngredients()" type="text" list="datalist"/></label>
+    <datalist id="datalist">
+        <option value="Bread, Peanut butter, Jelly, White bread" label="PB&J">
+        <option value="Corned beef, Swiss cheese, Sauerkraut, Rye bread" label="Reuben">
+        <option value="Ground beef, Tomato, Cheese, Tortilla" label="Taco">
+    </datalist>
+
+    <ul id="ingredients">
+    </ul>
+</div>
+
+</body>
+</html>
