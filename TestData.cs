@@ -105,22 +105,22 @@ namespace Microsoft.Edge.A11y
                     additionalRequirement: CheckElementNames(7,
                     new List<string>{
                         "aria-label attribute 3",
-                        "as-004-labelledby 3",//TODO go to inner html
+                        "h1 referenced by aria-labelledby4",
                         "title attribute 5",
                         "aria-label attribute 7"},
                     new List<string>{
-                        "h1 referenced by aria-describedby 6",
+                        "h1 referenced by aria-describedby6",
                         "title attribute 7"
                     })),
                 new TestData("aside", "Group", "aside", "Custom", "complementary",
                     additionalRequirement: CheckElementNames(7,
                     new List<string>{
                         "aria-label attribute 3",
-                        "ar-004-labelledby 3",//TODO go to inner html
+                        "h1 referenced by aria-labelledby4",
                         "title attribute 5",
                         "aria-label attribute 7"},
                     new List<string>{
-                        "h1 referenced by aria-describedby 6",
+                        "h1 referenced by aria-describedby6",
                         "title attribute 7"
                     })),
                 new TestData("audio", "Group", "audio",
@@ -148,12 +148,12 @@ namespace Microsoft.Edge.A11y
                     additionalRequirement: CheckElementNames(7,
                     new List<string>{
                         "aria-label attribute 2",
-                        "fg-003-labelledby 3",//TODO change to interior of p element
+                        "p referenced by aria-labelledby3",
                         "title attribute 4",
                         "Figcaption element 5",
                         "Figcaption element 7"},
                     new List<string>{
-                        "p referenced by aria-describedby 6",
+                        "p referenced by aria-describedby6",
                         "title attribute 7"
                     })),
                 //new TestData("figure-figcaption", "Text",
@@ -166,11 +166,11 @@ namespace Microsoft.Edge.A11y
                     additionalRequirement: CheckElementNames(7,
                     new List<string>{
                         "aria-label attribute 3",
-                        "ft-004-labelledby 4",//TODO go to inner html
+                        "small referenced by aria-labelledby4",
                         "title attribute 5",
                         "aria-label attribute 7"},
                     new List<string>{
-                        "small referenced by aria-describedby 6",
+                        "small referenced by aria-describedby6",
                         "title attribute 7"
                     })),
                 new TestData("header", "Group", "header", "Custom", "banner",
@@ -179,11 +179,11 @@ namespace Microsoft.Edge.A11y
                     additionalRequirement: CheckElementNames(7,
                     new List<string>{
                         "aria-label attribute 3",
-                        "hd-004-labelledby 4",//TODO go to inner html
+                        "h1 referenced by aria-labelledby4",
                         "title attribute 5",
                         "aria-label attribute 7"},
                     new List<string>{
-                        "small referenced by aria-describedby 6",
+                        "h1 referenced by aria-describedby6",
                         "title attribute 7"
                     })),
                 new TestData("input-color", "Button", "color picker",
@@ -280,14 +280,14 @@ namespace Microsoft.Edge.A11y
                             new List<string>
                             {
                                 "aria-label attribute 2",
-                                "ri-003-labelledby 3",//TODO go to inner html
+                                "p referenced by aria-labelledby3",
                                 "label wrapping input 4",
                                 "title attribute 5",
                                 "label referenced by for/id attributes 7",
                             },
                             new List<string>
                             {
-                                "p referenced by aria-describedby 6",
+                                "p referenced by aria-describedby6",
                                 "title attribute 7"
                             })(elements, driver, ids);
                     }),
@@ -308,12 +308,12 @@ namespace Microsoft.Edge.A11y
                     new List<string>{
                         "title attribute 1",
                         "aria-label attribute 2",
-                        "h1 referenced by aria-labelledby 3",
+                        "h1 referenced by aria-labelledby3",
                         "title attribute 4",
                         "aria-label attribute 6"
                     },
                     new List<string>{
-                        "h1 referenced by aria-describedby 5",
+                        "h1 referenced by aria-describedby5",
                         "title attribute 6"
                     })),
                 new TestData("mark", "Text", "mark"),
@@ -328,14 +328,14 @@ namespace Microsoft.Edge.A11y
                                 new List<string>
                                 {
                                     "aria-label attribute 2",
-                                    "mr-003-labelledby 3",//TODO go to inner html
+                                    "p referenced by aria-labelledby3",
                                     "label wrapping meter 4",
                                     "title attribute 5",
                                     "label referenced by for/id attributes 7",
                                 },
                                 new List<string>
                                 {
-                                    "p referenced by aria-describedby 6",
+                                    "p referenced by aria-describedby6",
                                     "title attribute 7"
                                 })(elements, driver, ids);
                         }),
@@ -347,11 +347,11 @@ namespace Microsoft.Edge.A11y
                     additionalRequirement: CheckElementNames(6,
                     new List<string>{
                         "aria-label attribute 2",
-                        "nv-003-labelledby 3",//TODO go to inner html
+                        "h1 referenced by aria-labelledby3",
                         "title attribute 4",
                         "aria-label attribute 6"},
                     new List<string>{
-                        "h1 referenced by aria-describedby 5",
+                        "h1 referenced by aria-describedby5",
                         "title attribute 6"
                     })),
                 new TestData("output", "Group", "output",
@@ -383,11 +383,11 @@ namespace Microsoft.Edge.A11y
                     additionalRequirement: CheckElementNames(7,
                     new List<string>{
                         "aria-label attribute 3",
-                        "sc-004-labelledby 3",//TODO go to inner html
+                        "h1 referenced by aria-labelledby4",
                         "title attribute 5",
                         "aria-label attribute 7"},
                     new List<string>{
-                        "h1 referenced by aria-describedby 6",
+                        "h1 referenced by aria-describedby6",
                         "title attribute 7"
                     })),
                 new TestData("summary", null),
