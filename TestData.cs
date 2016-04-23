@@ -2,9 +2,25 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace Microsoft.Edge.A11y
 {
+    public class StructureChangedHandler : IUIAutomationStructureChangedEventHandler
+    {
+        void IUIAutomationStructureChangedEventHandler.HandleStructureChangedEvent(IUIAutomationElement sender, StructureChangeType changeType, int[] runtimeId)
+        {
+            if (changeType == StructureChangeType.StructureChangeType_ChildAdded)
+            {
+                Console.WriteLine("{0} -Added {1} child", DateTime.Now.Millisecond, sender.CurrentName);
+                if (TestData.WaitForElements.Any(element => element.Equals(sender.CurrentName, StringComparison.InvariantCultureIgnoreCase)))
+                {
+                    TestData.Ewh.Set();
+                }
+            }
+        }
+    }
+
     /// <summary>
     /// This is where the logic of the tests is stored
     /// </summary>
@@ -51,6 +67,21 @@ namespace Microsoft.Edge.A11y
         public Func<IUIAutomationElement, bool> _SearchStrategy;
 
         /// <summary>
+        /// Manual reset event waiter used to wait for elements to be added to UIA tree
+        /// </summary>
+        public static readonly EventWaitHandle Ewh = new EventWaitHandle(false, EventResetMode.ManualReset);
+
+        /// <summary>
+        /// Event handler for StructureChanged event used to wait for element to be added to UIA tree
+        /// </summary>
+        private static StructureChangedHandler _handler = new StructureChangedHandler();
+
+        /// <summary>
+        /// List of elements to wait for to be added to UIA tree before signaling event waiter
+        /// </summary>
+        public static readonly string[] WaitForElements = { "volume" };
+
+        /// <summary>
         /// Simple ctor
         /// </summary>
         /// <param name="testName"></param>
@@ -81,6 +112,19 @@ namespace Microsoft.Edge.A11y
 
         //All the tests to run
         public static Lazy<List<TestData>> alltests = new Lazy<List<TestData>>(AllTests);
+
+        public static StructureChangedHandler Handler
+        {
+            get
+            {
+                return _handler;
+            }
+
+            set
+            {
+                _handler = value;
+            }
+        }
 
         /// <summary>
         /// Get the TestData for the given test page
@@ -125,6 +169,9 @@ namespace Microsoft.Edge.A11y
                     })),
                 new TestData("audio", "Group", "audio",
                     additionalRequirement: ((elements, driver, ids) => {
+                        new CUIAutomation8().AddStructureChangedEventHandler(elements[0], TreeScope.TreeScope_Descendants, null, TestData.Handler);
+                        Ewh.WaitOne();
+
                         var childNames = CheckChildNames(new List<string> {
                                 "Play",
                                 "Time elapsed",
@@ -412,7 +459,11 @@ namespace Microsoft.Edge.A11y
                     searchStrategy: (element => true)),
                 new TestData("video", "Group", null, keyboardElements: new List<string> { "video1" },
                     additionalRequirement: ((elements, driver, ids) =>
-                        CheckChildNames(
+                    {
+                        new CUIAutomation8().AddStructureChangedEventHandler(elements[0], TreeScope.TreeScope_Descendants, null, TestData.Handler);
+                        Ewh.WaitOne();
+
+                        var childNames = CheckChildNames(
                             new List<string> {//TODO get full list when it's finalized
                                     "Play",
                                     "Time elapsed",
@@ -423,9 +474,13 @@ namespace Microsoft.Edge.A11y
                                     "Show captioning",
                                     "Mute",
                                     "Volume",
-                                    "Full screen" })(elements, driver, ids) == ARPASS ?
-                        CheckVideoKeyboardInteractions(elements, driver, ids) : ARFAIL)),
-                new TestData("hidden-att", "Button", null,
+                                    "Full screen" })(elements, driver, ids);
+                        if(childNames != ARPASS){
+                            return childNames;
+                        }
+                        return CheckVideoKeyboardInteractions(elements, driver, ids);
+                    })),
+                    new TestData("hidden-att", "Button", null,
                         //TODO no text pattern
                     additionalRequirement: ((elements, driver, ids) =>
                     {
