@@ -145,7 +145,7 @@ namespace Microsoft.Edge.A11y
         {
             var converter = new ElementConverter();
             const int timeout = 0;
-            var alltests = new List<TestData>{
+            return new List<TestData>{
                 new TestData("article", "Group", "article",
                     additionalRequirement: CheckElementNames(7,
                     new List<string>{
@@ -231,10 +231,12 @@ namespace Microsoft.Edge.A11y
                         "p referenced by aria-describedby6",
                         "title attribute 7"
                     })),
-                //new TestData("figure-figcaption", "Text",
-                    //additionalRequirement: ((elements, driver, ids) =>
-                        //elements.All(element => element.CurrentName == "HTML5 logo") ?
-                        //ARPASS : ARFAIL)),//TODO TextPattern range says HTML5 logo
+                new TestData("figure-figcaption", "Text",
+                    additionalRequirement: ((elements, driver, ids) => 
+                        {
+                            //TODO TextPattern range says HTML5 logo
+                            return ARFAIL;
+                        })),
                 new TestData("footer", "Group",
                     additionalRequirement: (elements, driver, ids) => {
                         var result = CheckElementNames(7,
@@ -616,9 +618,10 @@ namespace Microsoft.Edge.A11y
                         if (!elements.All(element => ((IUIAutomationElement5)element).CurrentLiveSetting != LiveSetting.Polite)){
                             return "Element did not have LiveSetting = Polite";
                         }
-                        if (!elements.All(element => element.CurrentControllerFor != null && element.CurrentControllerFor.Length > 0)){
-                            //TODO points to output from input
-                            return "Element did not have ControllerFor set";
+                        var controllerForLengths = elements.ConvertAll(element => element.CurrentControllerFor != null ? element.CurrentControllerFor.Length : 0);
+                        if (controllerForLengths.Count(cfl => cfl > 0) != 1)
+                        {
+                            return "Expected 1 element with ControllerFor set. Found " + controllerForLengths.Count(cfl => cfl > 0);
                         }
                         return ARPASS;
                     })),
@@ -636,17 +639,20 @@ namespace Microsoft.Edge.A11y
                         "title attribute 7"
                     })),
                 new TestData("section", "Group", "section", "Custom", "region",
-                        //TODO if there's no accessible name, do not include in the tree
-                    additionalRequirement: CheckElementNames(7,
-                    new List<string>{
-                        "aria-label attribute 3",
-                        "h1 referenced by aria-labelledby4",
-                        "title attribute 5",
-                        "aria-label attribute 7"},
-                    new List<string>{
-                        "h1 referenced by aria-describedby6",
-                        "title attribute 7"
-                    })),
+                    additionalRequirement: (elements, driver, ids) => {
+                        if(elements.Count == 4){//This is because we should only include in the
+                            //tree those elements that have accessible names (3, 4, 5, 7)
+                            return CheckElementNames(4,
+                                new List<string>{
+                                    "aria-label attribute 3",
+                                    "h1 referenced by aria-labelledby4",
+                                    "title attribute 5",
+                                    "aria-label attribute 7"},
+                                new List<string>{
+                                    "title attribute 7"})(elements, driver, ids);
+                        }
+                        return "Expect to find 4 elements, found " + elements.Count;
+                    }),
                 new TestData("summary", null),
                 new TestData("time", "Group", "time",
                     additionalRequirement: ((elements, driver, ids) => {
@@ -769,8 +775,6 @@ namespace Microsoft.Edge.A11y
                         }.All(f => f(elementNames)) ? ARPASS : ARFAIL;
                     }))
             };
-
-            return alltests;
         }
 
         /// <summary>
