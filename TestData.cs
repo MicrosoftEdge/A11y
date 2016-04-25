@@ -184,12 +184,39 @@ namespace Microsoft.Edge.A11y
                             return childNames;
                         }
                         return CheckAudioKeyboardInteractions(elements, driver, ids);
-                    })),//TODO get full list when it's finalized
-                new TestData("canvas", "Image"),//TODO search for subdom //TODO feature detection focus ring
+                    })),
+                new TestData("canvas", "Image",
+                    additionalRequirement: ((elements, driver, ids) => {
+                        var browserElement = EdgeA11yTools.FindBrowserDocument(0);
+                        var automationElementConverter = new ElementConverter();
+
+                        HashSet<string> foundControlTypes;
+                        elements = EdgeA11yTools.SearchDocumentChildren(browserElement, "", (current) => {
+                            var convertedRole = automationElementConverter.GetElementNameFromCode(current.CurrentControlType);
+                            return convertedRole == "Button" || convertedRole == "Text";
+                        }, out foundControlTypes);
+
+                        return elements.Count() == 2 ? ARPASS : "Unable to find subdom elements";
+                    })),//TODO feature detection focus ring
                 new TestData("datalist", "Combobox", keyboardElements: new List<string> { "input1" },
-                    additionalRequirement: ((elements, driver, ids) => elements.All(e =>
-                            e.CurrentControllerFor != null &&
-                            e.CurrentControllerFor.Length > 0) ? ARPASS : ARFAIL)),//TODO arrow up/down and enter selects
+                    additionalRequirement: ((elements, driver, ids) => {
+                        if(elements.Any(e => e.CurrentControllerFor == null || e.CurrentControllerFor.Length == 0)){
+                            return "Element controller for not set";
+                        }
+
+                        Func<string, string> datalistValue = (id) => (string)driver.ExecuteScript("return document.getElementById('" + id + "').value", 0);
+                        foreach (var id in ids)
+                        {
+                            var initial = datalistValue(id);
+                            driver.SendSpecialKeys(id, "Arrow_downEnter");
+                            if (datalistValue(id) == initial)
+                            {
+                                return "Unable to set the datalist with keyboard";
+                            }
+                        }
+
+                        return ARPASS;
+                    })),
                 new TestData("details", null),
                 new TestData("dialog", null),
                 new TestData("figure", "Group", "figure",
@@ -208,34 +235,115 @@ namespace Microsoft.Edge.A11y
                     //additionalRequirement: ((elements, driver, ids) =>
                         //elements.All(element => element.CurrentName == "HTML5 logo") ?
                         //ARPASS : ARFAIL)),//TODO TextPattern range says HTML5 logo
-                new TestData("footer", "Group", "footer", "Custom", "content information",
-                        //TODO check whether the localized control type is correct under
-                        //different circumstances
-                    additionalRequirement: CheckElementNames(7,
-                    new List<string>{
-                        "aria-label attribute 3",
-                        "small referenced by aria-labelledby4",
-                        "title attribute 5",
-                        "aria-label attribute 7"},
-                    new List<string>{
-                        "small referenced by aria-describedby6",
-                        "title attribute 7"
-                    })),
-                new TestData("header", "Group", "header", "Custom", "banner",
-                        //TODO check whether the localized control type is correct under
-                        //different circumstances
-                    additionalRequirement: CheckElementNames(7,
-                    new List<string>{
-                        "aria-label attribute 3",
-                        "h1 referenced by aria-labelledby4",
-                        "title attribute 5",
-                        "aria-label attribute 7"},
-                    new List<string>{
-                        "h1 referenced by aria-describedby6",
-                        "title attribute 7"
-                    })),
+                new TestData("footer", "Group",
+                    additionalRequirement: (elements, driver, ids) => {
+                        var result = CheckElementNames(7,
+                            new List<string>{
+                                "aria-label attribute 3",
+                                "small referenced by aria-labelledby4",
+                                "title attribute 5",
+                                "aria-label attribute 7"},
+                            new List<string>{
+                                "small referenced by aria-describedby6",
+                                "title attribute 7"
+                            })(elements, driver, ids);
+
+                        if (result != ARPASS)
+                        {
+                            return result;
+                        }
+
+                        //not all elements need to have the same localized control type
+                        if(elements.Select(e => e.CurrentLocalizedControlType).Count(lct => lct == "footer") != 6){
+                            return "Elements did not have the correct localized control types";
+                        }
+
+                        var elementConverter = new ElementConverter();
+
+                        var convertedLandmarks = 0;
+                        var localizedLandmarks = 0;
+                        //same for landmark and localizedlandmark
+                        foreach (var element in elements)
+                        {
+                            var five = element as IUIAutomationElement5;
+                            var convertedLandmark = elementConverter.GetElementNameFromCode(five.CurrentLandmarkType);
+                            var localizedLandmark = five.CurrentLocalizedLandmarkType;
+                            if (convertedLandmark == "Custom")
+                            {
+                                convertedLandmarks++;
+                            }
+                            if (localizedLandmark == "content information")
+                            {
+                                localizedLandmarks++;
+                            }
+                        }
+                        if (convertedLandmarks != 6)
+                        {
+                            return "Elements did not have the correct landmark types";
+                        }
+
+                        if (localizedLandmarks != 6)
+                        {
+                            return "Elements did not have the correct localized landmark types";
+                        }
+
+                        return ARPASS;
+                    }),
+                new TestData("header", "Group",
+                    additionalRequirement: (elements, driver, ids) => {
+                        var result = CheckElementNames(7,
+                            new List<string>{
+                                "aria-label attribute 3",
+                                "small referenced by aria-labelledby4",
+                                "title attribute 5",
+                                "aria-label attribute 7"},
+                            new List<string>{
+                                "small referenced by aria-describedby6",
+                                "title attribute 7"
+                            })(elements, driver, ids);
+
+                        if (result != ARPASS)
+                        {
+                            return result;
+                        }
+
+                        //not all elements need to have the same localized control type
+                        if(elements.Select(e => e.CurrentLocalizedControlType).Count(lct => lct == "header") != 6){
+                            return "Elements did not have the correct localized control types";
+                        }
+
+                        var elementConverter = new ElementConverter();
+
+                        var convertedLandmarks = 0;
+                        var localizedLandmarks = 0;
+                        //same for landmark and localizedlandmark
+                        foreach (var element in elements)
+                        {
+                            var five = element as IUIAutomationElement5;
+                            var convertedLandmark = elementConverter.GetElementNameFromCode(five.CurrentLandmarkType);
+                            var localizedLandmark = five.CurrentLocalizedLandmarkType;
+                            if (convertedLandmark == "Custom")
+                            {
+                                convertedLandmarks++;
+                            }
+                            if (localizedLandmark == "banner")
+                            {
+                                localizedLandmarks++;
+                            }
+                        }
+                        if (convertedLandmarks != 6)
+                        {
+                            return "Elements did not have the correct landmark types";
+                        }
+
+                        if (localizedLandmarks != 6)
+                        {
+                            return "Elements did not have the correct localized landmark types";
+                        }
+
+                        return ARPASS;
+                    }),
                 new TestData("input-color", "Button", "color picker",
-                        //TODO naming
                     additionalRequirement: (elements, driver, ids) =>
                         ids.FirstOrDefault(id =>
                         {
@@ -262,67 +370,131 @@ namespace Microsoft.Edge.A11y
                             {
                                 return true;
                             }
+
+                            //p1
                             //TODO get to buttons
                             //TODO active buttons with space/enter
+
+                            //p2
                             //TODO enter submits escape cancels
                             //TODO move sliders with left right
-                            //TODO children have correct color(Group, livesetting =
-                            //polite, value as HSL) sliders(CT: Slider, Range.RangeValue
-                            //is whatever will be submitted)
+                            //TODO children have correct sliders(CT: Slider,
+                            //Range.RangeValue) is whatever will be submitted
                             //TODO root button has controllerfor pointing to dialog
+                            //TODO ControllerFor and LiveSetting=polite for color well
 
                             return false;
                         }) == null ? ARPASS : "Failed keyboard interaction"
                     ),
                 new TestData("input-date", "Edit", keyboardElements: new List<string> { "input1", "input2" },
-                        //TODO naming
-                    additionalRequirement: CheckCalendarKeyboard(3)),
-                new TestData("input-datetime-local", "Text", additionalRequirement: CheckDatetimeLocalKeyboard()),
-                    //TODO naming
+                    additionalRequirement: (elements, driver, ids) => {
+                        return CheckCalendarKeyboard(3)(elements, driver, ids) + "\n" +
+                            CheckElementNames(7,
+                                new List<string>{
+                                    "aria-label attribute2",
+                                    "p referenced by aria-labelledby3",
+                                    "label wrapping input 4",
+                                    "title attribute 5",
+                                    "label referenced by for/id attributes 7"},
+                                new List<string>{
+                                    "p referenced by aria-describedby6",
+                                    "title attribute 7" })
+                                (elements, driver, ids);
+                    }),
+                new TestData("input-datetime-local", "Text",
+                    additionalRequirement: (elements, driver, ids) => {
+                        return CheckDatetimeLocalKeyboard()(elements, driver, ids) + "\n" +
+                            CheckElementNames(7,
+                                new List<string>{
+                                    "aria-label attribute2",
+                                    "p referenced by aria-labelledby3",
+                                    "label wrapping input 4",
+                                    "title attribute 5",
+                                    "label referenced by for/id attributes 7"},
+                                new List<string>{
+                                    "p referenced by aria-describedby6",
+                                    "title attribute 7" })
+                                (elements, driver, ids);
+                    }),
                 new TestData("input-email", "Edit", "email",
-                    //TODO naming
                     keyboardElements: new List<string> { "input1", "input2" },
-                    additionalRequirement: CheckValidation()),
+                    additionalRequirement: (elements, driver, ids) => {
+                        return CheckValidation()(elements, driver, ids) + "\n" +
+                            CheckElementNames(7,
+                                new List<string>{
+                                    "aria-label attribute2",
+                                    "p referenced by aria-labelledby3",
+                                    "label wrapping input 4",
+                                    "title attribute 5",
+                                    "label referenced by for/id attributes 7"},
+                                new List<string>{
+                                    "p referenced by aria-describedby6",
+                                    "title attribute 7" })
+                                (elements, driver, ids);
+                    }),
                 new TestData("input-month", "Edit", keyboardElements: new List<string> { "input1", "input2" },
-                    //TODO naming
-                    additionalRequirement: CheckCalendarKeyboard(2)),
+                    additionalRequirement: (elements, driver, ids) => {
+                        return CheckCalendarKeyboard(2)(elements, driver, ids) + "\n" +
+                            CheckElementNames(7,
+                                new List<string>{
+                                    "aria-label attribute2",
+                                    "p referenced by aria-labelledby3",
+                                    "label wrapping input 4",
+                                    "title attribute 5",
+                                    "label referenced by for/id attributes 7"},
+                                new List<string>{
+                                    "p referenced by aria-describedby6",
+                                    "title attribute 7" })
+                                (elements, driver, ids);
+                    }),
                 new TestData("input-number", "Spinner", "number",
                     keyboardElements: new List<string> { "input1", "input2" },
-                    additionalRequirement: CheckValidation()),
-                    //TODO naming
-                new TestData("input-range", "Slider", keyboardElements: new List<string> { "input1", "input2" },
-                    //TODO naming
-                    //TODO implements range pattern
                     additionalRequirement: (elements, driver, ids) => {
-                        if(!ids.All(id => {
+                        return CheckValidation()(elements, driver, ids) + "\n" +
+                            CheckElementNames(7,
+                                new List<string>{
+                                    "aria-label attribute2",
+                                    "p referenced by aria-labelledby3",
+                                    "label wrapping input 4",
+                                    "title attribute 5",
+                                    "label referenced by for/id attributes 7"},
+                                new List<string>{
+                                    "p referenced by aria-describedby6",
+                                    "title attribute 7" })
+                                (elements, driver, ids);
+                    }),
+                new TestData("input-range", "Slider", keyboardElements: new List<string> { "input1", "input2" },
+                    additionalRequirement: (elements, driver, ids) => {
+                        foreach(var id in ids){
                             Func<int> RangeValue = () => (int) Int32.Parse((string) driver.ExecuteScript("return document.getElementById('" + id + "').value", 0));
 
                             var initial = RangeValue();
                             driver.SendSpecialKeys(id, "Arrow_up");
-                            if (initial >= RangeValue())
+                            if (initial == RangeValue())
                             {
-                                return false;
+                                return "Unable to increase range with arrow up";
                             }
                             driver.SendSpecialKeys(id, "Arrow_down");
                             if (initial != RangeValue())
                             {
-                                return false;
+                                return "Unable to decrease range with arrow down";
                             }
 
                             driver.SendSpecialKeys(id, "Arrow_right");
                             if (initial >= RangeValue())
                             {
-                                return false;
+                                return "Unable to increase range with arrow right";
                             }
                             driver.SendSpecialKeys(id, "Arrow_left");
                             if (initial != RangeValue())
                             {
-                                return false;
+                                return "Unable to decrease range with arrow left";
                             }
-
-                            return true;
-                        })){
-                           return ARFAIL;
+                        }
+                        foreach(var element in elements){
+                            if (!element.GetPatterns().Contains("RangeValuePattern")) {
+                                return "Element did not implement the RangeValuePattern";
+                            }
                         }
                         return CheckElementNames(7,
                             new List<string>
@@ -339,13 +511,51 @@ namespace Microsoft.Edge.A11y
                                 "title attribute 7"
                             })(elements, driver, ids);
                     }),
-                new TestData("input-search", "Edit", "search", keyboardElements: new List<string> { "input1", "input2" }),
-                    //TODO naming
-                new TestData("input-tel", "Edit", "telephone", keyboardElements: new List<string> { "input1", "input2" }),
-                    //TODO naming
+                new TestData("input-search", "Edit", "search", keyboardElements: new List<string> { "input1", "input2" },
+                    additionalRequirement: CheckElementNames(7,
+                            new List<string>
+                            {
+                                "aria-label attribute 2",
+                                "p referenced by aria-labelledby3",
+                                "label wrapping input 4",
+                                "title attribute 5",
+                                "label referenced by for/id attributes 7",
+                            },
+                            new List<string>
+                            {
+                                "p referenced by aria-describedby6",
+                                "title attribute 7"
+                            })),
+                new TestData("input-tel", "Edit", "telephone", keyboardElements: new List<string> { "input1", "input2" },
+                    additionalRequirement: CheckElementNames(7,
+                            new List<string>
+                            {
+                                "aria-label attribute 2",
+                                "p referenced by aria-labelledby3",
+                                "label wrapping input 4",
+                                "title attribute 5",
+                                "label referenced by for/id attributes 7",
+                            },
+                            new List<string>
+                            {
+                                "p referenced by aria-describedby6",
+                                "title attribute 7"
+                            })),
                 new TestData("input-time", "Edit", keyboardElements: new List<string> { "input1", "input2" },
-                    //TODO naming
-                    additionalRequirement: CheckCalendarKeyboard(2)),
+                    additionalRequirement: (elements, driver, ids) => {
+                        return CheckCalendarKeyboard(2)(elements, driver, ids) + "\n" +
+                            CheckElementNames(7,
+                                new List<string>{
+                                    "aria-label attribute2",
+                                    "p referenced by aria-labelledby3",
+                                    "label wrapping input 4",
+                                    "title attribute 5",
+                                    "label referenced by for/id attributes 7"},
+                                new List<string>{
+                                    "p referenced by aria-describedby6",
+                                    "title attribute 7" })
+                                (elements, driver, ids);
+                    }),
                 new TestData("input-url", "Edit", "url",
                         keyboardElements: new List<string> { "input1", "input2" },
                         additionalRequirement: CheckValidation()),
@@ -366,7 +576,6 @@ namespace Microsoft.Edge.A11y
                     })),
                 new TestData("mark", "Text", "mark"),
                 new TestData("meter", "Progressbar", "meter",
-                        //TODO naming
                     additionalRequirement:
                         ((elements, driver, ids) => {
                             if(!elements.All(element => element.GetProperties().Any(p => p.Contains("IsReadOnly")))){
@@ -417,13 +626,13 @@ namespace Microsoft.Edge.A11y
                     additionalRequirement: CheckElementNames(7,
                     new List<string>{
                         "aria-label attribute 2",
-                        "p referenced by aria-labelledby 3",
+                        "p referenced by aria-labelledby3",
                         "label wrapping output 4",
                         "title attribute 5",
                         "label referenced by for/id attributes 7"
                     },
                     new List<string>{
-                        "p referenced by aria-describedby 6",
+                        "p referenced by aria-describedby6",
                         "title attribute 7"
                     })),
                 new TestData("section", "Group", "section", "Custom", "region",
@@ -521,12 +730,25 @@ namespace Microsoft.Edge.A11y
                     {
                         driver.SendSubmit("input1");
                         System.Threading.Thread.Sleep(TimeSpan.FromMilliseconds(500));
-                        return elements.Count() == 1 && elements.All(
-                                                            e => e.CurrentControllerFor != null
-                                                            && e.CurrentControllerFor.Length > 0
-                                                            && e.CurrentIsDataValidForForm == 0) ? ARPASS : ARFAIL;
-                        //TODO isrequiredforform
-                        //TODO help text
+                        foreach(var element in elements){
+                            if(element.CurrentControllerFor == null || element.CurrentControllerFor.Length == 0){
+                                return "Element did not have controller for set";
+                            }
+
+                            if(element.CurrentIsDataValidForForm != 0){
+                                return "Element did not have IsDataValidForForm set to false";
+                            }
+
+                            if(element.CurrentIsRequiredForForm != 1){
+                                return "Element did not have IsRequiredForForm set to true";
+                            }
+
+                            if(element.CurrentHelpText == null || element.CurrentHelpText.Length == 0){
+                                return "Element did not have HelpText";
+                            }
+                        }
+
+                        return ARPASS;
                     }),
                 new TestData("placeholder-att", "Edit",
                     additionalRequirement: ((elements, driver, ids) =>
@@ -599,9 +821,6 @@ namespace Microsoft.Edge.A11y
                 PauseVideo();
             }
 
-            //TODO remove when the test file is resized
-            driver.ExecuteScript("document.getElementById('video1').width = 600", 0);
-
             //Case 3: Volume and mute
             Javascript.ClearFocus(driver, 0);
             driver.SendTabs(videoId, 7);//tab to volume control //TODO make this more resilient to UI changes
@@ -630,7 +849,7 @@ namespace Microsoft.Edge.A11y
             //Case 4: Audio selection
             Javascript.ClearFocus(driver, 0);
             driver.SendTabs(videoId, 6);//tab to audio selection//TODO make this more resilient to UI changes
-            driver.SendSpecialKeys(videoId, "EnterArrow_up");//TODO arrow_down
+            driver.SendSpecialKeys(videoId, "EnterArrow_down");
 
             //Case 5: Progress and seek
             if (VideoPlaying())
@@ -786,7 +1005,7 @@ namespace Microsoft.Edge.A11y
             {
                 var result = ids.FirstOrDefault(id =>//"first element that fails"
                 {
-                    driver.SendSpecialKeys(id, "EnterEscapeEnterEnter");//TODO remove when possible
+                    driver.SendSpecialKeys(id, "EnterEscapeEnterEnter");//Make sure that the element has focus (gets around weirdness in WebDriver)
 
                     Func<string> DateValue = () => (string)driver.ExecuteScript("return document.getElementById('" + id + "').value", 0);
 
@@ -838,7 +1057,7 @@ namespace Microsoft.Edge.A11y
             {
                 var result = ids.FirstOrDefault(id =>//"first element that fails"
                 {
-                    driver.SendSpecialKeys(id, "EnterEscape");//TODO remove when possible
+                    driver.SendSpecialKeys(id, "EnterEscapeEnterEnter");//Make sure that the element has focus (gets around weirdness in WebDriver)
 
                     var inputFields = new List<int> { 3, 3 };
                     var outputFields = 5;
@@ -905,10 +1124,9 @@ namespace Microsoft.Edge.A11y
                         //Everything that is invalid on the page
                         var invalid = elements.Where(e => e.CurrentControllerFor != null &&
                                         e.CurrentControllerFor.Length > 0 &&
-                                        e.CurrentIsDataValidForForm == 0).Select(e => elements.IndexOf(e));
-                        //TODO help text
-                        //TODO error message is in a pane and ^ controller for points to
-                        //it
+                                        e.CurrentIsDataValidForForm == 0 &&
+                                        e.CurrentHelpText != null &&
+                                        e.CurrentHelpText.Length > 0).Select(e => elements.IndexOf(e));
 
                         //Elements that are invalid for the first time
                         var newInvalid = invalid.DefaultIfEmpty(-1).FirstOrDefault(inv => !previouslyInvalid.Contains(inv));
@@ -916,6 +1134,18 @@ namespace Microsoft.Edge.A11y
                         {
                             return "Element failed to validate improper input";
                         }
+
+                        if (elements[newInvalid].CurrentControllerFor.Length > 1)
+                        {
+                            throw new Exception("Test assumption failed: expected only one controller");
+                        }
+                        var helpPane = elements[newInvalid].CurrentControllerFor.GetElement(0);
+                        if (helpPane.CurrentControlType != new ElementConverter().GetElementCodeFromName("Pane"))
+                        {
+                            return "Error message did not have correct ControlType";
+                        }
+                        //TODO find out if the message pane needs to have any more requirements
+
                         previouslyInvalid.Add(newInvalid);
                     }
                     return ARPASS;
