@@ -32,3 +32,12 @@ For a full explanation of how scores are calculated, see
 
 After the tests have run, the results are printed to the console and saved in the root
 directory of the project with the name "scores.csv".
+
+## Testing your site
+It's possible to use A11y to automate testing of your site as well. A sample project is
+included on the site_testing branch.
+
+### Test files
+The sample test page is included in this repo on the site_testing branch. It's possible
+(and better) to have your sites in another location. Just change the constructor call to
+to the TestStrategy class passing in the base URL where your test files are located.
