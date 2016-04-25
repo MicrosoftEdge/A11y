@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using OpenQA.Selenium;
 
 namespace Microsoft.Edge.A11y
 {
@@ -170,7 +171,7 @@ namespace Microsoft.Edge.A11y
                 new TestData("audio", "Group", "audio",
                     additionalRequirement: ((elements, driver, ids) => {
                         new CUIAutomation8().AddStructureChangedEventHandler(elements[0], TreeScope.TreeScope_Descendants, null, TestData.Handler);
-                        Ewh.WaitOne();
+                        Ewh.WaitOne(TimeSpan.FromSeconds(5));
 
                         var childNames = CheckChildNames(new List<string> {
                                 "Play",
@@ -461,7 +462,7 @@ namespace Microsoft.Edge.A11y
                     additionalRequirement: ((elements, driver, ids) =>
                     {
                         new CUIAutomation8().AddStructureChangedEventHandler(elements[0], TreeScope.TreeScope_Descendants, null, TestData.Handler);
-                        Ewh.WaitOne();
+                        Ewh.WaitOne(TimeSpan.FromSeconds(5));
 
                         var childNames = CheckChildNames(
                             new List<string> {//TODO get full list when it's finalized
@@ -560,33 +561,42 @@ namespace Microsoft.Edge.A11y
         private static string CheckVideoKeyboardInteractions(List<IUIAutomationElement> elements, DriverManager driver, List<string> ids)
         {
             string videoId = "video1";
+            string result = string.Empty;
+
             Func<bool> VideoPlaying = () => (bool)driver.ExecuteScript("return !document.getElementById('" + videoId + "').paused", 0);
+            Func<object> PauseVideo = () => driver.ExecuteScript("document.getElementById('" + videoId + "').pause()", 0);
+            Func<object> PlayVideo = () => driver.ExecuteScript("document.getElementById('" + videoId + "').play()", 0);
             Func<double> VideoVolume = () => driver.ExecuteScript("return document.getElementById('" + videoId + "').volume", 0).ParseMystery();
             Func<bool> VideoMuted = () => (bool)driver.ExecuteScript("return document.getElementById('" + videoId + "').muted", 0);
             Func<double> VideoElapsed = () => driver.ExecuteScript("return document.getElementById('" + videoId + "').currentTime", 0).ParseMystery();
+            Func<bool> IsVideoFullScreen = () => driver.ExecuteScript("return document.fullscreenElement", 0) != null;
 
             //Case 1: tab to video element and play/pause
             driver.SendSpecialKeys(videoId, "Space");
             if (!VideoPlaying())
             {
-                return "Video was not playing after spacebar on root element";
+                result += "\tVideo was not playing after spacebar on root element\n";
+                PlayVideo();
             }
             driver.SendSpecialKeys(videoId, "Space");
             if (VideoPlaying())
             {
-                return "Video was not paused after spacebar on root element";
+                result += "\tVideo was not paused after spacebar on root element\n";
+                PauseVideo();
             }
 
             //Case 2: tab to play button and play/pause
             driver.SendSpecialKeys(videoId, "TabSpace");
             if (!VideoPlaying())
             {
-                return "Video was not playing after spacebar on play button";
+                result += "\tVideo was not playing after spacebar on play button\n";
+                PlayVideo();
             }
             driver.SendSpecialKeys(videoId, "Enter");
             if (VideoPlaying())
             {
-                return "Video was not paused after enter on play button";
+                result += "\tVideo was not paused after enter on play button\n";
+                PauseVideo();
             }
 
             //TODO remove when the test file is resized
@@ -594,38 +604,38 @@ namespace Microsoft.Edge.A11y
 
             //Case 3: Volume and mute
             Javascript.ClearFocus(driver, 0);
-            driver.SendTabs(videoId, 6);//tab to volume control //TODO make this more resilient to UI changes
+            driver.SendTabs(videoId, 7);//tab to volume control //TODO make this more resilient to UI changes
             var initial = VideoVolume();
             driver.SendSpecialKeys(videoId, "Arrow_downArrow_down");//volume down
             if (initial == VideoVolume())
             {
-                return "Volume did not decrease with arrow keys";
+                result += "\tVolume did not decrease with arrow keys\n";
             }
             driver.SendSpecialKeys(videoId, "Arrow_upArrow_up");//volume up
             if (VideoVolume() != initial)
             {
-                return "Volume did not increase with arrow keys";
+                result += "\tVolume did not increase with arrow keys\n";
             }
             driver.SendSpecialKeys(videoId, "Enter");//mute//TODO switch back to original order once space works
             if (!VideoMuted())
             {
-                return "Enter did not mute the video";
+                result += "\tEnter did not mute the video\n";
             }
             driver.SendSpecialKeys(videoId, "Space");//unmute
             if (VideoMuted())
             {
-                return "Space did not unmute the video";
+                result += "\tSpace did not unmute the video\n";
             }
 
             //Case 4: Audio selection
             Javascript.ClearFocus(driver, 0);
-            driver.SendTabs(videoId, 5);//tab to audio selection//TODO make this more resilient to UI changes
+            driver.SendTabs(videoId, 6);//tab to audio selection//TODO make this more resilient to UI changes
             driver.SendSpecialKeys(videoId, "EnterArrow_up");//TODO arrow_down
 
             //Case 5: Progress and seek
             if (VideoPlaying())
             { //this should not be playing
-                return "Video was playing when it shouldn't have been";
+                result += "\tVideo was playing when it shouldn't have been\n";
             }
             Javascript.ClearFocus(driver, 0);
             driver.SendTabs(videoId, 3);//tab to seek//TODO make this more resilient to UI changes
@@ -633,19 +643,19 @@ namespace Microsoft.Edge.A11y
             driver.SendSpecialKeys(videoId, "Arrow_right"); //skip ahead
             if (initial != VideoElapsed() - 10)
             {
-                return "Video did not skip forward with arrow right";
+                result += "\tVideo did not skip forward with arrow right\n";
             }
 
             driver.SendSpecialKeys(videoId, "Arrow_left"); //skip back
             if (initial != VideoElapsed())
             {
-                return "Video did not skip back with arrow left";
+                result += "\tVideo did not skip back with arrow left\n";
             }
 
             //Case 6: Progress and seek on remaining time
             if (VideoPlaying())
             { //this should not be playing
-                return "Video was playing when it shouldn't have been";
+                result += "\tVideo was playing when it shouldn't have been\n";
             }
             Javascript.ClearFocus(driver, 0);
             driver.SendTabs(videoId, 4);//tab to seek//TODO make this more resilient to UI changes
@@ -653,18 +663,30 @@ namespace Microsoft.Edge.A11y
             driver.SendSpecialKeys(videoId, "Arrow_right"); //skip ahead
             if (initial != VideoElapsed() - 10)
             {
-                return "Video did not skip forward with arrow right";
+                result += "\tVideo did not skip forward with arrow right\n";
             }
 
             driver.SendSpecialKeys(videoId, "Arrow_left"); //skip back
             if (initial != VideoElapsed())
             {
-                return "Video did not skip back with arrow left";
+                result += "\tVideo did not skip back with arrow left\n";
             }
 
-            //TODO check fullscreen
+            //Case 7: Full screen
+            Javascript.ClearFocus(driver, 0);
+            driver.SendTabs(videoId, 8);//tab to fullscreen
+            driver.SendSpecialKeys(videoId, "Enter"); //enter fullscreen mode
+            if (!IsVideoFullScreen())
+            {
+                result += "\tVideo did not enter FullScreen mode\n";
+            }
+            driver.SendKeys(videoId, Keys.Escape);
+            if (IsVideoFullScreen())
+            {
+                result += "\tVideo did not exit FullScreen mode\n";
+            }
 
-            return ARPASS;
+            return string.IsNullOrEmpty(result) ? ARPASS : result;
         }
 
         /// <summary>
@@ -677,7 +699,10 @@ namespace Microsoft.Edge.A11y
         private static string CheckAudioKeyboardInteractions(List<IUIAutomationElement> elements, DriverManager driver, List<string> ids)
         {
             string audioId = "audio1";
+            string result = string.Empty;
             Func<bool> AudioPlaying = () => (bool)driver.ExecuteScript("return !document.getElementById('" + audioId + "').paused", 0);
+            Func<object> PauseAudio = () => driver.ExecuteScript("!document.getElementById('" + audioId + "').pause()", 0);
+            Func<object> PlayAudio = () => driver.ExecuteScript("!document.getElementById('" + audioId + "').play()", 0);
             Func<double> AudioVolume = () => driver.ExecuteScript("return document.getElementById('" + audioId + "').volume", 0).ParseMystery();
             Func<bool> AudioMuted = () => (bool)driver.ExecuteScript("return document.getElementById('" + audioId + "').muted", 0);
             Func<double> AudioElapsed = () => driver.ExecuteScript("return document.getElementById('" + audioId + "').currentTime", 0).ParseMystery();
@@ -687,31 +712,33 @@ namespace Microsoft.Edge.A11y
             driver.SendSpecialKeys(audioId, "Enter");
             if (!AudioPlaying())
             {
-                return "Audio did not play with enter";
+                result += "\tAudio did not play with enter\n";
+                PlayAudio();
             }
 
             driver.SendSpecialKeys(audioId, "Space");
             if (AudioPlaying())
             {
-                return "Audio did not pause with space";
+                result += "\tAudio did not pause with space\n";
+                PauseAudio();
             }
 
             //Case 2: Seek
             if (AudioPlaying())
             {
-                return "Audio was playing when it shouldn't have been";
+                result += "\tAudio was playing when it shouldn't have been\n";
             }
             driver.SendTabs(audioId, 3);
             var initial = AudioElapsed();
             driver.SendSpecialKeys(audioId, "Arrow_right");
             if (initial == AudioElapsed())
             {
-                return "Audio did not skip forward with arrow right";
+                result += "\tAudio did not skip forward with arrow right\n";
             }
             driver.SendSpecialKeys(audioId, "Arrow_left");
             if (initial != AudioElapsed())
             {
-                return "Audio did not skip back with arrow left";
+                result += "\tAudio did not skip back with arrow left\n";
             }
 
             //Case 3: Volume and mute
@@ -721,28 +748,28 @@ namespace Microsoft.Edge.A11y
             driver.SendSpecialKeys(audioId, "Arrow_down");
             if (initial == AudioVolume())
             {
-                return "Volume did not decrease with arrow down";
+                result += "\tVolume did not decrease with arrow down\n";
             }
 
             driver.SendSpecialKeys(audioId, "Arrow_up");
             if (initial != AudioVolume())
             {
-                return "Volume did not increase with arrow up";
+                result += "\tVolume did not increase with arrow up\n";
             }
 
             driver.SendSpecialKeys(audioId, "Space");
             if (!AudioMuted())
             {
-                return "Audio was not muted by space on the volume control";
+                result += "\tAudio was not muted by space on the volume control\n";
             }
 
             driver.SendSpecialKeys(audioId, "Enter");
             if (AudioMuted())
             {
-                return "Audio was not unmuted by enter on the volume control";
+                result += "\tAudio was not unmuted by enter on the volume control\n";
             }
 
-            return ARPASS;
+            return string.IsNullOrEmpty(result) ? ARPASS : result;
         }
 
         /// <summary>
@@ -972,7 +999,7 @@ namespace Microsoft.Edge.A11y
         /// <returns></returns>
         private static string GuessElementNumber(string property)
         {
-            var digit = property.FirstOrDefault(c => Char.IsNumber(c));
+            var digit = property.FirstOrDefault(char.IsNumber);
             return digit == null ? "An element" : digit.ToString();
         }
     }
