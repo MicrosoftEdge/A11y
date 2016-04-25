@@ -1114,45 +1114,25 @@ namespace Microsoft.Edge.A11y
                 var descriptions = elements.ConvertAll(element => ((IUIAutomationElement6)element).CurrentFullDescription);
 
                 //Check names
-                if (total != names.Count(name => name == "") + requiredNames.Count())
+                if (total != names.Count(name => name == "") + requiredNames.Count() || !requiredNames.All(rn => names.Contains(rn)))
                 {
-                    return total - requiredNames.Count() + " names should have been blank. Found " + names.Count(name => name == "");
-                }
-                foreach (var requiredName in requiredNames)
-                {
-                    if (!names.Contains(requiredName))
-                    {
-                        return GuessElementNumber(requiredName) + " had incorrect name";
-                    }
+                    return requiredNames.Where(rn => !names.Contains(rn)).Aggregate((a, b) => a + ", " + b) +
+                        " were expected as names but not found. " +
+                        names.Where(n => !requiredNames.Contains(n)).Aggregate((a, b) => a + ", " + b) +
+                        " were found but were not expected.";
                 }
 
                 //Check descriptions
-                if (total != descriptions.Count(description => description == "") + requiredDescriptions.Count())
+                if (total != descriptions.Count(description => description == "") + requiredDescriptions.Count() || !requiredDescriptions.All(rd => descriptions.Contains(rd)))
                 {
-                    return total - requiredDescriptions.Count() + " descriptions should have been blank. Found " + descriptions.Count(description => description == "");
-                }
-                foreach (var requiredDescription in requiredDescriptions)
-                {
-                    if (!descriptions.Contains(requiredDescription))
-                    {
-                        return GuessElementNumber(requiredDescription) + " had incorrect description";
-                    }
+                    return requiredDescriptions.Where(rd => !descriptions.Contains(rd)).Aggregate((a, b) => a + ", " + b) +
+                        " were expected as descriptions but not found. " +
+                        descriptions.Where(d => !requiredDescriptions.Contains(d)).Aggregate((a, b) => a + ", " + b) +
+                        " were found but were not expected.";
                 }
 
                 return ARPASS;
             };
-        }
-
-        /// <summary>
-        /// From the name of the string we were supposed to find,
-        /// guess what element failed
-        /// </summary>
-        /// <param name="property">The string we were supposed to find</param>
-        /// <returns></returns>
-        private static string GuessElementNumber(string property)
-        {
-            var digit = property.FirstOrDefault(c => Char.IsNumber(c));
-            return digit == null ? "An element" : digit.ToString();
         }
     }
 }
