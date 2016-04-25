@@ -41,3 +41,15 @@ included on the site_testing branch.
 The sample test page is included in this repo on the site_testing branch. It's possible
 (and better) to have your sites in another location. Just change the constructor call to
 to the TestStrategy class passing in the base URL where your test files are located.
+
+### Pass and failure conditions
+The TestData.cs file contains the logic of the tests and an explanation of the built-in
+tests. To add your own tests, add a TestData object for each test you want to run.
+
+By default, elements are found by their control type, but you can pass in a custom method
+of searching by adding a searchStrategy parameter.
+
+In addition to the default tests, you can use the additionalRequirement paramter to
+specify any other requirement that you want to verify. If you find yourself using the
+same additionalRequirement for many of your tests, you may want to add another parameter
+to the TestData constructor to simplify testing that requirement.
