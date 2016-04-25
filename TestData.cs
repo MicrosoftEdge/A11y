@@ -296,7 +296,6 @@ namespace Microsoft.Edge.A11y
                         return ARPASS;
                     }),
                 new TestData("input-color", "Button", "color picker",
-                        //TODO naming
                     additionalRequirement: (elements, driver, ids) =>
                         ids.FirstOrDefault(id =>
                         {
@@ -354,8 +353,21 @@ namespace Microsoft.Edge.A11y
                                     "title attribute 7" })
                                 (elements, driver, ids);
                     }),
-                new TestData("input-datetime-local", "Text", additionalRequirement: CheckDatetimeLocalKeyboard()),
-                    //TODO naming
+                new TestData("input-datetime-local", "Text",
+                    additionalRequirement: (elements, driver, ids) => {
+                        return CheckDatetimeLocalKeyboard()(elements, driver, ids) + "\n" +
+                            CheckElementNames(7,
+                                new List<string>{
+                                    "aria-label attribute2",
+                                    "p referenced by aria-labelledby3",
+                                    "label wrapping input 4",
+                                    "title attribute 5",
+                                    "label referenced by for/id attributes 7"},
+                                new List<string>{
+                                    "p referenced by aria-describedby6",
+                                    "title attribute 7" })
+                                (elements, driver, ids);
+                    }),
                 new TestData("input-email", "Edit", "email",
                     keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: (elements, driver, ids) => {
