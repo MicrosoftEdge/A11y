@@ -22,15 +22,13 @@ function ShowIngredients(){
 }
 
 function AddToList(ingredient){
-    var numberList = document.getElementById("ingredients");
+    var ingredientList = document.getElementById("ingredients");
 
-    var newNumberListItem = document.createElement("li");
+    var ingredientLi = document.createElement("li");
 
-    var numberListValue = document.createTextNode(ingredient);
+    ingredientLi.appendChild(document.createTextNode(ingredient));
 
-    newNumberListItem.appendChild(numberListValue);
-
-    numberList.appendChild(newNumberListItem);
+    ingredientList.appendChild(ingredientLi);
 }
 </script>
 

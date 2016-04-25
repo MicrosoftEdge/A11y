@@ -13,7 +13,7 @@ namespace Microsoft.Edge.A11y
         public const string ARFAIL = "Failed additional requirement";
         public const string ARPASS = "";
         /// <summary>
-        /// The name of the test, which corresponds to the name of the html element
+        /// The name of the test, which corresponds to the url of the page to test
         /// </summary>
         public string _TestName;
         /// <summary>
@@ -99,7 +99,7 @@ namespace Microsoft.Edge.A11y
         static List<TestData> AllTests()
         {
             return new List<TestData>{
-                new TestData("video", "Group", null, keyboardElements: new List<string> { "video1" },
+                new TestData("sample", "Combobox", null, keyboardElements: new List<string> { "video1" },
                     additionalRequirement: CheckVideoKeyboardInteractions)
             };
         }
