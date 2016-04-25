@@ -53,3 +53,12 @@ In addition to the default tests, you can use the additionalRequirement paramter
 specify any other requirement that you want to verify. If you find yourself using the
 same additionalRequirement for many of your tests, you may want to add another parameter
 to the TestData constructor to simplify testing that requirement.
+
+## Contributing
+We want your feedback and your help! If you have any suggestions, file an issue and we
+can figure out how to get your needs met.
+
+If you'd like to submit code changes, the best thing to do is to file an issue first so
+we can talk about whether the change would fit with the direction and purpose of the
+project. Even if your changes don't fit with the general purpose of A11y, we'd love to
+see you fork the project to do new things with it.
