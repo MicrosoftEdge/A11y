@@ -340,23 +340,70 @@ namespace Microsoft.Edge.A11y
                         }) == null ? ARPASS : "Failed keyboard interaction"
                     ),
                 new TestData("input-date", "Edit", keyboardElements: new List<string> { "input1", "input2" },
-                        //TODO naming
-                    additionalRequirement: CheckCalendarKeyboard(3)),
+                    additionalRequirement: (elements, driver, ids) => {
+                        return CheckCalendarKeyboard(3)(elements, driver, ids) + "\n" +
+                            CheckElementNames(7,
+                                new List<string>{
+                                    "aria-label attribute2",
+                                    "p referenced by aria-labelledby3",
+                                    "label wrapping input 4",
+                                    "title attribute 5",
+                                    "label referenced by for/id attributes 7"},
+                                new List<string>{
+                                    "p referenced by aria-describedby6",
+                                    "title attribute 7" })
+                                (elements, driver, ids);
+                    }),
                 new TestData("input-datetime-local", "Text", additionalRequirement: CheckDatetimeLocalKeyboard()),
                     //TODO naming
                 new TestData("input-email", "Edit", "email",
-                    //TODO naming
                     keyboardElements: new List<string> { "input1", "input2" },
-                    additionalRequirement: CheckValidation()),
+                    additionalRequirement: (elements, driver, ids) => {
+                        return CheckValidation()(elements, driver, ids) + "\n" +
+                            CheckElementNames(7,
+                                new List<string>{
+                                    "aria-label attribute2",
+                                    "p referenced by aria-labelledby3",
+                                    "label wrapping input 4",
+                                    "title attribute 5",
+                                    "label referenced by for/id attributes 7"},
+                                new List<string>{
+                                    "p referenced by aria-describedby6",
+                                    "title attribute 7" })
+                                (elements, driver, ids);
+                    }),
                 new TestData("input-month", "Edit", keyboardElements: new List<string> { "input1", "input2" },
-                    //TODO naming
-                    additionalRequirement: CheckCalendarKeyboard(2)),
+                    additionalRequirement: (elements, driver, ids) => {
+                        return CheckCalendarKeyboard(2)(elements, driver, ids) + "\n" +
+                            CheckElementNames(7,
+                                new List<string>{
+                                    "aria-label attribute2",
+                                    "p referenced by aria-labelledby3",
+                                    "label wrapping input 4",
+                                    "title attribute 5",
+                                    "label referenced by for/id attributes 7"},
+                                new List<string>{
+                                    "p referenced by aria-describedby6",
+                                    "title attribute 7" })
+                                (elements, driver, ids);
+                    }),
                 new TestData("input-number", "Spinner", "number",
                     keyboardElements: new List<string> { "input1", "input2" },
-                    additionalRequirement: CheckValidation()),
-                    //TODO naming
+                    additionalRequirement: (elements, driver, ids) => {
+                        return CheckValidation()(elements, driver, ids) + "\n" +
+                            CheckElementNames(7,
+                                new List<string>{
+                                    "aria-label attribute2",
+                                    "p referenced by aria-labelledby3",
+                                    "label wrapping input 4",
+                                    "title attribute 5",
+                                    "label referenced by for/id attributes 7"},
+                                new List<string>{
+                                    "p referenced by aria-describedby6",
+                                    "title attribute 7" })
+                                (elements, driver, ids);
+                    }),
                 new TestData("input-range", "Slider", keyboardElements: new List<string> { "input1", "input2" },
-                    //TODO naming
                     additionalRequirement: (elements, driver, ids) => {
                         foreach(var id in ids){
                             Func<int> RangeValue = () => (int) Int32.Parse((string) driver.ExecuteScript("return document.getElementById('" + id + "').value", 0));
@@ -385,7 +432,7 @@ namespace Microsoft.Edge.A11y
                             }
                         }
                         foreach(var element in elements){
-                            if (!element.GetPatterns().Contains("RangeValuePattern")) { 
+                            if (!element.GetPatterns().Contains("RangeValuePattern")) {
                                 return "Element did not implement the RangeValuePattern";
                             }
                         }
@@ -404,13 +451,51 @@ namespace Microsoft.Edge.A11y
                                 "title attribute 7"
                             })(elements, driver, ids);
                     }),
-                new TestData("input-search", "Edit", "search", keyboardElements: new List<string> { "input1", "input2" }),
-                    //TODO naming
-                new TestData("input-tel", "Edit", "telephone", keyboardElements: new List<string> { "input1", "input2" }),
-                    //TODO naming
+                new TestData("input-search", "Edit", "search", keyboardElements: new List<string> { "input1", "input2" },
+                    additionalRequirement: CheckElementNames(7,
+                            new List<string>
+                            {
+                                "aria-label attribute 2",
+                                "p referenced by aria-labelledby3",
+                                "label wrapping input 4",
+                                "title attribute 5",
+                                "label referenced by for/id attributes 7",
+                            },
+                            new List<string>
+                            {
+                                "p referenced by aria-describedby6",
+                                "title attribute 7"
+                            })),
+                new TestData("input-tel", "Edit", "telephone", keyboardElements: new List<string> { "input1", "input2" },
+                    additionalRequirement: CheckElementNames(7,
+                            new List<string>
+                            {
+                                "aria-label attribute 2",
+                                "p referenced by aria-labelledby3",
+                                "label wrapping input 4",
+                                "title attribute 5",
+                                "label referenced by for/id attributes 7",
+                            },
+                            new List<string>
+                            {
+                                "p referenced by aria-describedby6",
+                                "title attribute 7"
+                            })),
                 new TestData("input-time", "Edit", keyboardElements: new List<string> { "input1", "input2" },
-                    //TODO naming
-                    additionalRequirement: CheckCalendarKeyboard(2)),
+                    additionalRequirement: (elements, driver, ids) => {
+                        return CheckCalendarKeyboard(2)(elements, driver, ids) + "\n" +
+                            CheckElementNames(7,
+                                new List<string>{
+                                    "aria-label attribute2",
+                                    "p referenced by aria-labelledby3",
+                                    "label wrapping input 4",
+                                    "title attribute 5",
+                                    "label referenced by for/id attributes 7"},
+                                new List<string>{
+                                    "p referenced by aria-describedby6",
+                                    "title attribute 7" })
+                                (elements, driver, ids);
+                    }),
                 new TestData("input-url", "Edit", "url",
                         keyboardElements: new List<string> { "input1", "input2" },
                         additionalRequirement: CheckValidation()),
@@ -431,7 +516,6 @@ namespace Microsoft.Edge.A11y
                     })),
                 new TestData("mark", "Text", "mark"),
                 new TestData("meter", "Progressbar", "meter",
-                        //TODO naming
                     additionalRequirement:
                         ((elements, driver, ids) => {
                             if(!elements.All(element => element.GetProperties().Any(p => p.Contains("IsReadOnly")))){
@@ -946,7 +1030,7 @@ namespace Microsoft.Edge.A11y
                         //Everything that is invalid on the page
                         var invalid = elements.Where(e => e.CurrentControllerFor != null &&
                                         e.CurrentControllerFor.Length > 0 &&
-                                        e.CurrentIsDataValidForForm == 0 && 
+                                        e.CurrentIsDataValidForForm == 0 &&
                                         e.CurrentHelpText != null &&
                                         e.CurrentHelpText.Length > 0).Select(e => elements.IndexOf(e));
 
