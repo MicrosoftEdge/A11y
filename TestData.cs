@@ -10,7 +10,7 @@ namespace Microsoft.Edge.A11y
     public class StructureChangedHandler : IUIAutomationStructureChangedEventHandler
     {
         public string ElementName { get; set; }
-        
+
         void IUIAutomationStructureChangedEventHandler.HandleStructureChangedEvent(IUIAutomationElement sender, StructureChangeType changeType, int[] runtimeId)
         {
             if (changeType == StructureChangeType.StructureChangeType_ChildAdded)
@@ -112,7 +112,7 @@ namespace Microsoft.Edge.A11y
 
         //All the tests to run
         public static Lazy<List<TestData>> alltests = new Lazy<List<TestData>>(AllTests);
-        
+
         /// <summary>
         /// Get the TestData for the given test page
         /// </summary>
@@ -183,15 +183,22 @@ namespace Microsoft.Edge.A11y
                     })),//TODO feature detection focus ring
                 new TestData("datalist", "Combobox", keyboardElements: new List<string> { "input1" },
                     additionalRequirement: ((elements, driver, ids) => {
-                        if(elements.Any(e => e.CurrentControllerFor == null || e.CurrentControllerFor.Length == 0)){
-                            return "Element controller for not set";
-                        }
-
                         Func<string, string> datalistValue = (id) => (string)driver.ExecuteScript("return document.getElementById('" + id + "').value", 0);
+
+                        var previousControllerForElements = new HashSet<int>();
                         foreach (var id in ids)
                         {
                             var initial = datalistValue(id);
-                            driver.SendSpecialKeys(id, "Arrow_downEnter");
+                            driver.SendSpecialKeys(id, "Arrow_down");
+
+                            var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().ConvertAll(element => elements.IndexOf(element));
+                            if(!controllerForElements.Any(element => !previousControllerForElements.Contains(element))){
+                                return "Element controller for not set";
+                            }
+
+                            previousControllerForElements.Add(controllerForElements.First(element => !previousControllerForElements.Contains(element)));
+
+                            driver.SendSpecialKeys(id, "Enter");
                             if (datalistValue(id) == initial)
                             {
                                 return "Unable to set the datalist with keyboard";
@@ -761,14 +768,14 @@ namespace Microsoft.Edge.A11y
             string videoId = "video1";
             string result = ARPASS;
 
-            Func<bool> VideoPlaying = () => (bool) driver.ExecuteScript("return !document.getElementById('" + videoId + "').paused", 0);
+            Func<bool> VideoPlaying = () => (bool)driver.ExecuteScript("return !document.getElementById('" + videoId + "').paused", 0);
             Func<object> PauseVideo = () => driver.ExecuteScript("document.getElementById('" + videoId + "').pause()", 0);
             Func<object> PlayVideo = () => driver.ExecuteScript("document.getElementById('" + videoId + "').play()", 0);
             Func<double> VideoVolume = () => driver.ExecuteScript("return document.getElementById('" + videoId + "').volume", 0).ParseMystery();
             Func<bool> VideoMuted = () => (bool)driver.ExecuteScript("return document.getElementById('" + videoId + "').muted", 0);
             Func<double> VideoElapsed = () => driver.ExecuteScript("return document.getElementById('" + videoId + "').currentTime", 0).ParseMystery();
             Func<bool> IsVideoFullScreen = () => driver.ExecuteScript("return document.fullscreenElement", 0) != null;
-            
+
             var handler = new StructureChangedHandler();
             WaitForElement(handler, elements[0], "volume");
 
@@ -1198,7 +1205,7 @@ namespace Microsoft.Edge.A11y
                 }
 
                 //Check descriptions
-                if ( descriptions.Count() != requiredDescriptions.Count()
+                if (descriptions.Count() != requiredDescriptions.Count()
                     || !requiredDescriptions.All(rd => descriptions.Contains(rd)))
                 {
                     return requiredDescriptions.Where(rd => !descriptions.Contains(rd)).Aggregate((a, b) => a + ", " + b) +
