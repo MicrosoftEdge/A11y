@@ -780,13 +780,34 @@ namespace Microsoft.Edge.A11y
             string videoId = "video1";
             string result = ARPASS;
 
-            Func<bool> VideoPlaying = () => (bool)driver.ExecuteScript("return !document.getElementById('" + videoId + "').paused", 0);
-            Func<object> PauseVideo = () => driver.ExecuteScript("document.getElementById('" + videoId + "').pause()", 0);
-            Func<object> PlayVideo = () => driver.ExecuteScript("document.getElementById('" + videoId + "').play()", 0);
-            Func<double> VideoVolume = () => driver.ExecuteScript("return document.getElementById('" + videoId + "').volume", 0).ParseMystery();
-            Func<bool> VideoMuted = () => (bool)driver.ExecuteScript("return document.getElementById('" + videoId + "').muted", 0);
-            Func<double> VideoElapsed = () => driver.ExecuteScript("return document.getElementById('" + videoId + "').currentTime", 0).ParseMystery();
-            Func<bool> IsVideoFullScreen = () => driver.ExecuteScript("return document.fullscreenElement", 0) != null;
+            Func<bool> VideoPlaying = () =>{
+                Thread.Sleep(500);
+                return (bool)driver.ExecuteScript("return !document.getElementById('" + videoId + "').paused", 0);
+            }
+            Func<object> PauseVideo = () =>{
+                Thread.Sleep(500);
+                return driver.ExecuteScript("document.getElementById('" + videoId + "').pause()", 0);
+            }
+            Func<object> PlayVideo = () =>{
+                Thread.Sleep(500);
+                return driver.ExecuteScript("document.getElementById('" + videoId + "').play()", 0);
+            }
+            Func<double> VideoVolume = () =>{
+                Thread.Sleep(500);
+                return driver.ExecuteScript("return document.getElementById('" + videoId + "').volume", 0).ParseMystery();
+            }
+            Func<bool> VideoMuted = () =>{
+                Thread.Sleep(500);
+                return (bool)driver.ExecuteScript("return document.getElementById('" + videoId + "').muted", 0);
+            }
+            Func<double> VideoElapsed = () =>{
+                Thread.Sleep(500);
+                return driver.ExecuteScript("return document.getElementById('" + videoId + "').currentTime", 0).ParseMystery();
+            }
+            Func<bool> IsVideoFullScreen = () =>{
+                Thread.Sleep(500);
+                return driver.ExecuteScript("return document.fullscreenElement", 0) != null;
+            }
 
             //Case 1: tab to play button and play/pause
             driver.SendSpecialKeys(videoId, "TabSpace");
