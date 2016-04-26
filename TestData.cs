@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using OpenQA.Selenium;
 
@@ -9,12 +10,19 @@ namespace Microsoft.Edge.A11y
 {
     public class StructureChangedHandler : IUIAutomationStructureChangedEventHandler
     {
+        public string ElementName { get; set; }
+
+        public StructureChangedHandler(string elementName)
+        {
+            ElementName = elementName;
+        }
+
         void IUIAutomationStructureChangedEventHandler.HandleStructureChangedEvent(IUIAutomationElement sender, StructureChangeType changeType, int[] runtimeId)
         {
             if (changeType == StructureChangeType.StructureChangeType_ChildAdded)
             {
                 Console.WriteLine("{0} -Added {1} child", DateTime.Now.Millisecond, sender.CurrentName);
-                if (TestData.WaitForElements.Any(element => element.Equals(sender.CurrentName, StringComparison.InvariantCultureIgnoreCase)))
+                if (ElementName.Equals(sender.CurrentName, StringComparison.InvariantCultureIgnoreCase))
                 {
                     TestData.Ewh.Set();
                 }
@@ -29,6 +37,8 @@ namespace Microsoft.Edge.A11y
     {
         public const string ARFAIL = "Failed additional requirement";
         public const string ARPASS = "";
+        public const double epsilon = .001;
+
         /// <summary>
         /// The name of the test, which corresponds to the name of the html element
         /// </summary>
@@ -73,11 +83,6 @@ namespace Microsoft.Edge.A11y
         public static readonly EventWaitHandle Ewh = new EventWaitHandle(false, EventResetMode.ManualReset);
 
         /// <summary>
-        /// Event handler for StructureChanged event used to wait for element to be added to UIA tree
-        /// </summary>
-        private static StructureChangedHandler _handler = new StructureChangedHandler();
-
-        /// <summary>
         /// List of elements to wait for to be added to UIA tree before signaling event waiter
         /// </summary>
         public static readonly string[] WaitForElements = { "volume" };
@@ -113,20 +118,7 @@ namespace Microsoft.Edge.A11y
 
         //All the tests to run
         public static Lazy<List<TestData>> alltests = new Lazy<List<TestData>>(AllTests);
-
-        public static StructureChangedHandler Handler
-        {
-            get
-            {
-                return _handler;
-            }
-
-            set
-            {
-                _handler = value;
-            }
-        }
-
+        
         /// <summary>
         /// Get the TestData for the given test page
         /// </summary>
@@ -147,7 +139,7 @@ namespace Microsoft.Edge.A11y
             const int timeout = 0;
             return new List<TestData>{
                 new TestData("article", "Group", "article",
-                    additionalRequirement: CheckElementNames(7,
+                    additionalRequirement: CheckElementNames(
                     new List<string>{
                         "aria-label attribute 3",
                         "h1 referenced by aria-labelledby4",
@@ -158,7 +150,7 @@ namespace Microsoft.Edge.A11y
                         "title attribute 7"
                     })),
                 new TestData("aside", "Group", "aside", "Custom", "complementary",
-                    additionalRequirement: CheckElementNames(7,
+                    additionalRequirement: CheckElementNames(
                     new List<string>{
                         "aria-label attribute 3",
                         "h1 referenced by aria-labelledby4",
@@ -170,9 +162,6 @@ namespace Microsoft.Edge.A11y
                     })),
                 new TestData("audio", "Group", "audio",
                     additionalRequirement: ((elements, driver, ids) => {
-                        new CUIAutomation8().AddStructureChangedEventHandler(elements[0], TreeScope.TreeScope_Descendants, null, TestData.Handler);
-                        Ewh.WaitOne(TimeSpan.FromSeconds(5));
-
                         var childNames = CheckChildNames(new List<string> {
                                 "Play",
                                 "Time elapsed",
@@ -220,7 +209,7 @@ namespace Microsoft.Edge.A11y
                 new TestData("details", null),
                 new TestData("dialog", null),
                 new TestData("figure", "Group", "figure",
-                    additionalRequirement: CheckElementNames(7,
+                    additionalRequirement: CheckElementNames(
                     new List<string>{
                         "aria-label attribute 2",
                         "p referenced by aria-labelledby3",
@@ -239,7 +228,7 @@ namespace Microsoft.Edge.A11y
                         })),
                 new TestData("footer", "Group",
                     additionalRequirement: (elements, driver, ids) => {
-                        var result = CheckElementNames(7,
+                        var result = CheckElementNames(
                             new List<string>{
                                 "aria-label attribute 3",
                                 "small referenced by aria-labelledby4",
@@ -293,7 +282,7 @@ namespace Microsoft.Edge.A11y
                     }),
                 new TestData("header", "Group",
                     additionalRequirement: (elements, driver, ids) => {
-                        var result = CheckElementNames(7,
+                        var result = CheckElementNames(
                             new List<string>{
                                 "aria-label attribute 3",
                                 "small referenced by aria-labelledby4",
@@ -391,7 +380,7 @@ namespace Microsoft.Edge.A11y
                 new TestData("input-date", "Edit", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: (elements, driver, ids) => {
                         return CheckCalendarKeyboard(3)(elements, driver, ids) + "\n" +
-                            CheckElementNames(7,
+                            CheckElementNames(
                                 new List<string>{
                                     "aria-label attribute2",
                                     "p referenced by aria-labelledby3",
@@ -406,7 +395,7 @@ namespace Microsoft.Edge.A11y
                 new TestData("input-datetime-local", "Text",
                     additionalRequirement: (elements, driver, ids) => {
                         return CheckDatetimeLocalKeyboard()(elements, driver, ids) + "\n" +
-                            CheckElementNames(7,
+                            CheckElementNames(
                                 new List<string>{
                                     "aria-label attribute2",
                                     "p referenced by aria-labelledby3",
@@ -422,7 +411,7 @@ namespace Microsoft.Edge.A11y
                     keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: (elements, driver, ids) => {
                         return CheckValidation()(elements, driver, ids) + "\n" +
-                            CheckElementNames(7,
+                            CheckElementNames(
                                 new List<string>{
                                     "aria-label attribute2",
                                     "p referenced by aria-labelledby3",
@@ -437,7 +426,7 @@ namespace Microsoft.Edge.A11y
                 new TestData("input-month", "Edit", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: (elements, driver, ids) => {
                         return CheckCalendarKeyboard(2)(elements, driver, ids) + "\n" +
-                            CheckElementNames(7,
+                            CheckElementNames(
                                 new List<string>{
                                     "aria-label attribute2",
                                     "p referenced by aria-labelledby3",
@@ -453,7 +442,7 @@ namespace Microsoft.Edge.A11y
                     keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: (elements, driver, ids) => {
                         return CheckValidation()(elements, driver, ids) + "\n" +
-                            CheckElementNames(7,
+                            CheckElementNames(
                                 new List<string>{
                                     "aria-label attribute2",
                                     "p referenced by aria-labelledby3",
@@ -498,7 +487,7 @@ namespace Microsoft.Edge.A11y
                                 return "Element did not implement the RangeValuePattern";
                             }
                         }
-                        return CheckElementNames(7,
+                        return CheckElementNames(
                             new List<string>
                             {
                                 "aria-label attribute 2",
@@ -514,7 +503,7 @@ namespace Microsoft.Edge.A11y
                             })(elements, driver, ids);
                     }),
                 new TestData("input-search", "Edit", "search", keyboardElements: new List<string> { "input1", "input2" },
-                    additionalRequirement: CheckElementNames(7,
+                    additionalRequirement: CheckElementNames(
                             new List<string>
                             {
                                 "aria-label attribute 2",
@@ -529,7 +518,7 @@ namespace Microsoft.Edge.A11y
                                 "title attribute 7"
                             })),
                 new TestData("input-tel", "Edit", "telephone", keyboardElements: new List<string> { "input1", "input2" },
-                    additionalRequirement: CheckElementNames(7,
+                    additionalRequirement: CheckElementNames(
                             new List<string>
                             {
                                 "aria-label attribute 2",
@@ -546,7 +535,7 @@ namespace Microsoft.Edge.A11y
                 new TestData("input-time", "Edit", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: (elements, driver, ids) => {
                         return CheckCalendarKeyboard(2)(elements, driver, ids) + "\n" +
-                            CheckElementNames(7,
+                            CheckElementNames(
                                 new List<string>{
                                     "aria-label attribute2",
                                     "p referenced by aria-labelledby3",
@@ -564,7 +553,7 @@ namespace Microsoft.Edge.A11y
                 new TestData("input-week", "Edit", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: CheckCalendarKeyboard(2)),
                 new TestData("main", "Group", "main", "Main", "main",
-                    additionalRequirement: CheckElementNames(6,
+                    additionalRequirement: CheckElementNames(
                     new List<string>{
                         "title attribute 1",
                         "aria-label attribute 2",
@@ -583,7 +572,7 @@ namespace Microsoft.Edge.A11y
                             if(!elements.All(element => element.GetProperties().Any(p => p.Contains("IsReadOnly")))){
                                 return "Not all elements were read only";
                             }
-                            return CheckElementNames(7,
+                            return CheckElementNames(
                                 new List<string>
                                 {
                                     "aria-label attribute 2",
@@ -603,7 +592,7 @@ namespace Microsoft.Edge.A11y
                 new TestData("menupopup", null),
                 new TestData("menutoolbar", null),
                 new TestData("nav", "Group", "navigation", "Navigation", "navigation",
-                    additionalRequirement: CheckElementNames(6,
+                    additionalRequirement: CheckElementNames(
                     new List<string>{
                         "aria-label attribute 2",
                         "h1 referenced by aria-labelledby3",
@@ -626,7 +615,7 @@ namespace Microsoft.Edge.A11y
                         return ARPASS;
                     })),
                 new TestData("progress", "Progressbar",
-                    additionalRequirement: CheckElementNames(7,
+                    additionalRequirement: CheckElementNames(
                     new List<string>{
                         "aria-label attribute 2",
                         "p referenced by aria-labelledby3",
@@ -642,7 +631,7 @@ namespace Microsoft.Edge.A11y
                     additionalRequirement: (elements, driver, ids) => {
                         if(elements.Count == 4){//This is because we should only include in the
                             //tree those elements that have accessible names (3, 4, 5, 7)
-                            return CheckElementNames(4,
+                            return CheckElementNames(
                                 new List<string>{
                                     "aria-label attribute 3",
                                     "h1 referenced by aria-labelledby4",
@@ -676,8 +665,6 @@ namespace Microsoft.Edge.A11y
                 new TestData("video", "Group", null, keyboardElements: new List<string> { "video1" },
                     additionalRequirement: ((elements, driver, ids) =>
                     {
-                        new CUIAutomation8().AddStructureChangedEventHandler(elements[0], TreeScope.TreeScope_Descendants, null, TestData.Handler);
-                        Ewh.WaitOne(TimeSpan.FromSeconds(5));
 
                         var childNames = CheckChildNames(
                             new List<string> {//TODO get full list when it's finalized
@@ -815,6 +802,9 @@ namespace Microsoft.Edge.A11y
                 Thread.Sleep(500);
                 return driver.ExecuteScript("return document.fullscreenElement", 0) != null;
             };
+            
+            var handler = new StructureChangedHandler("volume");
+            WaitForElement(handler, elements[0]);
 
             //Case 1: tab to play button and play/pause
             driver.SendSpecialKeys(videoId, "TabSpace");
@@ -832,7 +822,19 @@ namespace Microsoft.Edge.A11y
 
             //Case 2: Volume and mute
             Javascript.ClearFocus(driver, 0);
-            driver.SendTabs(videoId, 7);//tab to volume control //TODO make this more resilient to UI changes
+            driver.SendTabs(videoId, 6);//tab to volume control //TODO make this more resilient to UI changes
+            driver.SendSpecialKeys(videoId, "Enter");//mute//TODO switch back to original order once space works
+            if (!VideoMuted())
+            {
+                result += "\tEnter did not mute the video\n";
+            }
+            handler.ElementName = "mute";
+            WaitForElement(handler, elements[0]);
+            driver.SendSpecialKeys(videoId, "Enter");//unmute
+            if (VideoMuted())
+            {
+                result += "\tEnter did not unmute the video\n";
+            }
             var initial = VideoVolume();
             driver.SendSpecialKeys(videoId, "Arrow_downArrow_down");//volume down
             if (initial == VideoVolume())
@@ -844,22 +846,14 @@ namespace Microsoft.Edge.A11y
             {
                 result += "\tVolume did not increase with arrow keys\n";
             }
-            driver.SendSpecialKeys(videoId, "Enter");//mute//TODO switch back to original order once space works
-            if (!VideoMuted())
-            {
-                result += "\tEnter did not mute the video\n";
-            }
-            driver.SendSpecialKeys(videoId, "Space");//unmute
-            if (VideoMuted())
-            {
-                result += "\tSpace did not unmute the video\n";
-            }
+            
 
             //Case 3: Audio selection
-            Javascript.ClearFocus(driver, 0);
-            driver.SendTabs(videoId, 6);//tab to audio selection//TODO make this more resilient to UI changes
-            driver.SendSpecialKeys(videoId, "EnterArrow_down");
-
+            // TODO test manually
+            //Javascript.ClearFocus(driver, 0);
+            //driver.SendTabs(videoId, 5);//tab to audio selection//TODO make this more resilient to UI changes
+            //driver.SendSpecialKeys(videoId, "EnterArrow_down");
+            
             //Case 4: Progress and seek
             if (VideoPlaying())
             { //this should not be playing
@@ -869,7 +863,7 @@ namespace Microsoft.Edge.A11y
             driver.SendTabs(videoId, 3);//tab to seek//TODO make this more resilient to UI changes
             initial = VideoElapsed();
             driver.SendSpecialKeys(videoId, "Arrow_right"); //skip ahead
-            if (initial != VideoElapsed() - 10)
+            if (initial - (VideoElapsed() - 10) > epsilon)
             {
                 result += "\tVideo did not skip forward with arrow right\n";
             }
@@ -889,7 +883,7 @@ namespace Microsoft.Edge.A11y
             driver.SendTabs(videoId, 4);//tab to seek//TODO make this more resilient to UI changes
             initial = VideoElapsed();
             driver.SendSpecialKeys(videoId, "Arrow_right"); //skip ahead
-            if (initial != VideoElapsed() - 10)
+            if (initial - (VideoElapsed() - 10) > epsilon)
             {
                 result += "\tVideo did not skip forward with arrow right\n";
             }
@@ -959,6 +953,8 @@ namespace Microsoft.Edge.A11y
                 return driver.ExecuteScript("return document.getElementById('" + audioId + "').currentTime", 0).ParseMystery();
             };
 
+            WaitForElement(elements[0], "volume");
+
             //Case 1: Play/Pause
             driver.SendTabs(audioId, 1); //Tab to play button
             driver.SendSpecialKeys(audioId, "Enter");
@@ -1009,12 +1005,12 @@ namespace Microsoft.Edge.A11y
                 result += "\tVolume did not increase with arrow up\n";
             }
 
-            driver.SendSpecialKeys(audioId, "Space");
+            driver.SendSpecialKeys(audioId, "Enter");
             if (!AudioMuted())
             {
-                result += "\tAudio was not muted by space on the volume control\n";
+                result += "\tAudio was not muted by enter on the volume control\n";
             }
-
+            WaitForElement(elements[0], "mute");
             driver.SendSpecialKeys(audioId, "Enter");
             if (AudioMuted())
             {
@@ -1217,15 +1213,15 @@ namespace Microsoft.Edge.A11y
         /// to find</param>
         /// <returns>A func that can be used to check the names and descriptions
         /// of elements</returns>
-        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckElementNames(int total, List<string> requiredNames, List<string> requiredDescriptions)
+        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckElementNames(List<string> requiredNames, List<string> requiredDescriptions)
         {
             return (elements, driver, ids) =>
             {
-                var names = elements.ConvertAll(element => element.CurrentName);
-                var descriptions = elements.ConvertAll(element => ((IUIAutomationElement6)element).CurrentFullDescription);
+                var names = elements.ConvertAll(element => element.CurrentName).Where(e => !string.IsNullOrEmpty(e)).ToList();
+                var descriptions = elements.ConvertAll(element => ((IUIAutomationElement6)element).CurrentFullDescription).Where(e => !string.IsNullOrEmpty(e)).ToList();
 
                 //Check names
-                if (total != names.Count(name => name == "") + requiredNames.Count()//total != actual blank names + expected non-blank
+                if (names.Count() != requiredNames.Count()//total != actual blank names + expected non-blank
                     || !requiredNames.All(rn => names.Contains(rn)))//not all the expected names were found
                 {
                     return requiredNames.Where(rn => !names.Contains(rn)).Aggregate((a, b) => a + ", " + b) + //get a comma-separated list of all required names not found
@@ -1235,7 +1231,7 @@ namespace Microsoft.Edge.A11y
                 }
 
                 //Check descriptions
-                if (total != descriptions.Count(description => description == "") + requiredDescriptions.Count()
+                if ( descriptions.Count() != requiredDescriptions.Count()
                     || !requiredDescriptions.All(rd => descriptions.Contains(rd)))
                 {
                     return requiredDescriptions.Where(rd => !descriptions.Contains(rd)).Aggregate((a, b) => a + ", " + b) +
@@ -1246,6 +1242,26 @@ namespace Microsoft.Edge.A11y
 
                 return ARPASS;
             };
+        }
+
+        public static bool WaitForElement(IUIAutomationElement element, string elementName, TimeSpan? timeout = null)
+        {
+            new CUIAutomation8().AddStructureChangedEventHandler(element, TreeScope.TreeScope_Descendants, null, new StructureChangedHandler(elementName));
+            if (timeout == null)
+            {
+                timeout = TimeSpan.FromMilliseconds(500);
+            }
+            return Ewh.WaitOne(timeout.Value);
+        }
+
+        public static bool WaitForElement(StructureChangedHandler handler, IUIAutomationElement element, TimeSpan? timeout = null)
+        {
+            new CUIAutomation8().AddStructureChangedEventHandler(element, TreeScope.TreeScope_Descendants, null, handler);
+            if (timeout == null)
+            {
+                timeout = TimeSpan.FromMilliseconds(500);
+            }
+            return Ewh.WaitOne(timeout.Value);
         }
     }
 }
