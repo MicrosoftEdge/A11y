@@ -528,7 +528,7 @@ namespace Microsoft.Edge.A11y
                         "h1 referenced by aria-describedby5",
                         "title attribute 6"
                     })),
-                new TestData("mark", "Text", "mark"),
+                new TestData("mark", "Text", "mark"),//TODO text pattern//TODO naming
                 new TestData("meter", "Progressbar", "meter",
                     additionalRequirement:
                         ((elements, driver, ids) => {
@@ -663,15 +663,6 @@ namespace Microsoft.Edge.A11y
                             return "Found " + elements.Count(e => e.CurrentControlType != paneCode) + " elements. Expected 1";
                         }
 
-                        //TODO possibly remove
-                        driver.ExecuteScript(Javascript.RemoveAriaHidden, timeout);
-
-                        elements = EdgeA11yTools.SearchDocumentChildren(browserElement, "Button", null, out foundControlTypes);
-                        if (elements.Count(e => e.CurrentControlType != paneCode) != 2)
-                        {
-                            return "Found " + elements.Count(e => e.CurrentControlType != paneCode) + " elements. Expected 2";
-                        }
-
                         return ARPASS;
                     }),
                     searchStrategy: (element => true)),//take all elements
@@ -736,19 +727,7 @@ namespace Microsoft.Edge.A11y
             Func<bool> VideoMuted = () => (bool)driver.ExecuteScript("return document.getElementById('" + videoId + "').muted", 0);
             Func<double> VideoElapsed = () => driver.ExecuteScript("return document.getElementById('" + videoId + "').currentTime", 0).ParseMystery();
 
-            //Case 1: tab to video element and play/pause
-            driver.SendSpecialKeys(videoId, "Space");
-            if (!VideoPlaying())
-            {
-                return "Video was not playing after spacebar on root element";
-            }
-            driver.SendSpecialKeys(videoId, "Space");
-            if (VideoPlaying())
-            {
-                return "Video was not paused after spacebar on root element";
-            }
-
-            //Case 2: tab to play button and play/pause
+            //Case 1: tab to play button and play/pause
             driver.SendSpecialKeys(videoId, "TabSpace");
             if (!VideoPlaying())
             {
@@ -760,7 +739,7 @@ namespace Microsoft.Edge.A11y
                 return "Video was not paused after enter on play button";
             }
 
-            //Case 3: Volume and mute
+            //Case 2: Volume and mute
             Javascript.ClearFocus(driver, 0);
             driver.SendTabs(videoId, 6);//tab to volume control //TODO make this more resilient to UI changes
             var initial = VideoVolume();
@@ -785,12 +764,12 @@ namespace Microsoft.Edge.A11y
                 return "Space did not unmute the video";
             }
 
-            //Case 4: Audio selection
+            //Case 3: Audio selection
             Javascript.ClearFocus(driver, 0);
             driver.SendTabs(videoId, 5);//tab to audio selection//TODO make this more resilient to UI changes
             driver.SendSpecialKeys(videoId, "EnterArrow_down");
 
-            //Case 5: Progress and seek
+            //Case 4: Progress and seek
             if (VideoPlaying())
             { //this should not be playing
                 return "Video was playing when it shouldn't have been";
@@ -810,7 +789,7 @@ namespace Microsoft.Edge.A11y
                 return "Video did not skip back with arrow left";
             }
 
-            //Case 6: Progress and seek on remaining time
+            //Case 5: Progress and seek on remaining time
             if (VideoPlaying())
             { //this should not be playing
                 return "Video was playing when it shouldn't have been";
