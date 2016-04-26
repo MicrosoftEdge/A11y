@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using OpenQA.Selenium;
 
@@ -11,12 +10,7 @@ namespace Microsoft.Edge.A11y
     public class StructureChangedHandler : IUIAutomationStructureChangedEventHandler
     {
         public string ElementName { get; set; }
-
-        public StructureChangedHandler(string elementName)
-        {
-            ElementName = elementName;
-        }
-
+        
         void IUIAutomationStructureChangedEventHandler.HandleStructureChangedEvent(IUIAutomationElement sender, StructureChangeType changeType, int[] runtimeId)
         {
             if (changeType == StructureChangeType.StructureChangeType_ChildAdded)
@@ -221,7 +215,7 @@ namespace Microsoft.Edge.A11y
                         "title attribute 7"
                     })),
                 new TestData("figure-figcaption", "Text",
-                    additionalRequirement: ((elements, driver, ids) => 
+                    additionalRequirement: ((elements, driver, ids) =>
                         {
                             //TODO TextPattern range says HTML5 logo
                             return ARFAIL;
@@ -767,71 +761,46 @@ namespace Microsoft.Edge.A11y
             string videoId = "video1";
             string result = ARPASS;
 
-            Func<bool> VideoPlaying = () =>
-            {
-                Thread.Sleep(500);
-                return (bool)driver.ExecuteScript("return !document.getElementById('" + videoId + "').paused", 0);
-            };
-            Func<object> PauseVideo = () =>
-            {
-                Thread.Sleep(500);
-                return driver.ExecuteScript("document.getElementById('" + videoId + "').pause()", 0);
-            };
-            Func<object> PlayVideo = () =>
-            {
-                Thread.Sleep(500);
-                return driver.ExecuteScript("document.getElementById('" + videoId + "').play()", 0);
-            };
-            Func<double> VideoVolume = () =>
-            {
-                Thread.Sleep(500);
-                return driver.ExecuteScript("return document.getElementById('" + videoId + "').volume", 0).ParseMystery();
-            };
-            Func<bool> VideoMuted = () =>
-            {
-                Thread.Sleep(500);
-                return (bool)driver.ExecuteScript("return document.getElementById('" + videoId + "').muted", 0);
-            };
-            Func<double> VideoElapsed = () =>
-            {
-                Thread.Sleep(500);
-                return driver.ExecuteScript("return document.getElementById('" + videoId + "').currentTime", 0).ParseMystery();
-            };
-            Func<bool> IsVideoFullScreen = () =>
-            {
-                Thread.Sleep(500);
-                return driver.ExecuteScript("return document.fullscreenElement", 0) != null;
-            };
+            Func<bool> VideoPlaying = () => (bool) driver.ExecuteScript("return !document.getElementById('" + videoId + "').paused", 0);
+            Func<object> PauseVideo = () => driver.ExecuteScript("document.getElementById('" + videoId + "').pause()", 0);
+            Func<object> PlayVideo = () => driver.ExecuteScript("document.getElementById('" + videoId + "').play()", 0);
+            Func<double> VideoVolume = () => driver.ExecuteScript("return document.getElementById('" + videoId + "').volume", 0).ParseMystery();
+            Func<bool> VideoMuted = () => (bool)driver.ExecuteScript("return document.getElementById('" + videoId + "').muted", 0);
+            Func<double> VideoElapsed = () => driver.ExecuteScript("return document.getElementById('" + videoId + "').currentTime", 0).ParseMystery();
+            Func<bool> IsVideoFullScreen = () => driver.ExecuteScript("return document.fullscreenElement", 0) != null;
             
-            var handler = new StructureChangedHandler("volume");
-            WaitForElement(handler, elements[0]);
+            var handler = new StructureChangedHandler();
+            WaitForElement(handler, elements[0], "volume");
 
             //Case 1: tab to play button and play/pause
+            Console.WriteLine("Case 1: tab to play button and play/pause");
             driver.SendSpecialKeys(videoId, "TabSpace");
-            if (!VideoPlaying())
+
+            WaitForElement(handler, elements[0], "play");
+            if (!WaitForCondition(VideoPlaying))
             {
                 result += "\tVideo was not playing after spacebar on play button\n";
                 PlayVideo();
             }
             driver.SendSpecialKeys(videoId, "Enter");
-            if (VideoPlaying())
+            if (WaitForCondition(VideoPlaying))
             {
                 result += "\tVideo was not paused after enter on play button\n";
                 PauseVideo();
             }
 
             //Case 2: Volume and mute
+            Console.WriteLine("Case 2: Volume and mute");
             Javascript.ClearFocus(driver, 0);
             driver.SendTabs(videoId, 6);//tab to volume control //TODO make this more resilient to UI changes
             driver.SendSpecialKeys(videoId, "Enter");//mute//TODO switch back to original order once space works
-            if (!VideoMuted())
+            if (!WaitForCondition(VideoMuted))
             {
                 result += "\tEnter did not mute the video\n";
             }
-            handler.ElementName = "mute";
-            WaitForElement(handler, elements[0]);
+            WaitForElement(handler, elements[0], "mute");
             driver.SendSpecialKeys(videoId, "Enter");//unmute
-            if (VideoMuted())
+            if (WaitForCondition(VideoMuted))
             {
                 result += "\tEnter did not unmute the video\n";
             }
@@ -846,16 +815,16 @@ namespace Microsoft.Edge.A11y
             {
                 result += "\tVolume did not increase with arrow keys\n";
             }
-            
 
             //Case 3: Audio selection
             // TODO test manually
             //Javascript.ClearFocus(driver, 0);
             //driver.SendTabs(videoId, 5);//tab to audio selection//TODO make this more resilient to UI changes
             //driver.SendSpecialKeys(videoId, "EnterArrow_down");
-            
+
+            Console.WriteLine("Case 4: Progress and seek");
             //Case 4: Progress and seek
-            if (VideoPlaying())
+            if (WaitForCondition(VideoPlaying))
             { //this should not be playing
                 result += "\tVideo was playing when it shouldn't have been\n";
             }
@@ -898,12 +867,12 @@ namespace Microsoft.Edge.A11y
             Javascript.ClearFocus(driver, 0);
             driver.SendTabs(videoId, 8);//tab to fullscreen
             driver.SendSpecialKeys(videoId, "Enter"); //enter fullscreen mode
-            if (!IsVideoFullScreen())
+            if (!WaitForCondition(IsVideoFullScreen))
             {
                 result += "\tVideo did not enter FullScreen mode\n";
             }
             driver.SendKeys(videoId, Keys.Escape);
-            if (IsVideoFullScreen())
+            if (WaitForCondition(IsVideoFullScreen))
             {
                 result += "\tVideo did not exit FullScreen mode\n";
             }
@@ -1206,8 +1175,6 @@ namespace Microsoft.Edge.A11y
         /// <summary>
         /// Func factory for checking that elements have the proper Names and FullDescriptions
         /// </summary>
-        /// <param name="total">How many elements are on the page total, since
-        /// some are supposed to be blank</param>
         /// <param name="requiredNames">All the names we expect to find</param>
         /// <param name="requiredDescriptions">All the descriptions we expect
         /// to find</param>
@@ -1246,7 +1213,9 @@ namespace Microsoft.Edge.A11y
 
         public static bool WaitForElement(IUIAutomationElement element, string elementName, TimeSpan? timeout = null)
         {
-            new CUIAutomation8().AddStructureChangedEventHandler(element, TreeScope.TreeScope_Descendants, null, new StructureChangedHandler(elementName));
+            var handler = new StructureChangedHandler();
+            handler.ElementName = elementName;
+            new CUIAutomation8().AddStructureChangedEventHandler(element, TreeScope.TreeScope_Descendants, null, handler);
             if (timeout == null)
             {
                 timeout = TimeSpan.FromMilliseconds(500);
@@ -1254,14 +1223,26 @@ namespace Microsoft.Edge.A11y
             return Ewh.WaitOne(timeout.Value);
         }
 
-        public static bool WaitForElement(StructureChangedHandler handler, IUIAutomationElement element, TimeSpan? timeout = null)
+        public static bool WaitForElement(StructureChangedHandler handler, IUIAutomationElement element, string elementName, TimeSpan? timeout = null)
         {
+            handler.ElementName = elementName;
             new CUIAutomation8().AddStructureChangedEventHandler(element, TreeScope.TreeScope_Descendants, null, handler);
             if (timeout == null)
             {
                 timeout = TimeSpan.FromMilliseconds(500);
             }
             return Ewh.WaitOne(timeout.Value);
+        }
+
+        public static bool WaitForCondition(Func<bool> conditionCheck)
+        {
+            var condition = false;
+            for (var i = 0; i < 10 && !condition; i++)
+            {
+                Thread.Sleep(500);
+                condition = conditionCheck();
+            }
+            return condition;
         }
     }
 }
