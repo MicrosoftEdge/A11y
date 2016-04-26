@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Remoting.Messaging;
 using System.Threading;
 using OpenQA.Selenium;
 
@@ -15,7 +16,7 @@ namespace Microsoft.Edge.A11y
         {
             if (changeType == StructureChangeType.StructureChangeType_ChildAdded)
             {
-                Console.WriteLine("{0} -Added {1} child", DateTime.Now.Millisecond, sender.CurrentName);
+                //Console.WriteLine("{0} -Added {1} child", DateTime.Now.Millisecond, sender.CurrentName);
                 if (ElementName.Equals(sender.CurrentName, StringComparison.InvariantCultureIgnoreCase))
                 {
                     TestData.Ewh.Set();
@@ -192,7 +193,7 @@ namespace Microsoft.Edge.A11y
                             driver.SendSpecialKeys(id, "Arrow_down");
 
                             var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().ConvertAll(element => elements.IndexOf(element));
-                            if(!controllerForElements.Any(element => !previousControllerForElements.Contains(element))){
+                            if(controllerForElements.All(element => previousControllerForElements.Contains(element))){
                                 return "Element controller for not set";
                             }
 
@@ -771,9 +772,11 @@ namespace Microsoft.Edge.A11y
             Func<bool> VideoPlaying = () => (bool)driver.ExecuteScript("return !document.getElementById('" + videoId + "').paused", 0);
             Func<object> PauseVideo = () => driver.ExecuteScript("document.getElementById('" + videoId + "').pause()", 0);
             Func<object> PlayVideo = () => driver.ExecuteScript("document.getElementById('" + videoId + "').play()", 0);
-            Func<double> VideoVolume = () => driver.ExecuteScript("return document.getElementById('" + videoId + "').volume", 0).ParseMystery();
+            Func<double> GetVideoVolume = () => driver.ExecuteScript("return document.getElementById('" + videoId + "').volume", 0).ParseMystery();
+            Func <double, bool> VideoVolume = expected => Math.Abs(GetVideoVolume() - expected) < epsilon;
             Func<bool> VideoMuted = () => (bool)driver.ExecuteScript("return document.getElementById('" + videoId + "').muted", 0);
-            Func<double> VideoElapsed = () => driver.ExecuteScript("return document.getElementById('" + videoId + "').currentTime", 0).ParseMystery();
+            Func<double> GetVideoElapsed = () => driver.ExecuteScript("return document.getElementById('" + videoId + "').currentTime", 0).ParseMystery();
+            Func <double, bool> VideoElapsed = expected => Math.Abs(GetVideoElapsed() - expected) < epsilon;
             Func<bool> IsVideoFullScreen = () => driver.ExecuteScript("return document.fullscreenElement", 0) != null;
 
             var handler = new StructureChangedHandler();
@@ -811,14 +814,14 @@ namespace Microsoft.Edge.A11y
             {
                 result += "\tEnter did not unmute the video\n";
             }
-            var initial = VideoVolume();
+            var initial = GetVideoVolume();
             driver.SendSpecialKeys(videoId, "Arrow_downArrow_down");//volume down
-            if (initial == VideoVolume())
+            if (!WaitForCondition(VideoVolume, initial - 0.1))
             {
                 result += "\tVolume did not decrease with arrow keys\n";
             }
             driver.SendSpecialKeys(videoId, "Arrow_upArrow_up");//volume up
-            if (VideoVolume() != initial)
+            if (!WaitForCondition(VideoVolume, initial))
             {
                 result += "\tVolume did not increase with arrow keys\n";
             }
@@ -837,17 +840,18 @@ namespace Microsoft.Edge.A11y
             }
             Javascript.ClearFocus(driver, 0);
             driver.SendTabs(videoId, 3);//tab to seek//TODO make this more resilient to UI changes
-            initial = VideoElapsed();
+            initial = GetVideoElapsed();
             driver.SendSpecialKeys(videoId, "Arrow_right"); //skip ahead
-            if (initial - (VideoElapsed() - 10) > epsilon)
+            if (!WaitForCondition(VideoElapsed, initial+10))
             {
                 result += "\tVideo did not skip forward with arrow right\n";
             }
 
             driver.SendSpecialKeys(videoId, "Arrow_left"); //skip back
-            if (initial != VideoElapsed())
+            if (!WaitForCondition(VideoElapsed,initial))
             {
                 result += "\tVideo did not skip back with arrow left\n";
+                Console.WriteLine("Video did not skip back with arrow left, initial:{0} actual:{1}", initial, GetVideoElapsed());
             }
 
             //Case 5: Progress and seek on remaining time
@@ -857,17 +861,20 @@ namespace Microsoft.Edge.A11y
             }
             Javascript.ClearFocus(driver, 0);
             driver.SendTabs(videoId, 4);//tab to seek//TODO make this more resilient to UI changes
-            initial = VideoElapsed();
+            initial = GetVideoElapsed();
             driver.SendSpecialKeys(videoId, "Arrow_right"); //skip ahead
-            if (initial - (VideoElapsed() - 10) > epsilon)
+            if (!WaitForCondition(VideoElapsed, initial+10))
             {
                 result += "\tVideo did not skip forward with arrow right\n";
             }
 
             driver.SendSpecialKeys(videoId, "Arrow_left"); //skip back
-            if (initial != VideoElapsed())
+            if (!WaitForCondition(VideoElapsed, initial))
             {
                 result += "\tVideo did not skip back with arrow left\n";
+                Console.WriteLine("Video did not skip back with arrow left, initial:{0} actual:{1}", initial, GetVideoElapsed());
+                driver.SendSpecialKeys(videoId, "Arrow_left"); //skip back
+                Console.WriteLine("Video did not skip back with arrow left, initial:{0} actual:{1}", initial, GetVideoElapsed());
             }
 
             //Case 6: Full screen
@@ -1239,6 +1246,17 @@ namespace Microsoft.Edge.A11y
                 timeout = TimeSpan.FromMilliseconds(500);
             }
             return Ewh.WaitOne(timeout.Value);
+        }
+
+        public static bool WaitForCondition(Func<double, bool> conditionCheck, double value)
+        {
+            var condition = false;
+            for (var i = 0; i < 10 && !condition; i++)
+            {
+                Thread.Sleep(500);
+                condition = conditionCheck(value);
+            }
+            return condition;
         }
 
         public static bool WaitForCondition(Func<bool> conditionCheck)
