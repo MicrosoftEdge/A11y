@@ -780,34 +780,41 @@ namespace Microsoft.Edge.A11y
             string videoId = "video1";
             string result = ARPASS;
 
-            Func<bool> VideoPlaying = () =>{
+            Func<bool> VideoPlaying = () =>
+            {
                 Thread.Sleep(500);
                 return (bool)driver.ExecuteScript("return !document.getElementById('" + videoId + "').paused", 0);
-            }
-            Func<object> PauseVideo = () =>{
+            };
+            Func<object> PauseVideo = () =>
+            {
                 Thread.Sleep(500);
                 return driver.ExecuteScript("document.getElementById('" + videoId + "').pause()", 0);
-            }
-            Func<object> PlayVideo = () =>{
+            };
+            Func<object> PlayVideo = () =>
+            {
                 Thread.Sleep(500);
                 return driver.ExecuteScript("document.getElementById('" + videoId + "').play()", 0);
-            }
-            Func<double> VideoVolume = () =>{
+            };
+            Func<double> VideoVolume = () =>
+            {
                 Thread.Sleep(500);
                 return driver.ExecuteScript("return document.getElementById('" + videoId + "').volume", 0).ParseMystery();
-            }
-            Func<bool> VideoMuted = () =>{
+            };
+            Func<bool> VideoMuted = () =>
+            {
                 Thread.Sleep(500);
                 return (bool)driver.ExecuteScript("return document.getElementById('" + videoId + "').muted", 0);
-            }
-            Func<double> VideoElapsed = () =>{
+            };
+            Func<double> VideoElapsed = () =>
+            {
                 Thread.Sleep(500);
                 return driver.ExecuteScript("return document.getElementById('" + videoId + "').currentTime", 0).ParseMystery();
-            }
-            Func<bool> IsVideoFullScreen = () =>{
+            };
+            Func<bool> IsVideoFullScreen = () =>
+            {
                 Thread.Sleep(500);
                 return driver.ExecuteScript("return document.fullscreenElement", 0) != null;
-            }
+            };
 
             //Case 1: tab to play button and play/pause
             driver.SendSpecialKeys(videoId, "TabSpace");
@@ -921,12 +928,36 @@ namespace Microsoft.Edge.A11y
         {
             string audioId = "audio1";
             string result = ARPASS;
-            Func<bool> AudioPlaying = () => (bool)driver.ExecuteScript("return !document.getElementById('" + audioId + "').paused", 0);
-            Func<object> PauseAudio = () => driver.ExecuteScript("!document.getElementById('" + audioId + "').pause()", 0);
-            Func<object> PlayAudio = () => driver.ExecuteScript("!document.getElementById('" + audioId + "').play()", 0);
-            Func<double> AudioVolume = () => driver.ExecuteScript("return document.getElementById('" + audioId + "').volume", 0).ParseMystery();
-            Func<bool> AudioMuted = () => (bool)driver.ExecuteScript("return document.getElementById('" + audioId + "').muted", 0);
-            Func<double> AudioElapsed = () => driver.ExecuteScript("return document.getElementById('" + audioId + "').currentTime", 0).ParseMystery();
+            Func<bool> AudioPlaying = () =>
+            {
+                Thread.Sleep(500);
+                return (bool)driver.ExecuteScript("return !document.getElementById('" + audioId + "').paused", 0);
+            };
+            Func<object> PauseAudio = () =>
+            {
+                Thread.Sleep(500);
+                return driver.ExecuteScript("!document.getElementById('" + audioId + "').pause()", 0);
+            };
+            Func<object> PlayAudio = () =>
+            {
+                Thread.Sleep(500);
+                return driver.ExecuteScript("!document.getElementById('" + audioId + "').play()", 0);
+            };
+            Func<double> AudioVolume = () =>
+            {
+                Thread.Sleep(500);
+                return driver.ExecuteScript("return document.getElementById('" + audioId + "').volume", 0).ParseMystery();
+            };
+            Func<bool> AudioMuted = () =>
+            {
+                Thread.Sleep(500);
+                return (bool)driver.ExecuteScript("return document.getElementById('" + audioId + "').muted", 0);
+            };
+            Func<double> AudioElapsed = () =>
+            {
+                Thread.Sleep(500);
+                return driver.ExecuteScript("return document.getElementById('" + audioId + "').currentTime", 0).ParseMystery();
+            };
 
             //Case 1: Play/Pause
             driver.SendTabs(audioId, 1); //Tab to play button
