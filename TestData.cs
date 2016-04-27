@@ -1202,23 +1202,33 @@ namespace Microsoft.Edge.A11y
                 var descriptions = elements.ConvertAll(element => ((IUIAutomationElement6)element).CurrentFullDescription).Where(e => !string.IsNullOrEmpty(e)).ToList();
 
                 //Check names
-                if (names.Count() != requiredNames.Count()//total != actual blank names + expected non-blank
+                if (names.Count() != requiredNames.Count()
                     || !requiredNames.All(rn => names.Contains(rn)))//not all the expected names were found
                 {
-                    return requiredNames.Where(rn => !names.Contains(rn)).Aggregate((a, b) => a + ", " + b) + //get a comma-separated list of all required names not found
-                        " were expected as names but not found. " +
-                        names.Where(n => !requiredNames.Contains(n)).Aggregate((a, b) => a + ", " + b) + //get a comma-separated list of all found names that weren't required
-                        " were found but were not expected.";
+                    var expectedNotFound = requiredNames.Where(rn => !names.Contains(rn));//get a list of all required names not found
+                    var foundNotExpected = names.Where(n => !requiredNames.Contains(n));//get a list of all found names that weren't required
+
+                    return expectedNotFound.Count() > 0 ? expectedNotFound.Aggregate((a, b) => a + ", " + b) +
+                        (expectedNotFound.Count() > 1 ? " were" : " was") + 
+                        "  expected but not found. " : "" + 
+                        (foundNotExpected.Count() > 0 ? foundNotExpected.Aggregate((a, b) => a + ", " + b) +
+                        (expectedNotFound.Count() > 1 ? " were" : " was") + 
+                        " found but not expected." : "");
                 }
 
                 //Check descriptions
                 if (descriptions.Count() != requiredDescriptions.Count()
                     || !requiredDescriptions.All(rd => descriptions.Contains(rd)))
                 {
-                    return requiredDescriptions.Where(rd => !descriptions.Contains(rd)).Aggregate((a, b) => a + ", " + b) +
-                        " were expected as descriptions but not found. " +
-                        descriptions.Where(d => !requiredDescriptions.Contains(d)).Aggregate((a, b) => a + ", " + b) +
-                        " were found but were not expected.";
+                    var expectedNotFound = requiredDescriptions.Where(rd => !descriptions.Contains(rd));
+                    var foundNotExpected = descriptions.Where(d => !requiredDescriptions.Contains(d));
+
+                    return expectedNotFound.Count() > 0 ? expectedNotFound.Aggregate((a, b) => a + ", " + b) +
+                        (expectedNotFound.Count() > 1 ? " were" : " was") + 
+                        "  expected but not found. " : "" + 
+                        (foundNotExpected.Count() > 0 ? foundNotExpected.Aggregate((a, b) => a + ", " + b) +
+                        (expectedNotFound.Count() > 1 ? " were" : " was") + 
+                        " found but not expected." : "");
                 }
 
                 return ARPASS;
