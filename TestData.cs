@@ -1216,7 +1216,7 @@ namespace Microsoft.Edge.A11y
 
                     return expectedNotFound.Any() ? expectedNotFound.Aggregate((a, b) => a + ", " + b) +
                         (expectedNotFound.Count() > 1 ? " were" : " was") + 
-                        "  expected but not found. " : "" + 
+                        " expected but not found. " : "" + 
                         (foundNotExpected.Any() ? foundNotExpected.Aggregate((a, b) => a + ", " + b) +
                         (expectedNotFound.Count() > 1 ? " were" : " was") + 
                         " found but not expected." : "");
@@ -1231,7 +1231,7 @@ namespace Microsoft.Edge.A11y
 
                     return expectedNotFound.Any() ? expectedNotFound.Aggregate((a, b) => a + ", " + b) +
                         (expectedNotFound.Count() > 1 ? " were" : " was") + 
-                        "  expected but not found. " : "" + 
+                        " expected but not found. " : "" + 
                         (foundNotExpected.Any() ? foundNotExpected.Aggregate((a, b) => a + ", " + b) +
                         (expectedNotFound.Count() > 1 ? " were" : " was") + 
                         " found but not expected." : "");
