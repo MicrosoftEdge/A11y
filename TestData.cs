@@ -229,6 +229,9 @@ namespace Microsoft.Edge.A11y
                             return ARFAIL;
                         })),
                 new TestData("footer", "Group",
+                    searchStrategy: element =>
+                        element.CurrentControlType == converter.GetElementCodeFromName("Group")
+                        && element.CurrentLocalizedControlType == "footer",
                     additionalRequirement: (elements, driver, ids) => {
                         var result = CheckElementNames(
                             new List<string>{
@@ -283,6 +286,9 @@ namespace Microsoft.Edge.A11y
                         return ARPASS;
                     }),
                 new TestData("header", "Group",
+                    searchStrategy: element =>
+                        element.CurrentControlType == converter.GetElementCodeFromName("Group")
+                        && element.CurrentLocalizedControlType == "header",
                     additionalRequirement: (elements, driver, ids) => {
                         var result = CheckElementNames(
                             new List<string>{
