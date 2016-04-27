@@ -539,7 +539,7 @@ namespace Microsoft.Edge.A11y
                         return CheckCalendarKeyboard(2)(elements, driver, ids) + "\n" +
                             CheckElementNames(
                                 new List<string>{
-                                    "aria-label attribute2",
+                                    "aria-label attribute 2",
                                     "p referenced by aria-labelledby3",
                                     "label wrapping input 4",
                                     "title attribute 5",
@@ -1205,13 +1205,13 @@ namespace Microsoft.Edge.A11y
                 if (names.Count() != requiredNames.Count()
                     || !requiredNames.All(rn => names.Contains(rn)))//not all the expected names were found
                 {
-                    var expectedNotFound = requiredNames.Where(rn => !names.Contains(rn));//get a list of all required names not found
-                    var foundNotExpected = names.Where(n => !requiredNames.Contains(n));//get a list of all found names that weren't required
+                    var expectedNotFound = requiredNames.Where(rn => !names.Contains(rn)).ToList();//get a list of all required names not found
+                    var foundNotExpected = names.Where(n => !requiredNames.Contains(n)).ToList();//get a list of all found names that weren't required
 
-                    return expectedNotFound.Count() > 0 ? expectedNotFound.Aggregate((a, b) => a + ", " + b) +
+                    return expectedNotFound.Any() ? expectedNotFound.Aggregate((a, b) => a + ", " + b) +
                         (expectedNotFound.Count() > 1 ? " were" : " was") + 
                         "  expected but not found. " : "" + 
-                        (foundNotExpected.Count() > 0 ? foundNotExpected.Aggregate((a, b) => a + ", " + b) +
+                        (foundNotExpected.Any() ? foundNotExpected.Aggregate((a, b) => a + ", " + b) +
                         (expectedNotFound.Count() > 1 ? " were" : " was") + 
                         " found but not expected." : "");
                 }
@@ -1220,13 +1220,13 @@ namespace Microsoft.Edge.A11y
                 if (descriptions.Count() != requiredDescriptions.Count()
                     || !requiredDescriptions.All(rd => descriptions.Contains(rd)))
                 {
-                    var expectedNotFound = requiredDescriptions.Where(rd => !descriptions.Contains(rd));
-                    var foundNotExpected = descriptions.Where(d => !requiredDescriptions.Contains(d));
+                    var expectedNotFound = requiredDescriptions.Where(rd => !descriptions.Contains(rd)).ToList();
+                    var foundNotExpected = descriptions.Where(d => !requiredDescriptions.Contains(d)).ToList();
 
-                    return expectedNotFound.Count() > 0 ? expectedNotFound.Aggregate((a, b) => a + ", " + b) +
+                    return expectedNotFound.Any() ? expectedNotFound.Aggregate((a, b) => a + ", " + b) +
                         (expectedNotFound.Count() > 1 ? " were" : " was") + 
                         "  expected but not found. " : "" + 
-                        (foundNotExpected.Count() > 0 ? foundNotExpected.Aggregate((a, b) => a + ", " + b) +
+                        (foundNotExpected.Any() ? foundNotExpected.Aggregate((a, b) => a + ", " + b) +
                         (expectedNotFound.Count() > 1 ? " were" : " was") + 
                         " found but not expected." : "");
                 }
