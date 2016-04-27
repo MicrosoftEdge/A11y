@@ -17,7 +17,7 @@
 
         public override string ToString()
         {
-            return Name + ":\n\t" + Result + (MoreInfo != null ? " (\n" + MoreInfo + "\t)" : "");
+            return Name + ":\n\t" + Result + (MoreInfo != null ? " (" + MoreInfo + ")" : "");
         }
 
         public string ToCSVString()
