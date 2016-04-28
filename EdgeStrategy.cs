@@ -58,8 +58,12 @@ namespace Microsoft.Edge.A11y
                 {
                     if (!element.CurrentLocalizedControlType.Equals(testData._LocalizedControlType, StringComparison.OrdinalIgnoreCase))
                     {
-                        result += "\nElement did not have the correct localized control type. Expected:" +
+                        var error = "\nElement did not have the correct localized control type. Expected:" +
                             testData._LocalizedControlType + " Actual:" + element.CurrentLocalizedControlType;
+                        if (!result.Contains(error))
+                        {
+                            result += error;
+                        }
                     }
                 }
             }
@@ -75,14 +79,22 @@ namespace Microsoft.Edge.A11y
 
                     if (convertedLandmark != testData._LandmarkType)
                     {
-                        result += "\nElement did not have the correct landmark type. Expected:" +
+                        var error = "\nElement did not have the correct landmark type. Expected:" +
                             testData._LandmarkType + " Actual:" + convertedLandmark + "\n";
+                        if (!result.Contains(error))
+                        {
+                            result += error;
+                        }
                     }
 
                     if (localizedLandmark != testData._LocalizedLandmarkType)
                     {
-                        result += "\nElement did not have the correct localized landmark type. Expected:" +
+                        var error = "\nElement did not have the correct localized landmark type. Expected:" +
                             testData._LocalizedLandmarkType + " Actual:" + localizedLandmark + "\n";
+                        if (!result.Contains(error))
+                        {
+                            result += error;
+                        }
                     }
                 }
             }

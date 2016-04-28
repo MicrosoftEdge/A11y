@@ -1206,38 +1206,29 @@ namespace Microsoft.Edge.A11y
             {
                 var names = elements.ConvertAll(element => element.CurrentName).Where(e => !string.IsNullOrEmpty(e)).ToList();
                 var descriptions = elements.ConvertAll(element => ((IUIAutomationElement6)element).CurrentFullDescription).Where(e => !string.IsNullOrEmpty(e)).ToList();
+                var result = "";
 
                 //Check names
-                if (names.Count() != requiredNames.Count()
-                    || !requiredNames.All(rn => names.Contains(rn)))//not all the expected names were found
-                {
-                    var expectedNotFound = requiredNames.Where(rn => !names.Contains(rn)).ToList();//get a list of all required names not found
-                    var foundNotExpected = names.Where(n => !requiredNames.Contains(n)).ToList();//get a list of all found names that weren't required
-
-                    return expectedNotFound.Any() ? expectedNotFound.Aggregate((a, b) => a + ", " + b) +
-                        (expectedNotFound.Count() > 1 ? " were" : " was") + 
-                        " expected but not found. " : "" + 
-                        (foundNotExpected.Any() ? foundNotExpected.Aggregate((a, b) => a + ", " + b) +
-                        (expectedNotFound.Count() > 1 ? " were" : " was") + 
-                        " found but not expected." : "");
-                }
+                var expectedNotFound = requiredNames.Where(rn => !names.Contains(rn)).ToList();//get a list of all required names not found
+                var foundNotExpected = names.Where(n => !requiredNames.Contains(n)).ToList();//get a list of all found names that weren't required
+                result += expectedNotFound.Any() ? expectedNotFound.Aggregate((a, b) => a + ", " + b) +
+                    (expectedNotFound.Count() > 1 ? " were expected as names but not found. " : " was expected as a name but not found. ")
+                    : "" +
+                    (foundNotExpected.Any() ? foundNotExpected.Aggregate((a, b) => a + ", " + b) +
+                    (foundNotExpected.Count() > 1 ? " were found as names but not expected. " : " was found as a name but not expected. ")
+                    : "");
 
                 //Check descriptions
-                if (descriptions.Count() != requiredDescriptions.Count()
-                    || !requiredDescriptions.All(rd => descriptions.Contains(rd)))
-                {
-                    var expectedNotFound = requiredDescriptions.Where(rd => !descriptions.Contains(rd)).ToList();
-                    var foundNotExpected = descriptions.Where(d => !requiredDescriptions.Contains(d)).ToList();
+                expectedNotFound = requiredDescriptions.Where(rd => !descriptions.Contains(rd)).ToList();
+                foundNotExpected = descriptions.Where(d => !requiredDescriptions.Contains(d)).ToList();
+                result += expectedNotFound.Any() ? expectedNotFound.Aggregate((a, b) => a + ", " + b) +
+                    (expectedNotFound.Count() > 1 ? " were expected as descriptions but not found. " : " was expected as a description but not found. ")
+                    : "" +
+                    (foundNotExpected.Any() ? foundNotExpected.Aggregate((a, b) => a + ", " + b) +
+                    (foundNotExpected.Count() > 1 ? " were found as descriptions but not expected. " : " was found as a description but not expected. ")
+                    : "");
 
-                    return expectedNotFound.Any() ? expectedNotFound.Aggregate((a, b) => a + ", " + b) +
-                        (expectedNotFound.Count() > 1 ? " were" : " was") + 
-                        " expected but not found. " : "" + 
-                        (foundNotExpected.Any() ? foundNotExpected.Aggregate((a, b) => a + ", " + b) +
-                        (expectedNotFound.Count() > 1 ? " were" : " was") + 
-                        " found but not expected." : "");
-                }
-
-                return ARPASS;
+                return result;
             };
         }
 
