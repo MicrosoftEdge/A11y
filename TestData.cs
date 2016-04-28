@@ -358,10 +358,20 @@ namespace Microsoft.Edge.A11y
                 new TestData("input-color", "Button", "color picker",
                     additionalRequirement: (elements, driver, ids) => {
                         var result = string.Empty;
+
+                        var previousControllerForElements = new HashSet<int>();
                         foreach(var id in ids)
                         {
                             Func<string> CheckColorValue = () => (string) driver.ExecuteScript("return document.getElementById('"+ id + "').value", timeout);
                             var initial = CheckColorValue();
+
+                            //open dialog to check controllerfor
+                            driver.SendSpecialKeys(id, "Enter");
+                            var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().ConvertAll(element => elements.IndexOf(element));
+                            if(controllerForElements.All(element => previousControllerForElements.Contains(element))){
+                                result += "Element controller for not set for id: " + id;
+                            }
+                            driver.SendSpecialKeys(id, "Escape");
 
                             driver.SendSpecialKeys(id, "EnterTabEscape");
                             if (CheckColorValue() != initial)
