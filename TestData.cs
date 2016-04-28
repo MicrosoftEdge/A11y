@@ -175,7 +175,7 @@ namespace Microsoft.Edge.A11y
                         var automationElementConverter = new ElementConverter();
 
                         HashSet<string> foundControlTypes;
-                        elements = EdgeA11yTools.SearchDocumentChildren(browserElement, "", (current) => {
+                        elements = EdgeA11yTools.SearchChildren(browserElement, "", (current) => {
                             var convertedRole = automationElementConverter.GetElementNameFromCode(current.CurrentControlType);
                             return convertedRole == "Button" || convertedRole == "Text";
                         }, out foundControlTypes);
@@ -387,7 +387,7 @@ namespace Microsoft.Edge.A11y
                     ),
                 new TestData("input-date", "Edit", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: (elements, driver, ids) => {
-                        return CheckCalendarKeyboard(3)(elements, driver, ids) + "\n" +
+                        return CheckCalendar(3)(elements, driver, ids) + "\n" +
                             CheckElementNames(
                                 new List<string>{
                                     "aria-label attribute2",
@@ -433,7 +433,7 @@ namespace Microsoft.Edge.A11y
                     }),
                 new TestData("input-month", "Edit", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: (elements, driver, ids) => {
-                        return CheckCalendarKeyboard(2)(elements, driver, ids) + "\n" +
+                        return CheckCalendar(2)(elements, driver, ids) + "\n" +
                             CheckElementNames(
                                 new List<string>{
                                     "aria-label attribute2",
@@ -542,7 +542,7 @@ namespace Microsoft.Edge.A11y
                             })),
                 new TestData("input-time", "Edit", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: (elements, driver, ids) => {
-                        return CheckCalendarKeyboard(2)(elements, driver, ids) + "\n" +
+                        return CheckCalendar(2)(elements, driver, ids) + "\n" +
                             CheckElementNames(
                                 new List<string>{
                                     "aria-label attribute 2",
@@ -559,7 +559,7 @@ namespace Microsoft.Edge.A11y
                         keyboardElements: new List<string> { "input1", "input2" },
                         additionalRequirement: CheckValidation()),
                 new TestData("input-week", "Edit", keyboardElements: new List<string> { "input1", "input2" },
-                    additionalRequirement: CheckCalendarKeyboard(2)),
+                    additionalRequirement: CheckCalendar(2)),
                 new TestData("main", "Group", "main", "Main", "main",
                     additionalRequirement: CheckElementNames(
                     new List<string>{
@@ -686,7 +686,7 @@ namespace Microsoft.Edge.A11y
                     {
 
                         var childNames = CheckChildNames(
-                            new List<string> {//TODO get full list when it's finalized
+                            new List<string> {
                                     "Play",
                                     "Time elapsed",
                                     "Seek",
@@ -719,7 +719,7 @@ namespace Microsoft.Edge.A11y
                         driver.ExecuteScript(Javascript.RemoveHidden, timeout);
 
                         HashSet<string> foundControlTypes;
-                        elements = EdgeA11yTools.SearchDocumentChildren(browserElement, "Button", null, out foundControlTypes);
+                        elements = EdgeA11yTools.SearchChildren(browserElement, "Button", null, out foundControlTypes);
                         if (elements.Count(e => e.CurrentControlType != paneCode) != 1)
                         {
                             return "Found " + elements.Count(e => e.CurrentControlType != paneCode) + " elements. Expected 1";
@@ -820,7 +820,7 @@ namespace Microsoft.Edge.A11y
             Console.WriteLine("Case 2: Volume and mute");
             Javascript.ClearFocus(driver, 0);
             driver.SendTabs(videoId, 6);//tab to volume control //TODO make this more resilient to UI changes
-            driver.SendSpecialKeys(videoId, "Enter");//mute//TODO switch back to original order once space works
+            driver.SendSpecialKeys(videoId, "Enter");//mute
             if (!WaitForCondition(VideoMuted))
             {
                 result += "\tEnter did not mute the video\n";
@@ -1026,13 +1026,33 @@ namespace Microsoft.Edge.A11y
         /// </summary>
         /// <param name="fields">A count of the number of fields to test</param>
         /// <returns></returns>
-        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckCalendarKeyboard(int fields)
+        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckCalendar(int fields)
         {
-            //TODO child elements in UIA tree nested lists and two buttons
             //TODO tab to buttons
             return new Func<List<IUIAutomationElement>, DriverManager, List<string>, string>((elements, driver, ids) =>
             {
-                var result = ids.FirstOrDefault(id =>//"first element that fails"
+                foreach (var element in elements)
+                {
+                    if (element.CurrentControllerFor == null || element.CurrentControllerFor.Length == 0)
+                    {
+                        return "Element did not have ControllerFor set";
+                    }
+
+                    var foundControlTypes = new HashSet<string>();
+                    var foundButtons = EdgeA11yTools.SearchChildren(element.CurrentControllerFor.GetElement(0), "Button", null, out foundControlTypes);
+                    var foundLists = EdgeA11yTools.SearchChildren(element.CurrentControllerFor.GetElement(0), "List", null, out foundControlTypes);
+
+                    if (foundButtons.Count < 2)
+                    {
+                        return "Unable to find buttons in the child element";
+                    }
+                    if (foundLists.Count < fields)
+                    {
+                        return "Unable to find " + fields + " lists in the child element";
+                    }
+                }
+
+                var keyboardResult = ids.FirstOrDefault(id =>//"first element that fails"
                 {
                     driver.SendSpecialKeys(id, "EnterEscapeEnterEnter");//Make sure that the element has focus (gets around weirdness in WebDriver)
 
@@ -1067,11 +1087,11 @@ namespace Microsoft.Edge.A11y
 
                     return false;
                 });
-                if (result == null)
+                if (keyboardResult == null)
                 {
                     return ARPASS;
                 }
-                return "Keyboard interaction failed for element with id: " + result;
+                return "Keyboard interaction failed for element with id: " + keyboardResult;
             });
         }
 

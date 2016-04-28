@@ -38,7 +38,7 @@ namespace Microsoft.Edge.A11y
 
             //Find elements using ControlType or the alternate search strategy
             HashSet<string> foundControlTypes;
-            var testElements = EdgeA11yTools.SearchDocumentChildren(browserElement, testData._ControlType, testData._SearchStrategy, out foundControlTypes);
+            var testElements = EdgeA11yTools.SearchChildren(browserElement, testData._ControlType, testData._SearchStrategy, out foundControlTypes);
             if (testElements.Count == 0)
             {
                 return Fail(testData._TestName, testData._SearchStrategy == null ? 
@@ -118,7 +118,7 @@ namespace Microsoft.Edge.A11y
                 //If necessary, check any additional requirements
                 if (testData._AdditionalRequirement != null)
                 {
-                    testElements = EdgeA11yTools.SearchDocumentChildren(browserElement, testData._ControlType, testData._SearchStrategy, out foundControlTypes);
+                    testElements = EdgeA11yTools.SearchChildren(browserElement, testData._ControlType, testData._SearchStrategy, out foundControlTypes);
                     var additionalRequirementResult = testData._AdditionalRequirement(testElements, _driverManager, tabbable).Trim();
                     if (additionalRequirementResult != TestData.ARPASS)
                     {

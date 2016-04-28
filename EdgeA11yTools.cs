@@ -85,7 +85,7 @@ namespace Microsoft.Edge.A11y
         /// <param name="searchStrategy">An alternative search strategy for elements which are not found by their controltype</param>
         /// <param name="foundControlTypes">A list of all control types found on the page, for error reporting</param>
         /// <returns>The elements found which match the tag given</returns>
-        public static List<IUIAutomationElement> SearchDocumentChildren(
+        public static List<IUIAutomationElement> SearchChildren(
             IUIAutomationElement browserElement, 
             string controlType, 
             Func<IUIAutomationElement, bool> searchStrategy, 
