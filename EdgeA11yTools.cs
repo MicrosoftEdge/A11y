@@ -17,7 +17,7 @@ namespace Microsoft.Edge.A11y
         public const string ExceptionMessage = "Currently only Edge is supported";
 
         /// <summary>
-        /// This is used to find the DOM of the browser, which is used as the starting 
+        /// This is used to find the DOM of the browser, which is used as the starting
         /// point when searching for elements.
         /// </summary>
         /// <param name="retries">How many times we have already retried</param>

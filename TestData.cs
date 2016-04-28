@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Remoting.Messaging;
 using System.Threading;
-using OpenQA.Selenium;
 
 namespace Microsoft.Edge.A11y
 {
@@ -183,6 +182,7 @@ namespace Microsoft.Edge.A11y
                         return elements.Count() == 2 ? ARPASS : "Unable to find subdom elements";
                     })),//TODO feature detection focus ring
                 new TestData("datalist", "Combobox", keyboardElements: new List<string> { "input1" },
+                        //TODO CanSelectMultiple is false or absent
                     additionalRequirement: ((elements, driver, ids) => {
                         Func<string, string> datalistValue = (id) => (string)driver.ExecuteScript("return document.getElementById('" + id + "').value", 0);
 
@@ -200,7 +200,7 @@ namespace Microsoft.Edge.A11y
                             previousControllerForElements.Add(controllerForElements.First(element => !previousControllerForElements.Contains(element)));
 
                             driver.SendSpecialKeys(id, "Enter");
-                            if (datalistValue(id) == initial)
+                            if (datalistValue(id) == initial)//TODO set to specific value
                             {
                                 return "Unable to set the datalist with keyboard";
                             }
@@ -226,6 +226,7 @@ namespace Microsoft.Edge.A11y
                     additionalRequirement: ((elements, driver, ids) =>
                         {
                             //TODO TextPattern range says HTML5 logo
+                            //TOOD not in tree
                             return ARFAIL;
                         })),
                 new TestData("footer", "Group",
@@ -385,7 +386,8 @@ namespace Microsoft.Edge.A11y
                             return false;
                         }) == null ? ARPASS : "Failed keyboard interaction"
                     ),
-                new TestData("input-date", "Edit", keyboardElements: new List<string> { "input1", "input2" },
+                new TestData("input-date", "Edit",
+                    keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: (elements, driver, ids) => {
                         return CheckCalendar(3)(elements, driver, ids) + "\n" +
                             CheckElementNames(
@@ -416,6 +418,7 @@ namespace Microsoft.Edge.A11y
                                 (elements, driver, ids);
                     }),
                 new TestData("input-email", "Edit", "email",
+                        //TODO can get to little x via tab
                     keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: (elements, driver, ids) => {
                         return CheckValidation()(elements, driver, ids) + "\n" +
@@ -447,6 +450,8 @@ namespace Microsoft.Edge.A11y
                                 (elements, driver, ids);
                     }),
                 new TestData("input-number", "Spinner", "number",
+                        //TODO Value pattern
+                        //TODO Value.value is set
                     keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: (elements, driver, ids) => {
                         return CheckValidation()(elements, driver, ids) + "\n" +
@@ -559,6 +564,7 @@ namespace Microsoft.Edge.A11y
                         keyboardElements: new List<string> { "input1", "input2" },
                         additionalRequirement: CheckValidation()),
                 new TestData("input-week", "Edit", keyboardElements: new List<string> { "input1", "input2" },
+                        //TODO naming
                     additionalRequirement: CheckCalendar(2)),
                 new TestData("main", "Group", "main", "Main", "main",
                     additionalRequirement: CheckElementNames(
@@ -574,6 +580,7 @@ namespace Microsoft.Edge.A11y
                         "title attribute 6"
                     })),
                 new TestData("mark", "Text", "mark",//TODO text pattern
+                        //TODO not in tree
                     additionalRequirement: CheckElementNames(
                     new List<string>{
                         "aria-label attribute2",
@@ -586,6 +593,7 @@ namespace Microsoft.Edge.A11y
                         "title attribute 6"
                     })),
                 new TestData("meter", "Progressbar", "meter",
+                        //TODO min max low etc.
                     additionalRequirement:
                         ((elements, driver, ids) => {
                             if(!elements.All(element => element.GetProperties().Any(p => p.Contains("IsReadOnly")))){
@@ -622,6 +630,7 @@ namespace Microsoft.Edge.A11y
                         "title attribute 6"
                     })),
                 new TestData("output", "Group", "output",
+                        //TODO naming
                     additionalRequirement: ((elements, driver, ids) => {
                         if (!elements.All(element => ((IUIAutomationElement5)element).CurrentLiveSetting != LiveSetting.Polite)){
                             return "Element did not have LiveSetting = Polite";
@@ -902,7 +911,7 @@ namespace Microsoft.Edge.A11y
             {
                 result += "\tVideo did not enter FullScreen mode\n";
             }
-            driver.SendKeys(videoId, Keys.Escape);
+            driver.SendSpecialKeys(videoId, "Escape");
             if (WaitForCondition(IsVideoFullScreen))
             {
                 result += "\tVideo did not exit FullScreen mode\n";
@@ -1084,6 +1093,9 @@ namespace Microsoft.Edge.A11y
                             return true;//true means this element fails
                         }
                     }
+                    //TODO escape to cancel
+                    //TODO buttons with space or enter
+                    //TODO open with space
 
                     return false;
                 });
