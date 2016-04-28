@@ -170,6 +170,8 @@ namespace Microsoft.Edge.A11y
                     })),
                 new TestData("canvas", "Image",
                     additionalRequirement: ((elements, driver, ids) => {
+                        var result = string.Empty;
+
                         var browserElement = EdgeA11yTools.FindBrowserDocument(0);
                         var automationElementConverter = new ElementConverter();
 
@@ -179,7 +181,16 @@ namespace Microsoft.Edge.A11y
                             return convertedRole == "Button" || convertedRole == "Text";
                         }, out foundControlTypes);
 
-                        return elements.Count() == 2 ? ARPASS : "Unable to find subdom elements";
+                        result += elements.Count() == 2 ? ARPASS : "Unable to find subdom elements";
+
+                        var featureDetectionScript = @"canvas = document.getElementById('myCanvas');
+                                                        isSupported = !!(canvas.getContext && canvas.getContext('2d'));
+                                                        isSupported = isSupported && !!(canvas.getContext('2d').drawFocusIfNeeded);
+                                                        return isSupported;";
+
+                        result += (bool) driver.ExecuteScript(featureDetectionScript, timeout) ? "" : "\nFailed feature detection";
+
+                        return result;
                     })),//TODO feature detection focus ring
                 new TestData("datalist", "Combobox", keyboardElements: new List<string> { "input1" },
                         //TODO CanSelectMultiple is false or absent
@@ -828,7 +839,7 @@ namespace Microsoft.Edge.A11y
             //Case 2: Volume and mute
             Console.WriteLine("Case 2: Volume and mute");
             Javascript.ClearFocus(driver, 0);
-            driver.SendTabs(videoId, 6);//tab to volume control //TODO make this more resilient to UI changes
+            driver.SendTabs(videoId, 6);//tab to volume control//TODO make this more resilient to UI changes
             driver.SendSpecialKeys(videoId, "Enter");//mute
             if (!WaitForCondition(VideoMuted))
             {
@@ -855,7 +866,7 @@ namespace Microsoft.Edge.A11y
             //Case 3: Audio selection
             // TODO test manually
             //Javascript.ClearFocus(driver, 0);
-            //driver.SendTabs(videoId, 5);//tab to audio selection//TODO make this more resilient to UI changes
+            //driver.SendTabs(videoId, 5);//tab to audio selection
             //driver.SendSpecialKeys(videoId, "EnterArrow_down");
 
             Console.WriteLine("Case 4: Progress and seek");
@@ -865,7 +876,7 @@ namespace Microsoft.Edge.A11y
                 result += "\tVideo was playing when it shouldn't have been\n";
             }
             Javascript.ClearFocus(driver, 0);
-            driver.SendTabs(videoId, 3);//tab to seek//TODO make this more resilient to UI changes
+            driver.SendTabs(videoId, 3);//tab to seek
             initial = GetVideoElapsed();
             driver.SendSpecialKeys(videoId, "Arrow_right"); //skip ahead
             if (!WaitForCondition(VideoElapsed, initial+10))
@@ -886,7 +897,7 @@ namespace Microsoft.Edge.A11y
                 result += "\tVideo was playing when it shouldn't have been\n";
             }
             Javascript.ClearFocus(driver, 0);
-            driver.SendTabs(videoId, 4);//tab to seek//TODO make this more resilient to UI changes
+            driver.SendTabs(videoId, 4);//tab to seek
             initial = GetVideoElapsed();
             driver.SendSpecialKeys(videoId, "Arrow_right"); //skip ahead
             if (!WaitForCondition(VideoElapsed, initial+10))
