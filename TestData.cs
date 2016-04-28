@@ -191,11 +191,12 @@ namespace Microsoft.Edge.A11y
                         result += (bool) driver.ExecuteScript(featureDetectionScript, timeout) ? "" : "\nFailed feature detection";
 
                         return result;
-                    })),//TODO feature detection focus ring
+                    })),
                 new TestData("datalist", "Combobox", keyboardElements: new List<string> { "input1" },
                         //TODO CanSelectMultiple is false or absent
                     additionalRequirement: ((elements, driver, ids) => {
                         Func<string, string> datalistValue = (id) => (string)driver.ExecuteScript("return document.getElementById('" + id + "').value", 0);
+                        var result = string.Empty;
 
                         var previousControllerForElements = new HashSet<int>();
                         foreach (var id in ids)
@@ -205,7 +206,7 @@ namespace Microsoft.Edge.A11y
 
                             var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().ConvertAll(element => elements.IndexOf(element));
                             if(controllerForElements.All(element => previousControllerForElements.Contains(element))){
-                                return "Element controller for not set";
+                                result += "Element controller for not set for id: " + id;
                             }
 
                             previousControllerForElements.Add(controllerForElements.First(element => !previousControllerForElements.Contains(element)));
@@ -213,11 +214,11 @@ namespace Microsoft.Edge.A11y
                             driver.SendSpecialKeys(id, "Enter");
                             if (datalistValue(id) == initial)//TODO set to specific value
                             {
-                                return "Unable to set the datalist with keyboard";
+                                return "Unable to set the datalist with keyboard for element with id: " + id;
                             }
                         }
 
-                        return ARPASS;
+                        return result;
                     })),
                 new TestData("details", null),
                 new TestData("dialog", null),
@@ -355,8 +356,9 @@ namespace Microsoft.Edge.A11y
                         return ARPASS;
                     }),
                 new TestData("input-color", "Button", "color picker",
-                    additionalRequirement: (elements, driver, ids) =>
-                        ids.FirstOrDefault(id =>
+                    additionalRequirement: (elements, driver, ids) => {
+                        var result = string.Empty;
+                        foreach(var id in ids)
                         {
                             Func<string> CheckColorValue = () => (string) driver.ExecuteScript("return document.getElementById('"+ id + "').value", timeout);
                             var initial = CheckColorValue();
@@ -364,22 +366,22 @@ namespace Microsoft.Edge.A11y
                             driver.SendSpecialKeys(id, "EnterTabEscape");
                             if (CheckColorValue() != initial)
                             {
-                                return true;
+                                result += "\nUnable to cancel with escape";
                             }
 
                             //TODO open with space as well
                             driver.SendSpecialKeys(id, "EnterTabEnter");
                             if (CheckColorValue() == initial)
                             {
-                                return true;
+                                result += "\nUnable to cancel with enter";
                             }
 
                             initial = CheckColorValue();
 
-                            driver.SendSpecialKeys(id, "EnterTabTabArrow_rightArrow_rightArrow_right");
+                            driver.SendSpecialKeys(id, "EnterTabTabArrow_rightArrow_rightArrow_rightEnter");
                             if (CheckColorValue() == initial)
                             {
-                                return true;
+                                result += "\nUnable to change values with arrow keys";
                             }
 
                             //p1
@@ -394,9 +396,9 @@ namespace Microsoft.Edge.A11y
                             //TODO root button has controllerfor pointing to dialog
                             //TODO ControllerFor and LiveSetting=polite for color well
 
-                            return false;
-                        }) == null ? ARPASS : "Failed keyboard interaction"
-                    ),
+                        }
+                        return result;
+                    }),
                 new TestData("input-date", "Edit",
                     keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: (elements, driver, ids) => {
