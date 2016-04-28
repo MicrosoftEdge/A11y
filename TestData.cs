@@ -573,7 +573,18 @@ namespace Microsoft.Edge.A11y
                         "h1 referenced by aria-describedby5",
                         "title attribute 6"
                     })),
-                new TestData("mark", "Text", "mark"),//TODO text pattern//TODO naming
+                new TestData("mark", "Text", "mark",//TODO text pattern
+                    additionalRequirement: CheckElementNames(
+                    new List<string>{
+                        "aria-label attribute2",
+                        "Element referenced by aria-labelledby attribute3",
+                        "title attribute 4",
+                        "aria-label attribute 6"
+                    },
+                    new List<string>{
+                        "Element referenced by aria-describedby attribute5",
+                        "title attribute 6"
+                    })),
                 new TestData("meter", "Progressbar", "meter",
                     additionalRequirement:
                         ((elements, driver, ids) => {
