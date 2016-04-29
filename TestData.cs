@@ -427,7 +427,7 @@ namespace Microsoft.Edge.A11y
                     }),
                 new TestData("input-datetime-local", "Text",
                     additionalRequirement: (elements, driver, ids) => {
-                        return CheckDatetimeLocalKeyboard()(elements, driver, ids) + "\n" +
+                        return CheckDatetimeLocal()(elements, driver, ids) + "\n" +
                             CheckElementNames(
                                 new List<string>{
                                     "aria-label attribute2",
@@ -1063,28 +1063,9 @@ namespace Microsoft.Edge.A11y
             //TODO tab to buttons
             return new Func<List<IUIAutomationElement>, DriverManager, List<string>, string>((elements, driver, ids) =>
             {
-                foreach (var element in elements)
-                {
-                    if (element.CurrentControllerFor == null || element.CurrentControllerFor.Length == 0)
-                    {
-                        return "Element did not have ControllerFor set";
-                    }
-
-                    var foundControlTypes = new HashSet<string>();
-                    var foundButtons = EdgeA11yTools.SearchChildren(element.CurrentControllerFor.GetElement(0), "Button", null, out foundControlTypes);
-                    var foundLists = EdgeA11yTools.SearchChildren(element.CurrentControllerFor.GetElement(0), "List", null, out foundControlTypes);
-
-                    if (foundButtons.Count < 2)
-                    {
-                        return "Unable to find buttons in the child element";
-                    }
-                    if (foundLists.Count < fields)
-                    {
-                        return "Unable to find " + fields + " lists in the child element";
-                    }
-                }
-
-                var keyboardResult = ids.FirstOrDefault(id =>//"first element that fails"
+                var result = "";
+                var previousControllerForElements = new HashSet<int>();
+                foreach(var id in ids)
                 {
                     driver.SendSpecialKeys(id, "EnterEscapeEnterEnter");//Make sure that the element has focus (gets around weirdness in WebDriver)
 
@@ -1094,6 +1075,13 @@ namespace Microsoft.Edge.A11y
 
                     //Open the menu
                     driver.SendSpecialKeys(id, "Enter");
+
+                    //Check ControllerFor
+                    var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().ConvertAll(element => elements.IndexOf(element));
+                    if(controllerForElements.All(element => previousControllerForElements.Contains(element))){
+                        result += "Element controller for not set for id: " + id;
+                    }
+
                     //Change each field in the calendar
                     for (int i = 0; i < fields; i++)
                     {
@@ -1113,20 +1101,14 @@ namespace Microsoft.Edge.A11y
                     {
                         if (newdatesplit[i] == todaysplit[i])
                         {
-                            return true;//true means this element fails
+                            result += "\nNot all fields were changed by keyboard interaction.";
                         }
                     }
                     //TODO escape to cancel
                     //TODO buttons with space or enter
                     //TODO open with space
-
-                    return false;
-                });
-                if (keyboardResult == null)
-                {
-                    return ARPASS;
                 }
-                return "Keyboard interaction failed for element with id: " + keyboardResult;
+                return result;
             });
         }
 
@@ -1135,11 +1117,13 @@ namespace Microsoft.Edge.A11y
         /// above.
         /// </summary>
         /// <returns></returns>
-        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckDatetimeLocalKeyboard()
+        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckDatetimeLocal()
         {
             return new Func<List<IUIAutomationElement>, DriverManager, List<string>, string>((elements, driver, ids) =>
             {
-                var result = ids.FirstOrDefault(id =>//"first element that fails"
+                var result = "";
+                var foundControllerFor = new List<int>();
+                foreach(var id in ids)
                 {
                     driver.SendSpecialKeys(id, "EnterEscapeEnterEnter");//Make sure that the element has focus (gets around weirdness in WebDriver)
 
@@ -1156,6 +1140,17 @@ namespace Microsoft.Edge.A11y
                     {
                         //Open the menu
                         driver.SendSpecialKeys(id, "Enter");
+
+                        //Check ControllerFor
+                        var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().ConvertAll(element => elements.IndexOf(element));
+                        if(controllerForElements.Count() == 0){
+                            result += "\nElement controller for not set for id: " + id;
+                        }
+                        else
+                        {
+                            foundControllerFor = foundControllerFor.Union(controllerForElements).ToList();
+                        }
+
                         //Change each field in the calendar
                         for (int i = 0; i < count; i++)
                         {
@@ -1174,17 +1169,20 @@ namespace Microsoft.Edge.A11y
                     {
                         if (newdatesplit[i] == todaysplit[i])
                         {
-                            return true;
+                            result += "\nNot all fields were changed by keyboard interaction";
                         }
                     }
-
-                    return false;
-                });
-                if (result == null)
-                {
-                    return ARPASS;
                 }
-                return "Keyboard interaction failed for element with id: " + result;
+
+                foreach (var element in elements)
+                {
+                    //Since we expect each element to be set as the controllerfor twice
+                    if (foundControllerFor.Count(fcf => fcf == elements.IndexOf(element)) != 2)
+                    {
+                        result += "\nElement controller for not set";
+                    }
+                }
+                return result;
             });
         }
 
