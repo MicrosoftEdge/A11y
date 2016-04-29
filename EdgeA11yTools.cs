@@ -283,13 +283,26 @@ namespace Microsoft.Edge.A11y
         /// Get all of the Control Patterns supported by an element
         /// </summary>
         /// <param name="element">The element being extended</param>
+        /// <param name="ids">The ids of the patterns</param>
+        /// <returns>A list of all the patterns supported</returns>
+        public static List<string> GetPatterns(this IUIAutomationElement element, out List<int> ids)
+        {
+            int[] inIds;
+            string[] names;
+            new CUIAutomation8().PollForPotentialSupportedPatterns(element, out inIds, out names);
+            ids = inIds.ToList();
+            return names.ToList();
+        }
+
+        /// <summary>
+        /// Get all of the Control Patterns supported by an element
+        /// </summary>
+        /// <param name="element">The element being extended</param>
         /// <returns>A list of all the patterns supported</returns>
         public static List<string> GetPatterns(this IUIAutomationElement element)
         {
-            int[] ids;
-            string[] names;
-            new CUIAutomation8().PollForPotentialSupportedPatterns(element, out ids, out names);
-            return names.ToList();
+            var ids = new List<int>();
+            return GetPatterns(element, out ids);
         }
 
         /// <summary>
