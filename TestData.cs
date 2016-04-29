@@ -131,6 +131,9 @@ namespace Microsoft.Edge.A11y
         {
             var converter = new ElementConverter();
             const int timeout = 0;
+            var uia = new CUIAutomation8();
+            var walker = uia.RawViewWalker;
+
             return new List<TestData>{
                 new TestData("article", "Group", "article",
                     additionalRequirement: CheckElementNames(
@@ -234,7 +237,8 @@ namespace Microsoft.Edge.A11y
                         "p referenced by aria-describedby6",
                         "title attribute 7"
                     })),
-                new TestData("figure-figcaption", "Text",
+                new TestData("figure-figcaption", "",
+                    searchStrategy: element => true, //Verify this element via text range
                     additionalRequirement: ((elements, driver, ids) =>
                         {
                             //TODO TextPattern range says HTML5 logo
@@ -426,6 +430,8 @@ namespace Microsoft.Edge.A11y
                                 (elements, driver, ids);
                     }),
                 new TestData("input-datetime-local", "Text",
+                    searchStrategy: element => walker.GetFirstChildElement(element) == null //Need to only find leaf nodes on the tree
+                        && element.CurrentControlType == converter.GetElementCodeFromName("Text"),
                     additionalRequirement: (elements, driver, ids) => {
                         return CheckDatetimeLocal()(elements, driver, ids) + "\n" +
                             CheckElementNames(
