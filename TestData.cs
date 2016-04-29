@@ -310,7 +310,7 @@ namespace Microsoft.Edge.A11y
                                 "title attribute 5",
                                 "aria-label attribute 7"},
                             new List<string>{
-                                "small referenced by aria-describedby6",
+                                "h1 referenced by aria-describedby6",
                                 "title attribute 7"
                             })(elements, driver, ids);
 
@@ -383,7 +383,7 @@ namespace Microsoft.Edge.A11y
                             driver.SendSpecialKeys(id, "EnterTabEnter");
                             if (CheckColorValue() == initial)
                             {
-                                result += "\nUnable to cancel with enter";
+                                result += "\nUnable to submit with enter";
                             }
 
                             initial = CheckColorValue();
