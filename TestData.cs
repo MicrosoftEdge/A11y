@@ -455,7 +455,8 @@ namespace Microsoft.Edge.A11y
                                 new List<string>{
                                     "p referenced by aria-describedby6",
                                     "title attribute 7" })
-                                (elements, driver, ids);
+                                (elements, driver, ids) +
+                                CheckClearButton()(driver, ids);
                     }),
                 new TestData("input-month", "Edit", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: (elements, driver, ids) => {
@@ -822,10 +823,10 @@ namespace Microsoft.Edge.A11y
             Func<object> PauseVideo = () => driver.ExecuteScript("document.getElementById('" + videoId + "').pause()", 0);
             Func<object> PlayVideo = () => driver.ExecuteScript("document.getElementById('" + videoId + "').play()", 0);
             Func<double> GetVideoVolume = () => driver.ExecuteScript("return document.getElementById('" + videoId + "').volume", 0).ParseMystery();
-            Func <double, bool> VideoVolume = expected => Math.Abs(GetVideoVolume() - expected) < epsilon;
+            Func<double, bool> VideoVolume = expected => Math.Abs(GetVideoVolume() - expected) < epsilon;
             Func<bool> VideoMuted = () => (bool)driver.ExecuteScript("return document.getElementById('" + videoId + "').muted", 0);
             Func<double> GetVideoElapsed = () => driver.ExecuteScript("return document.getElementById('" + videoId + "').currentTime", 0).ParseMystery();
-            Func <double, bool> VideoElapsed = expected => Math.Abs(GetVideoElapsed() - expected) < epsilon;
+            Func<double, bool> VideoElapsed = expected => Math.Abs(GetVideoElapsed() - expected) < epsilon;
             Func<bool> IsVideoFullScreen = () => driver.ExecuteScript("return document.fullscreenElement", 0) != null;
 
             var handler = new StructureChangedHandler();
@@ -891,13 +892,13 @@ namespace Microsoft.Edge.A11y
             driver.SendTabs(videoId, 3);//tab to seek
             initial = GetVideoElapsed();
             driver.SendSpecialKeys(videoId, "Arrow_right"); //skip ahead
-            if (!WaitForCondition(VideoElapsed, initial+10))
+            if (!WaitForCondition(VideoElapsed, initial + 10))
             {
                 result += "\tVideo did not skip forward with arrow right\n";
             }
 
             driver.SendSpecialKeys(videoId, "Arrow_left"); //skip back
-            if (!WaitForCondition(VideoElapsed,initial))
+            if (!WaitForCondition(VideoElapsed, initial))
             {
                 result += "\tVideo did not skip back with arrow left\n";
                 Console.WriteLine("Video did not skip back with arrow left, initial:{0} actual:{1}", initial, GetVideoElapsed());
@@ -912,7 +913,7 @@ namespace Microsoft.Edge.A11y
             driver.SendTabs(videoId, 4);//tab to seek
             initial = GetVideoElapsed();
             driver.SendSpecialKeys(videoId, "Arrow_right"); //skip ahead
-            if (!WaitForCondition(VideoElapsed, initial+10))
+            if (!WaitForCondition(VideoElapsed, initial + 10))
             {
                 result += "\tVideo did not skip forward with arrow right\n";
             }
@@ -1065,7 +1066,7 @@ namespace Microsoft.Edge.A11y
             {
                 var result = "";
                 var previousControllerForElements = new HashSet<int>();
-                foreach(var id in ids)
+                foreach (var id in ids)
                 {
                     driver.SendSpecialKeys(id, "EnterEscapeEnterEnter");//Make sure that the element has focus (gets around weirdness in WebDriver)
 
@@ -1078,7 +1079,8 @@ namespace Microsoft.Edge.A11y
 
                     //Check ControllerFor
                     var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().ConvertAll(element => elements.IndexOf(element));
-                    if(controllerForElements.All(element => previousControllerForElements.Contains(element))){
+                    if (controllerForElements.All(element => previousControllerForElements.Contains(element)))
+                    {
                         result += "Element controller for not set for id: " + id;
                     }
 
@@ -1123,7 +1125,7 @@ namespace Microsoft.Edge.A11y
             {
                 var result = "";
                 var foundControllerFor = new List<int>();
-                foreach(var id in ids)
+                foreach (var id in ids)
                 {
                     driver.SendSpecialKeys(id, "EnterEscapeEnterEnter");//Make sure that the element has focus (gets around weirdness in WebDriver)
 
@@ -1143,7 +1145,8 @@ namespace Microsoft.Edge.A11y
 
                         //Check ControllerFor
                         var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().ConvertAll(element => elements.IndexOf(element));
-                        if(controllerForElements.Count() == 0){
+                        if (controllerForElements.Count() == 0)
+                        {
                             result += "\nElement controller for not set for id: " + id;
                         }
                         else
@@ -1291,6 +1294,30 @@ namespace Microsoft.Edge.A11y
                     (foundNotExpected.Any() ? foundNotExpected.Aggregate((a, b) => a + ", " + b) +
                     (foundNotExpected.Count() > 1 ? " were found as descriptions but not expected. " : " was found as a description but not expected. ")
                     : "");
+
+                return result;
+            };
+        }
+
+        public static Func<DriverManager, List<string>, string> CheckClearButton()
+        {
+            return (driver, ids) =>
+            {
+                var result = "";
+                Func<string, string> inputValue = (id) => (string)driver.ExecuteScript("return document.getElementById('" + id + "').value", 0);
+                Action<string> clearInput = (id) => driver.ExecuteScript("document.getElementById('" + id + "').value = ''", 0);
+
+                foreach (var id in ids)
+                {
+                    //Enter something, tab to the clear button, clear with space
+                    driver.SendSpecialKeys(id, "xTabSpace");
+                    if (inputValue(id) != "")
+                    {
+                        result += "\nElement did not clear or the clear button was not reachable by tab";
+                    }
+                    //Don't leave input which could cause problems with other tests
+                    clearInput(id);
+                }
 
                 return result;
             };
