@@ -744,17 +744,31 @@ namespace Microsoft.Edge.A11y
                         "title attribute 6"
                     })),
                 new TestData("output", "Group", "output",
-                        //TODO naming
                     additionalRequirement: ((elements, driver, ids) => {
+                        var result = string.Empty;
+
                         if (!elements.All(element => ((IUIAutomationElement5)element).CurrentLiveSetting != LiveSetting.Polite)){
-                            return "Element did not have LiveSetting = Polite";
+                            result += "Element did not have LiveSetting = Polite";
                         }
                         var controllerForLengths = elements.ConvertAll(element => element.CurrentControllerFor != null ? element.CurrentControllerFor.Length : 0);
                         if (controllerForLengths.Count(cfl => cfl > 0) != 1)
                         {
-                            return "Expected 1 element with ControllerFor set. Found " + controllerForLengths.Count(cfl => cfl > 0);
+                            result += "Expected 1 element with ControllerFor set. Found " + controllerForLengths.Count(cfl => cfl > 0);
                         }
-                        return ARPASS;
+                        result += CheckElementNames(
+                            new List<string>{
+                                "aria-label attribute 2",
+                                "p referenced by aria-labelledby3",
+                                "label wrapping output 4",
+                                "title attribute 5",
+                                "label referenced by for/id attributes 7"
+                            },
+                            new List<string>{
+                                "p referenced by aria-describedby6",
+                                "title attribute 7"
+                            })(elements, driver, ids);
+
+                        return result;
                     })),
                 new TestData("progress", "Progressbar",
                     additionalRequirement: CheckElementNames(
