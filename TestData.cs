@@ -241,6 +241,33 @@ namespace Microsoft.Edge.A11y
                     searchStrategy: element => true, //Verify this element via text range
                     additionalRequirement: ((elements, driver, ids) =>
                         {
+                            var five = (IUIAutomationElement5)elements[0];//TODO all elements
+                            List<int> patternIds;
+                            var names = five.GetPatterns(out patternIds);
+
+                            if (!names.Contains("TextPattern"))
+                            {
+                                return "Pane did not support TextPattern, unable to search";
+                            }
+
+                            var textPattern = (IUIAutomationTextPattern)five.GetCurrentPattern(
+                                patternIds[names.IndexOf("TextPattern")]);
+
+                            var documentRange = textPattern.DocumentRange;
+
+                            var foundText = documentRange.GetText(1000);
+                            if (!foundText.Contains("HTML5 logo 1"))
+                            {
+                                return "Text not found on page";
+                            }
+
+                            var children = documentRange.GetChildren();
+                            for (var i = 0; i < children.Length; i += 1)
+                            {
+                                var childTextPattern = (IUIAutomationTextPattern)five.GetCurrentPattern(
+                                    patternIds[names.IndexOf("TextPattern")]);
+                            }
+
                             //TODO TextPattern range says HTML5 logo
                             //TOOD not in tree
                             return ARFAIL;
@@ -310,7 +337,7 @@ namespace Microsoft.Edge.A11y
                         var result = CheckElementNames(
                             new List<string>{
                                 "aria-label attribute 3",
-                                "small referenced by aria-labelledby4",
+                                "h1 referenced by aria-labelledby4",
                                 "title attribute 5",
                                 "aria-label attribute 7"},
                             new List<string>{
