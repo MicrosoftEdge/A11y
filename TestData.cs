@@ -513,11 +513,11 @@ namespace Microsoft.Edge.A11y
                                 (elements, driver, ids);
                     }),
                 new TestData("input-number", "Spinner", "number",
-                        //TODO Value pattern
-                        //TODO Value.value is set
+                //TODO reevaluate if RangeValue is actually the right thing
                     keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: (elements, driver, ids) => {
-                        return CheckValidation()(elements, driver, ids) + "\n" +
+                        var result = CheckValidation()(elements, driver, ids);
+                        result +=
                             CheckElementNames(
                                 new List<string>{
                                     "aria-label attribute2",
@@ -529,6 +529,45 @@ namespace Microsoft.Edge.A11y
                                     "p referenced by aria-describedby6",
                                     "title attribute 7" })
                                 (elements, driver, ids);
+
+                        foreach(var id in ids)
+                        {
+                            //clear all elements
+                            driver.ExecuteScript("document.getElementById('" + id + "').value = ''", 0);
+                            //put values in to check for later
+                            driver.SendKeys(id, "706");
+                        }
+
+                        foreach(var element in elements)
+                        {
+                            var elementFive = (IUIAutomationElement5)element;
+                            List<int> patternIds;
+                            var names = elementFive.GetPatterns(out patternIds);
+
+                            if (!names.Contains("RangeValuePattern"))
+                            {
+                                result += "\nElement did not support RangeValuePattern";
+                            }
+                            else {
+                                var valuePattern = (IUIAutomationRangeValuePattern)elementFive.GetCurrentPattern(
+                                    patternIds[names.IndexOf("RangeValuePattern")]);
+
+                                var currentValue = valuePattern.CurrentValue;
+                                if(Math.Abs(currentValue - 706) > epsilon)
+                                {
+                                    result += "\nUnable to retrieve the value with Rangevalue.value";
+                                }
+
+                                valuePattern.SetValue(707);
+                                currentValue = valuePattern.CurrentValue;
+                                if(Math.Abs(currentValue - 707) > epsilon)
+                                {
+                                    result += "\nUnable to set the value with SetValue()";
+                                }
+                            }
+                        }
+
+                        return result;
                     }),
                 new TestData("input-range", "Slider", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: (elements, driver, ids) => {
@@ -1255,15 +1294,13 @@ namespace Microsoft.Edge.A11y
                             return "Element failed to validate improper input";
                         }
 
-                        if(elements[newInvalid].CurrentIsDataValidForForm != 0){
+                        if (elements[newInvalid].CurrentIsDataValidForForm != 0)
+                        {
                             return "\nElement did not have IsDataValidForForm set to false";
                         }
 
-                        if(elements[newInvalid].CurrentIsRequiredForForm != 1){
-                            return "\nElement did not have IsRequiredForForm set to true";
-                        }
-
-                        if(elements[newInvalid].CurrentHelpText == null || elements[newInvalid].CurrentHelpText.Length == 0){
+                        if (elements[newInvalid].CurrentHelpText == null || elements[newInvalid].CurrentHelpText.Length == 0)
+                        {
                             return "\nElement did not have HelpText";
                         }
 
@@ -1326,20 +1363,20 @@ namespace Microsoft.Edge.A11y
                 //Check names
                 var expectedNotFound = requiredNames.Where(rn => !names.Contains(rn)).ToList();//get a list of all required names not found
                 var foundNotExpected = names.Where(n => !requiredNames.Contains(n)).ToList();//get a list of all found names that weren't required
-                result += expectedNotFound.Any() ? expectedNotFound.Aggregate((a, b) => a + ", " + b) +
+                result += expectedNotFound.Any() ? "\n" + expectedNotFound.Aggregate((a, b) => a + ", " + b) +
                     (expectedNotFound.Count() > 1 ? " were expected as names but not found. " : " was expected as a name but not found. ")
                     : "" +
-                    (foundNotExpected.Any() ? foundNotExpected.Aggregate((a, b) => a + ", " + b) +
+                    (foundNotExpected.Any() ? "\n" + foundNotExpected.Aggregate((a, b) => a + ", " + b) +
                     (foundNotExpected.Count() > 1 ? " were found as names but not expected. " : " was found as a name but not expected. ")
                     : "");
 
                 //Check descriptions
                 expectedNotFound = requiredDescriptions.Where(rd => !descriptions.Contains(rd)).ToList();
                 foundNotExpected = descriptions.Where(d => !requiredDescriptions.Contains(d)).ToList();
-                result += expectedNotFound.Any() ? expectedNotFound.Aggregate((a, b) => a + ", " + b) +
+                result += expectedNotFound.Any() ? "\n" + expectedNotFound.Aggregate((a, b) => a + ", " + b) +
                     (expectedNotFound.Count() > 1 ? " were expected as descriptions but not found. " : " was expected as a description but not found. ")
                     : "" +
-                    (foundNotExpected.Any() ? foundNotExpected.Aggregate((a, b) => a + ", " + b) +
+                    (foundNotExpected.Any() ? "\n" + foundNotExpected.Aggregate((a, b) => a + ", " + b) +
                     (foundNotExpected.Count() > 1 ? " were found as descriptions but not expected. " : " was found as a description but not expected. ")
                     : "");
 
