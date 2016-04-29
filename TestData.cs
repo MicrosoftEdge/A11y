@@ -197,11 +197,27 @@ namespace Microsoft.Edge.A11y
                         return result;
                     })),
                 new TestData("datalist", "Combobox", keyboardElements: new List<string> { "input1" },
-                        //TODO CanSelectMultiple is false or absent
                     additionalRequirement: ((elements, driver, ids) => {
                         Func<string, string> datalistValue = (id) => (string)driver.ExecuteScript("return document.getElementById('" + id + "').value", 0);
                         var result = string.Empty;
 
+                        foreach(var element in elements)
+                        {
+                            var elementFive = (IUIAutomationElement5)element;
+                            List<int> patternIds;
+                            var names = elementFive.GetPatterns(out patternIds);
+
+                            if (!names.Contains("SelectionPattern"))
+                            {
+                                result += "\nElement did not support SelectionPattern";
+                            }
+                            else {
+                                var selectionPattern = (IUIAutomationSelectionPattern)elementFive.GetCurrentPattern(
+                                    patternIds[names.IndexOf("SelectionPattern")]);
+
+                                result += selectionPattern.CurrentCanSelectMultiple == 1 ? "\nCanSelectMultiple set to true" : "";
+                            }
+                        }
                         var previousControllerForElements = new HashSet<int>();
                         foreach (var id in ids)
                         {
