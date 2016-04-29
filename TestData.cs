@@ -666,8 +666,20 @@ namespace Microsoft.Edge.A11y
                         keyboardElements: new List<string> { "input1", "input2" },
                         additionalRequirement: CheckValidation()),
                 new TestData("input-week", "Edit", keyboardElements: new List<string> { "input1", "input2" },
-                        //TODO naming
-                    additionalRequirement: CheckCalendar(2)),
+                    additionalRequirement: (elements, driver, ids) => {
+                        return CheckCalendar(2)(elements, driver, ids) + "\n" +
+                            CheckElementNames(
+                                new List<string>{
+                                    "aria-label attribute 2",
+                                    "p referenced by aria-labelledby3",
+                                    "label wrapping input 4",
+                                    "title attribute 5",
+                                    "label referenced by for/id attributes 7"},
+                                new List<string>{
+                                    "p referenced by aria-describedby6",
+                                    "title attribute 7" })
+                                (elements, driver, ids);
+                    }),
                 new TestData("main", "Group", "main", "Main", "main",
                     additionalRequirement: CheckElementNames(
                     new List<string>{
@@ -1363,22 +1375,38 @@ namespace Microsoft.Edge.A11y
                 //Check names
                 var expectedNotFound = requiredNames.Where(rn => !names.Contains(rn)).ToList();//get a list of all required names not found
                 var foundNotExpected = names.Where(n => !requiredNames.Contains(n)).ToList();//get a list of all found names that weren't required
-                result += expectedNotFound.Any() ? "\n" + expectedNotFound.Aggregate((a, b) => a + ", " + b) +
-                    (expectedNotFound.Count() > 1 ? " were expected as names but not found. " : " was expected as a name but not found. ")
-                    : "" +
-                    (foundNotExpected.Any() ? "\n" + foundNotExpected.Aggregate((a, b) => a + ", " + b) +
-                    (foundNotExpected.Count() > 1 ? " were found as names but not expected. " : " was found as a name but not expected. ")
-                    : "");
+                result +=
+                    expectedNotFound.Any() ? "\n" +
+                        expectedNotFound.Aggregate((a, b) => a + ", " + b) +
+                        (expectedNotFound.Count() > 1 ?
+                            " were expected as names but not found. " :
+                            " was expected as a name but not found. ")
+                        : "";
+                result +=
+                    foundNotExpected.Any() ? "\n" +
+                        foundNotExpected.Aggregate((a, b) => a + ", " + b) +
+                        (foundNotExpected.Count() > 1 ?
+                            " were found as names but not expected. " :
+                            " was found as a name but not expected. ")
+                        : "";
 
                 //Check descriptions
                 expectedNotFound = requiredDescriptions.Where(rd => !descriptions.Contains(rd)).ToList();
                 foundNotExpected = descriptions.Where(d => !requiredDescriptions.Contains(d)).ToList();
-                result += expectedNotFound.Any() ? "\n" + expectedNotFound.Aggregate((a, b) => a + ", " + b) +
-                    (expectedNotFound.Count() > 1 ? " were expected as descriptions but not found. " : " was expected as a description but not found. ")
-                    : "" +
-                    (foundNotExpected.Any() ? "\n" + foundNotExpected.Aggregate((a, b) => a + ", " + b) +
-                    (foundNotExpected.Count() > 1 ? " were found as descriptions but not expected. " : " was found as a description but not expected. ")
-                    : "");
+                result +=
+                    expectedNotFound.Any() ? "\n" +
+                        expectedNotFound.Aggregate((a, b) => a + ", " + b) +
+                        (expectedNotFound.Count() > 1 ?
+                            " were expected as names but not found. " :
+                            " was expected as a name but not found. ")
+                        : "";
+                result +=
+                    foundNotExpected.Any() ? "\n" +
+                        foundNotExpected.Aggregate((a, b) => a + ", " + b) +
+                        (foundNotExpected.Count() > 1 ?
+                            " were found as names but not expected. " :
+                            " was found as a name but not expected. ")
+                        : "";
 
                 return result;
             };
