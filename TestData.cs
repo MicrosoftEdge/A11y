@@ -720,8 +720,9 @@ namespace Microsoft.Edge.A11y
                         "title attribute 5",
                         "aria-label attribute 7"},
                     new List<string>{
-                        "title attribute 7"})
-                    ),
+                        "h1 referenced by aria-describedby6",
+                        "title attribute 7"
+                    })),
                 new TestData("summary", null),
                 new TestData("time", "Group", "time",
                     additionalRequirement: ((elements, driver, ids) => {
@@ -796,19 +797,19 @@ namespace Microsoft.Edge.A11y
                         System.Threading.Thread.Sleep(TimeSpan.FromMilliseconds(500));
                         foreach(var element in elements){
                             if(element.CurrentControllerFor == null || element.CurrentControllerFor.Length == 0){
-                                return "Element did not have controller for set";
+                                return "\nElement did not have controller for set";
                             }
 
                             if(element.CurrentIsDataValidForForm != 0){
-                                return "Element did not have IsDataValidForForm set to false";
+                                return "\nElement did not have IsDataValidForForm set to false";
                             }
 
                             if(element.CurrentIsRequiredForForm != 1){
-                                return "Element did not have IsRequiredForForm set to true";
+                                return "\nElement did not have IsRequiredForForm set to true";
                             }
 
                             if(element.CurrentHelpText == null || element.CurrentHelpText.Length == 0){
-                                return "Element did not have HelpText";
+                                return "\nElement did not have HelpText";
                             }
                         }
 
@@ -1232,7 +1233,7 @@ namespace Microsoft.Edge.A11y
                     {
                         driver.SendKeys("input" + (i + 1), "invalid");
                         driver.SendSubmit("input" + (i + 1));
-                        System.Threading.Thread.Sleep(TimeSpan.FromMilliseconds(500));
+                        Thread.Sleep(TimeSpan.FromMilliseconds(500));
 
                         //Everything that is invalid on the page
                         var invalid = elements.Where(e => e.CurrentControllerFor != null &&
@@ -1248,10 +1249,23 @@ namespace Microsoft.Edge.A11y
                             return "Element failed to validate improper input";
                         }
 
+                        if(elements[newInvalid].CurrentIsDataValidForForm != 0){
+                            return "\nElement did not have IsDataValidForForm set to false";
+                        }
+
+                        if(elements[newInvalid].CurrentIsRequiredForForm != 1){
+                            return "\nElement did not have IsRequiredForForm set to true";
+                        }
+
+                        if(elements[newInvalid].CurrentHelpText == null || elements[newInvalid].CurrentHelpText.Length == 0){
+                            return "\nElement did not have HelpText";
+                        }
+
                         if (elements[newInvalid].CurrentControllerFor.Length > 1)
                         {
                             throw new Exception("Test assumption failed: expected only one controller");
                         }
+
                         var helpPane = elements[newInvalid].CurrentControllerFor.GetElement(0);
                         if (helpPane.CurrentControlType != new ElementConverter().GetElementCodeFromName("Pane"))
                         {
