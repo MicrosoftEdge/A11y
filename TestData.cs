@@ -713,20 +713,15 @@ namespace Microsoft.Edge.A11y
                         "title attribute 7"
                     })),
                 new TestData("section", "Group", "section", "Custom", "region",
-                    additionalRequirement: (elements, driver, ids) => {
-                        if(elements.Count == 4){//This is because we should only include in the
-                            //tree those elements that have accessible names (3, 4, 5, 7)
-                            return CheckElementNames(
-                                new List<string>{
-                                    "aria-label attribute 3",
-                                    "h1 referenced by aria-labelledby4",
-                                    "title attribute 5",
-                                    "aria-label attribute 7"},
-                                new List<string>{
-                                    "title attribute 7"})(elements, driver, ids);
-                        }
-                        return "Expect to find 4 elements, found " + elements.Count;
-                    }),
+                    additionalRequirement: CheckElementNames(
+                    new List<string>{
+                        "aria-label attribute 3",
+                        "h1 referenced by aria-labelledby4",
+                        "title attribute 5",
+                        "aria-label attribute 7"},
+                    new List<string>{
+                        "title attribute 7"})
+                    ),
                 new TestData("summary", null),
                 new TestData("time", "Group", "time",
                     additionalRequirement: ((elements, driver, ids) => {
