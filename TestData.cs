@@ -241,6 +241,10 @@ namespace Microsoft.Edge.A11y
                     searchStrategy: element => true, //Verify this element via text range
                     additionalRequirement: ((elements, driver, ids) =>
                         {
+                            var result = "";
+
+                            var logoText = "HTML5 logo 1";
+
                             var five = (IUIAutomationElement5)elements[0];//TODO all elements
                             List<int> patternIds;
                             var names = five.GetPatterns(out patternIds);
@@ -256,21 +260,25 @@ namespace Microsoft.Edge.A11y
                             var documentRange = textPattern.DocumentRange;
 
                             var foundText = documentRange.GetText(1000);
-                            if (!foundText.Contains("HTML5 logo 1"))
+                            if (!foundText.Contains(logoText))
                             {
                                 return "Text not found on page";
                             }
 
-                            var children = documentRange.GetChildren();
-                            for (var i = 0; i < children.Length; i += 1)
+                            var foundControlTypes = new HashSet<string>();
+                            var figure = EdgeA11yTools.SearchChildren(elements[0], "Group", null, out foundControlTypes);
+
+                            var childRange = textPattern.RangeFromChild(figure[0]);
+
+                            var childRangeText = childRange.GetText(1000).Trim();
+
+                            if(childRangeText != logoText)
                             {
-                                var childTextPattern = (IUIAutomationTextPattern)five.GetCurrentPattern(
-                                    patternIds[names.IndexOf("TextPattern")]);
+                                return string.Format("Unable to find correct text range. Found '{0}' instead", childRangeText);
                             }
 
-                            //TODO TextPattern range says HTML5 logo
                             //TOOD not in tree
-                            return ARFAIL;
+                            return result;
                         })),
                 new TestData("footer", "Group",
                     searchStrategy: element =>
@@ -456,9 +464,7 @@ namespace Microsoft.Edge.A11y
                                     "title attribute 7" })
                                 (elements, driver, ids);
                     }),
-                new TestData("input-datetime-local", "Text",
-                    searchStrategy: element => walker.GetFirstChildElement(element) == null //Need to only find leaf nodes on the tree
-                        && element.CurrentControlType == converter.GetElementCodeFromName("Text"),
+                new TestData("input-datetime-local", "Edit",
                     additionalRequirement: (elements, driver, ids) => {
                         return CheckDatetimeLocal()(elements, driver, ids) + "\n" +
                             CheckElementNames(
@@ -1110,7 +1116,7 @@ namespace Microsoft.Edge.A11y
                     var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().ConvertAll(element => elements.IndexOf(element));
                     if (controllerForElements.All(element => previousControllerForElements.Contains(element)))
                     {
-                        result += "Element controller for not set for id: " + id;
+                        result += "\nElement controller for not set for id: " + id;
                     }
 
                     //Change each field in the calendar
