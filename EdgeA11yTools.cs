@@ -323,13 +323,16 @@ namespace Microsoft.Edge.A11y
         /// </summary>
         /// <param name="element">The element being extended</param>
         /// <returns>A list of all the children's names</returns>
-        public static List<string> GetChildNames(this IUIAutomationElement element)
+        public static List<string> GetChildNames(this IUIAutomationElement element, Func<IUIAutomationElement, bool> searchStrategy = null)
         {
             var toreturn = new List<string>();
             var walker = new CUIAutomation8().RawViewWalker;
             for (var child = walker.GetFirstChildElement(element); child != null; child = walker.GetNextSiblingElement(child))
             {
-                toreturn.Add(child.CurrentName);
+                if (searchStrategy == null || searchStrategy(child))
+                {
+                    toreturn.Add(child.CurrentName);
+                }
             }
 
             return toreturn;

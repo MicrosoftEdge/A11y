@@ -165,7 +165,8 @@ namespace Microsoft.Edge.A11y
                                 "Seek",
                                 "Time remaining",
                                 "Mute",
-                                "Volume"})(elements, driver, ids);//TODO ensure nothing else is read
+                                "Volume"})//,false, element => element.CurrentIsOffscreen != 1)//TODO enable this if necessary
+                                (elements, driver, ids);//TODO ensure nothing else is read
                         if(childNames != ARPASS){
                             return childNames;
                         }
@@ -1353,13 +1354,19 @@ namespace Microsoft.Edge.A11y
         /// </summary>
         /// <param name="requiredNames">The names of the elements to search for</param>
         /// <returns>A Func that can be used to verify whether the elements in the list are child elements</returns>
-        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckChildNames(List<string> requiredNames)
+        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckChildNames(List<string> requiredNames,
+            bool strict = false,
+            Func<IUIAutomationElement, bool> searchStrategy = null)
         {
             return (elements, driver, ids) =>
             {
                 foreach (var element in elements)
                 {
-                    var names = element.GetChildNames();
+                    var names = element.GetChildNames(searchStrategy);
+                    if(strict && names.Count() != requiredNames.Count)
+                    {
+                        return "Found incorrect number of children";
+                    }
                     var firstFail = requiredNames.FirstOrDefault(rn => !names.Any(n => n.Contains(rn)));
                     if (firstFail != null)
                     {
