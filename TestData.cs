@@ -497,7 +497,6 @@ namespace Microsoft.Edge.A11y
                                 (elements, driver, ids);
                     }),
                 new TestData("input-email", "Edit", "email",
-                        //TODO can get to little x via tab
                     keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: (elements, driver, ids) => {
                         return CheckValidation()(elements, driver, ids) + "\n" +
@@ -530,7 +529,6 @@ namespace Microsoft.Edge.A11y
                                 (elements, driver, ids);
                     }),
                 new TestData("input-number", "Spinner", "number",
-                //TODO reevaluate if RangeValue is actually the right thing
                     keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: (elements, driver, ids) => {
                         var result = CheckValidation()(elements, driver, ids);
@@ -561,6 +559,7 @@ namespace Microsoft.Edge.A11y
                             List<int> patternIds;
                             var names = elementFive.GetPatterns(out patternIds);
 
+                            //TODO reevaluate if RangeValue is actually the right thing
                             if (!names.Contains("RangeValuePattern"))
                             {
                                 result += "\nElement did not support RangeValuePattern";
@@ -834,7 +833,6 @@ namespace Microsoft.Edge.A11y
                 new TestData("video", "Group", null, keyboardElements: new List<string> { "video1" },
                     additionalRequirement: ((elements, driver, ids) =>
                     {
-
                         var childNames = CheckChildNames(
                             new List<string> {
                                     "Play",
@@ -850,12 +848,13 @@ namespace Microsoft.Edge.A11y
                         if(childNames != ARPASS){
                             return childNames;
                         }
-                        return CheckVideoKeyboardInteractions(elements, driver, ids);
+                        return ARPASS;//CheckVideoKeyboardInteractions(elements, driver, ids);
                     })),
                     new TestData("hidden-att", "Button", null,
-                        //TODO no text pattern
                     additionalRequirement: ((elements, driver, ids) =>
                     {
+                        var result = string.Empty;
+
                         var elementConverter = new ElementConverter();
                         var paneCode = elementConverter.GetElementCodeFromName("Pane");
 
@@ -866,18 +865,41 @@ namespace Microsoft.Edge.A11y
                             return "Found " + elements.Count(e => e.CurrentControlType != paneCode) + " elements. Expected 0";
                         }
 
-                        driver.ExecuteScript(Javascript.RemoveHidden, timeout);
+                        //Make sure the text isn't showing up on the page
+                        var five = (IUIAutomationElement5)elements[0];//only have the pane element
+                        List<int> patternIds;
+                        var names = five.GetPatterns(out patternIds);
 
-                        HashSet<string> foundControlTypes;
-                        elements = EdgeA11yTools.SearchChildren(browserElement, "Button", null, out foundControlTypes);
-                        if (elements.Count(e => e.CurrentControlType != paneCode) != 1)
+                        if (!names.Contains("TextPattern"))
                         {
-                            return "Found " + elements.Count(e => e.CurrentControlType != paneCode) + " elements. Expected 1";
+                            return "Pane did not support TextPattern, unable to search";
                         }
 
-                        return ARPASS;
+                        var textPattern = (IUIAutomationTextPattern)five.GetCurrentPattern(
+                            patternIds[names.IndexOf("TextPattern")]);
+
+                        var documentRange = textPattern.DocumentRange;
+
+                        var foundText = documentRange.GetText(1000);
+                        if(foundText.Contains("HiDdEn TeXt"))
+                        {
+                            result += "\nFound text that should have been hidden";
+                        }
+
+                        //remove hidden attribute
+                        driver.ExecuteScript(Javascript.RemoveHidden, timeout);
+
+                        //make sure the buttons show up now that their parents are not hidden
+                        HashSet<string> foundControlTypes;
+                        elements = EdgeA11yTools.SearchChildren(browserElement, "Button", null, out foundControlTypes);
+                        if (elements.Count(e => e.CurrentControlType != paneCode) != 2)
+                        {
+                            result += "\nFound " + elements.Count(e => e.CurrentControlType != paneCode) + " elements. Expected 2";
+                        }
+
+                        return result;
                     }),
-                    searchStrategy: (element => true)),//take all elements
+                    searchStrategy: (element => true)),//take the pane
                 new TestData("required-att", "Edit",
                     additionalRequirement: (elements, driver, ids) =>
                     {
