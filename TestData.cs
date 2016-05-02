@@ -12,6 +12,8 @@ namespace Microsoft.Edge.A11y
     {
         public const string ARFAIL = "Failed additional requirement";
         public const string ARPASS = "";
+
+
         /// <summary>
         /// The name of the test, which corresponds to the url of the page to test
         /// </summary>

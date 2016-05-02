@@ -13,6 +13,7 @@ namespace Microsoft.Edge.A11y
     {
         protected DriverManager _driverManager;
         protected string _RepositoryPath;
+        protected string _FileSuffix;
 
         private string BuildTestUrl(string testName)
         {
@@ -27,7 +28,7 @@ namespace Microsoft.Edge.A11y
         /// <returns></returns>
         public IEnumerable<TestCaseResult> Execute(TestData testData)
         {
-            _driverManager.NavigateToUrl(BuildTestUrl(testData._TestName + ".html"));
+            _driverManager.NavigateToUrl(BuildTestUrl(testData._TestName + _FileSuffix));
             return testData._ControlType == null ? Skip(testData._TestName) : TestElement(testData);
         }
 

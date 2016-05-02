@@ -17,7 +17,7 @@ namespace Microsoft.Edge.A11y
         public const string ExceptionMessage = "Currently only Edge is supported";
 
         /// <summary>
-        /// This is used to find the DOM of the browser, which is used as the starting 
+        /// This is used to find the DOM of the browser, which is used as the starting
         /// point when searching for elements.
         /// </summary>
         /// <param name="retries">How many times we have already retried</param>
@@ -85,7 +85,7 @@ namespace Microsoft.Edge.A11y
         /// <param name="searchStrategy">An alternative search strategy for elements which are not found by their controltype</param>
         /// <param name="foundControlTypes">A list of all control types found on the page, for error reporting</param>
         /// <returns>The elements found which match the tag given</returns>
-        public static List<IUIAutomationElement> SearchDocumentChildren(
+        public static List<IUIAutomationElement> SearchChildren(
             IUIAutomationElement browserElement, 
             string controlType, 
             Func<IUIAutomationElement, bool> searchStrategy, 
@@ -283,13 +283,26 @@ namespace Microsoft.Edge.A11y
         /// Get all of the Control Patterns supported by an element
         /// </summary>
         /// <param name="element">The element being extended</param>
+        /// <param name="ids">The ids of the patterns</param>
+        /// <returns>A list of all the patterns supported</returns>
+        public static List<string> GetPatterns(this IUIAutomationElement element, out List<int> ids)
+        {
+            int[] inIds;
+            string[] names;
+            new CUIAutomation8().PollForPotentialSupportedPatterns(element, out inIds, out names);
+            ids = inIds.ToList();
+            return names.ToList();
+        }
+
+        /// <summary>
+        /// Get all of the Control Patterns supported by an element
+        /// </summary>
+        /// <param name="element">The element being extended</param>
         /// <returns>A list of all the patterns supported</returns>
         public static List<string> GetPatterns(this IUIAutomationElement element)
         {
-            int[] ids;
-            string[] names;
-            new CUIAutomation8().PollForPotentialSupportedPatterns(element, out ids, out names);
-            return names.ToList();
+            var ids = new List<int>();
+            return GetPatterns(element, out ids);
         }
 
         /// <summary>
@@ -310,13 +323,16 @@ namespace Microsoft.Edge.A11y
         /// </summary>
         /// <param name="element">The element being extended</param>
         /// <returns>A list of all the children's names</returns>
-        public static List<string> GetChildNames(this IUIAutomationElement element)
+        public static List<string> GetChildNames(this IUIAutomationElement element, Func<IUIAutomationElement, bool> searchStrategy = null)
         {
             var toreturn = new List<string>();
             var walker = new CUIAutomation8().RawViewWalker;
             for (var child = walker.GetFirstChildElement(element); child != null; child = walker.GetNextSiblingElement(child))
             {
-                toreturn.Add(child.CurrentName);
+                if (searchStrategy == null || searchStrategy(child))
+                {
+                    toreturn.Add(child.CurrentName);
+                }
             }
 
             return toreturn;
