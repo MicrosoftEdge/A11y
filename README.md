@@ -32,3 +32,33 @@ For a full explanation of how scores are calculated, see
 
 After the tests have run, the results are printed to the console and saved in the root
 directory of the project with the name "scores.csv".
+
+## Testing your site
+It's possible to use A11y to automate testing of your site as well. A sample project is
+included on the site_testing branch.
+
+### Test files
+The sample test page is included in this repo on the site_testing branch. It's possible
+(and better) to have your sites in another location. Just change the constructor call to
+to the TestStrategy class passing in the base URL where your test files are located.
+
+### Pass and failure conditions
+The TestData.cs file contains the logic of the tests and an explanation of the built-in
+tests. To add your own tests, add a TestData object for each test you want to run.
+
+By default, elements are found by their control type, but you can pass in a custom method
+of searching by adding a searchStrategy parameter.
+
+In addition to the default tests, you can use the additionalRequirement paramter to
+specify any other requirement that you want to verify. If you find yourself using the
+same additionalRequirement for many of your tests, you may want to add another parameter
+to the TestData constructor to simplify testing that requirement.
+
+## Contributing
+We want your feedback and your help! If you have any suggestions, file an issue and we
+can figure out how to get your needs met.
+
+If you'd like to submit code changes, the best thing to do is to file an issue first so
+we can talk about whether the change would fit with the direction and purpose of the
+project. Even if your changes don't fit with the general purpose of A11y, we'd love to
+see you fork the project to do new things with it.

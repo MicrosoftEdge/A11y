@@ -38,7 +38,7 @@ namespace Microsoft.Edge.A11y
 
             //Find elements using ControlType or the alternate search strategy
             HashSet<string> foundControlTypes;
-            var testElements = EdgeA11yTools.SearchDocumentChildren(browserElement, testData._ControlType, testData._SearchStrategy, out foundControlTypes);
+            var testElements = EdgeA11yTools.SearchChildren(browserElement, testData._ControlType, testData._SearchStrategy, out foundControlTypes);
             if (testElements.Count == 0)
             {
                 return Fail(testData._TestName, testData._SearchStrategy == null ? 
@@ -46,6 +46,7 @@ namespace Microsoft.Edge.A11y
                     "Unable to find the element using the alternate search strategy");
             }
 
+            string result = "";
             //This is used if the test passes but there is something to report
             string note = null;
             var elementConverter = new ElementConverter();
@@ -57,8 +58,12 @@ namespace Microsoft.Edge.A11y
                 {
                     if (!element.CurrentLocalizedControlType.Equals(testData._LocalizedControlType, StringComparison.OrdinalIgnoreCase))
                     {
-                        return Half(testData._TestName, "Element did not have the correct localized control type. Expected:" +
-                            testData._LocalizedControlType + " Actual:" + element.CurrentLocalizedControlType);
+                        var error = "\nElement did not have the correct localized control type. Expected:" +
+                            testData._LocalizedControlType + " Actual:" + element.CurrentLocalizedControlType;
+                        if (!result.Contains(error))
+                        {
+                            result += error;
+                        }
                     }
                 }
             }
@@ -74,14 +79,22 @@ namespace Microsoft.Edge.A11y
 
                     if (convertedLandmark != testData._LandmarkType)
                     {
-                        return Half(testData._TestName, "Element did not have the correct landmark type. Expected:" +
-                            testData._LandmarkType + " Actual:" + convertedLandmark + "\n");
+                        var error = "\nElement did not have the correct landmark type. Expected:" +
+                            testData._LandmarkType + " Actual:" + convertedLandmark + "\n";
+                        if (!result.Contains(error))
+                        {
+                            result += error;
+                        }
                     }
 
                     if (localizedLandmark != testData._LocalizedLandmarkType)
                     {
-                        return Half(testData._TestName, "Element did not have the correct localized landmark type. Expected:" +
-                            testData._LocalizedLandmarkType + " Actual:" + localizedLandmark + "\n");
+                        var error = "\nElement did not have the correct localized landmark type. Expected:" +
+                            testData._LocalizedLandmarkType + " Actual:" + localizedLandmark + "\n";
+                        if (!result.Contains(error))
+                        {
+                            result += error;
+                        }
                     }
                 }
             }
@@ -94,7 +107,7 @@ namespace Microsoft.Edge.A11y
                 {
                     if (!tabbable.Contains(e))
                     {
-                        return Half(testData._TestName, "Could not access element with id: '" + e + "' by tab");
+                        result += "\nCould not access element with id: '" + e + "' by tab";
                     }
                 }
             }
@@ -105,17 +118,22 @@ namespace Microsoft.Edge.A11y
                 //If necessary, check any additional requirements
                 if (testData._AdditionalRequirement != null)
                 {
-                    testElements = EdgeA11yTools.SearchDocumentChildren(browserElement, testData._ControlType, testData._SearchStrategy, out foundControlTypes);
-                    var result = testData._AdditionalRequirement(testElements, _driverManager, tabbable);
-                    if (result != TestData.ARPASS)
+                    testElements = EdgeA11yTools.SearchChildren(browserElement, testData._ControlType, testData._SearchStrategy, out foundControlTypes);
+                    var additionalRequirementResult = testData._AdditionalRequirement(testElements, _driverManager, tabbable).Trim();
+                    if (additionalRequirementResult != TestData.ARPASS)
                     {
-                        return Half(testData._TestName, result);
+                        result += "\n" + additionalRequirementResult;
                     }
                 }
             }
             catch(Exception ex)
             {
-                return Half(testData._TestName, "Caught exception during test execution, ERROR: " + ex.Message + "\nCallStack:\n" + ex.StackTrace);
+                result += "\nCaught exception during test execution, ERROR: " + ex.Message + "\nCallStack:\n" + ex.StackTrace;
+            }
+
+            if (result != "")
+            {
+                return Half(testData._TestName, result.Trim());
             }
 
             return Pass(testData._TestName, note);

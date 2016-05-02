@@ -44,6 +44,7 @@ namespace Microsoft.Edge.A11y
         /// </summary>
         private void Initialize()
         {
+            //TODO use UIA_ControlTypeIds
             //AttributeIds
             UI8Mapping.Add(40000, "AnimationStyle");
             UI8Mapping.Add(40001, "BackgroundColor");

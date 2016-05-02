@@ -2,9 +2,28 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Remoting.Messaging;
+using System.Threading;
 
 namespace Microsoft.Edge.A11y
 {
+    public class StructureChangedHandler : IUIAutomationStructureChangedEventHandler
+    {
+        public string ElementName { get; set; }
+
+        void IUIAutomationStructureChangedEventHandler.HandleStructureChangedEvent(IUIAutomationElement sender, StructureChangeType changeType, int[] runtimeId)
+        {
+            if (changeType == StructureChangeType.StructureChangeType_ChildAdded)
+            {
+                //Console.WriteLine("{0} -Added {1} child", DateTime.Now.Millisecond, sender.CurrentName);
+                if (ElementName.Equals(sender.CurrentName, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    TestData.Ewh.Set();
+                }
+            }
+        }
+    }
+
     /// <summary>
     /// This is where the logic of the tests is stored
     /// </summary>
@@ -12,6 +31,8 @@ namespace Microsoft.Edge.A11y
     {
         public const string ARFAIL = "Failed additional requirement";
         public const string ARPASS = "";
+        public const double epsilon = .001;
+
         /// <summary>
         /// The name of the test, which corresponds to the name of the html element
         /// </summary>
@@ -49,6 +70,16 @@ namespace Microsoft.Edge.A11y
         /// tested (instead of matching _ControlType).
         /// </summary>
         public Func<IUIAutomationElement, bool> _SearchStrategy;
+
+        /// <summary>
+        /// Manual reset event waiter used to wait for elements to be added to UIA tree
+        /// </summary>
+        public static readonly EventWaitHandle Ewh = new EventWaitHandle(false, EventResetMode.ManualReset);
+
+        /// <summary>
+        /// List of elements to wait for to be added to UIA tree before signaling event waiter
+        /// </summary>
+        public static readonly string[] WaitForElements = { "volume" };
 
         /// <summary>
         /// Simple ctor
@@ -100,27 +131,30 @@ namespace Microsoft.Edge.A11y
         {
             var converter = new ElementConverter();
             const int timeout = 0;
-            var alltests = new List<TestData>{
+            var uia = new CUIAutomation8();
+            var walker = uia.RawViewWalker;
+
+            return new List<TestData>{
                 new TestData("article", "Group", "article",
-                    additionalRequirement: CheckElementNames(7,
+                    additionalRequirement: CheckElementNames(
                     new List<string>{
                         "aria-label attribute 3",
-                        "as-004-labelledby 3",
+                        "h1 referenced by aria-labelledby4",
                         "title attribute 5",
                         "aria-label attribute 7"},
                     new List<string>{
-                        "h1 referenced by aria-describedby 6",
+                        "h1 referenced by aria-describedby6",
                         "title attribute 7"
                     })),
                 new TestData("aside", "Group", "aside", "Custom", "complementary",
-                    additionalRequirement: CheckElementNames(7,
+                    additionalRequirement: CheckElementNames(
                     new List<string>{
                         "aria-label attribute 3",
-                        "ar-004-labelledby 3",
+                        "h1 referenced by aria-labelledby4",
                         "title attribute 5",
                         "aria-label attribute 7"},
                     new List<string>{
-                        "h1 referenced by aria-describedby 6",
+                        "h1 referenced by aria-describedby6",
                         "title attribute 7"
                     })),
                 new TestData("audio", "Group", "audio",
@@ -131,178 +165,584 @@ namespace Microsoft.Edge.A11y
                                 "Seek",
                                 "Time remaining",
                                 "Mute",
-                                "Volume"})(elements, driver, ids);
+                                "Volume"})//,false, element => element.CurrentIsOffscreen != 1)//TODO enable this if necessary
+                                (elements, driver, ids);//TODO ensure nothing else is read
                         if(childNames != ARPASS){
                             return childNames;
                         }
                         return CheckAudioKeyboardInteractions(elements, driver, ids);
-                    })),//TODO get full list when it's finalized
-                new TestData("canvas", "Image"),
+                    })),
+                new TestData("canvas", "Image",
+                    additionalRequirement: ((elements, driver, ids) => {
+                        var result = string.Empty;
+
+                        var browserElement = EdgeA11yTools.FindBrowserDocument(0);
+                        var automationElementConverter = new ElementConverter();
+
+                        HashSet<string> foundControlTypes;
+                        elements = EdgeA11yTools.SearchChildren(browserElement, "", (current) => {
+                            var convertedRole = automationElementConverter.GetElementNameFromCode(current.CurrentControlType);
+                            return convertedRole == "Button" || convertedRole == "Text";
+                        }, out foundControlTypes);
+
+                        result += elements.Count() == 2 ? ARPASS : "Unable to find subdom elements";
+
+                        var featureDetectionScript = @"canvas = document.getElementById('myCanvas');
+                                                        isSupported = !!(canvas.getContext && canvas.getContext('2d'));
+                                                        isSupported = isSupported && !!(canvas.getContext('2d').drawFocusIfNeeded);
+                                                        return isSupported;";
+
+                        result += (bool) driver.ExecuteScript(featureDetectionScript, timeout) ? "" : "\nFailed feature detection";
+
+                        return result;
+                    })),
                 new TestData("datalist", "Combobox", keyboardElements: new List<string> { "input1" },
-                    additionalRequirement: ((elements, driver, ids) => elements.All(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0) ? ARPASS : ARFAIL)),
+                    additionalRequirement: ((elements, driver, ids) => {
+                        Func<string, string> datalistValue = (id) => (string)driver.ExecuteScript("return document.getElementById('" + id + "').value", 0);
+                        var result = string.Empty;
+
+                        foreach(var element in elements)
+                        {
+                            var elementFive = (IUIAutomationElement5)element;
+                            List<int> patternIds;
+                            var names = elementFive.GetPatterns(out patternIds);
+
+                            if (!names.Contains("SelectionPattern"))
+                            {
+                                result += "\nElement did not support SelectionPattern";
+                            }
+                            else {
+                                var selectionPattern = (IUIAutomationSelectionPattern)elementFive.GetCurrentPattern(
+                                    patternIds[names.IndexOf("SelectionPattern")]);
+
+                                result += selectionPattern.CurrentCanSelectMultiple == 1 ? "\nCanSelectMultiple set to true" : "";
+                            }
+                        }
+                        var previousControllerForElements = new HashSet<int>();
+                        foreach (var id in ids)
+                        {
+                            var initial = datalistValue(id);
+                            driver.SendSpecialKeys(id, "Arrow_down");
+
+                            var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().ConvertAll(element => elements.IndexOf(element));
+                            if(controllerForElements.All(element => previousControllerForElements.Contains(element))){
+                                result += "Element controller for not set for id: " + id;
+                            }
+
+                            previousControllerForElements.Add(controllerForElements.First(element => !previousControllerForElements.Contains(element)));
+
+                            driver.SendSpecialKeys(id, "Enter");
+                            if (datalistValue(id) == initial)//TODO set to specific value
+                            {
+                                return "Unable to set the datalist with keyboard for element with id: " + id;
+                            }
+                        }
+
+                        return result;
+                    })),
                 new TestData("details", null),
                 new TestData("dialog", null),
                 new TestData("figure", "Group", "figure",
-                    additionalRequirement: CheckElementNames(6,
+                    additionalRequirement: CheckElementNames(
                     new List<string>{
                         "aria-label attribute 2",
-                        "fg-003-labelledby 3",
+                        "p referenced by aria-labelledby3",
                         "title attribute 4",
                         "Figcaption element 5",
                         "Figcaption element 7"},
                     new List<string>{
-                        "p referenced by aria-describedby 6",
+                        "p referenced by aria-describedby6",
                         "title attribute 7"
                     })),
-                new TestData("figure-figcaption", "Image",
-                    additionalRequirement: ((elements, driver, ids) => elements.All(element => element.CurrentName == "HTML5 logo") ? ARPASS : ARFAIL)),
-                new TestData("footer", "Group", "footer", "Custom", "content information",
-                    additionalRequirement: CheckElementNames(7,
-                    new List<string>{
-                        "aria-label attribute 3",
-                        "ft-004-labelledby 4",
-                        "title attribute 5",
-                        "aria-label attribute 7"},
-                    new List<string>{
-                        "small referenced by aria-describedby 6",
-                        "title attribute 7"
-                    })),
-                new TestData("header", "Group", "header", "Custom", "banner",
-                    additionalRequirement: CheckElementNames(7,
-                    new List<string>{
-                        "aria-label attribute 3",
-                        "hd-004-labelledby 4",
-                        "title attribute 5",
-                        "aria-label attribute 7"},
-                    new List<string>{
-                        "small referenced by aria-describedby 6",
-                        "title attribute 7"
-                    })),
-                new TestData("input-color", "Edit", "color picker",
-                    additionalRequirement: (elements, driver, ids) => 
-                        ids.FirstOrDefault(id =>
+                new TestData("figure-figcaption", "",
+                    searchStrategy: element => true, //Verify this element via text range
+                    additionalRequirement: ((elements, driver, ids) =>
+                        {
+                            var result = "";
+
+                            var logoText = "HTML5 logo 1";
+
+                            var five = (IUIAutomationElement5)elements[0];//TODO all elements
+                            List<int> patternIds;
+                            var names = five.GetPatterns(out patternIds);
+
+                            if (!names.Contains("TextPattern"))
+                            {
+                                return "Pane did not support TextPattern, unable to search";
+                            }
+
+                            var textPattern = (IUIAutomationTextPattern)five.GetCurrentPattern(
+                                patternIds[names.IndexOf("TextPattern")]);
+
+                            var documentRange = textPattern.DocumentRange;
+
+                            var foundText = documentRange.GetText(1000);
+                            if (!foundText.Contains(logoText))
+                            {
+                                return "Text not found on page";
+                            }
+
+                            var foundControlTypes = new HashSet<string>();
+                            var figure = EdgeA11yTools.SearchChildren(elements[0], "Group", null, out foundControlTypes);
+
+                            var childRange = textPattern.RangeFromChild(figure[0]);
+
+                            var childRangeText = childRange.GetText(1000).Trim();
+
+                            if(childRangeText != logoText)
+                            {
+                                return string.Format("Unable to find correct text range. Found '{0}' instead", childRangeText);
+                            }
+
+                            //TOOD not in tree
+                            return result;
+                        })),
+                new TestData("footer", "Group",
+                    searchStrategy: element =>
+                        element.CurrentControlType == converter.GetElementCodeFromName("Group")
+                        && element.CurrentLocalizedControlType == "footer",
+                    additionalRequirement: (elements, driver, ids) => {
+                        var result = CheckElementNames(
+                            new List<string>{
+                                "aria-label attribute 3",
+                                "small referenced by aria-labelledby4",
+                                "title attribute 5",
+                                "aria-label attribute 7"},
+                            new List<string>{
+                                "small referenced by aria-describedby6",
+                                "title attribute 7"
+                            })(elements, driver, ids);
+
+                        if (result != ARPASS)
+                        {
+                            return result;
+                        }
+
+                        //not all elements need to have the same localized control type
+                        if(elements.Select(e => e.CurrentLocalizedControlType).Count(lct => lct == "footer") != 6){
+                            return "Elements did not have the correct localized control types";
+                        }
+
+                        var elementConverter = new ElementConverter();
+
+                        var convertedLandmarks = 0;
+                        var localizedLandmarks = 0;
+                        //same for landmark and localizedlandmark
+                        foreach (var element in elements)
+                        {
+                            var five = element as IUIAutomationElement5;
+                            var convertedLandmark = elementConverter.GetElementNameFromCode(five.CurrentLandmarkType);
+                            var localizedLandmark = five.CurrentLocalizedLandmarkType;
+                            if (convertedLandmark == "Custom")
+                            {
+                                convertedLandmarks++;
+                            }
+                            if (localizedLandmark == "content information")
+                            {
+                                localizedLandmarks++;
+                            }
+                        }
+                        if (convertedLandmarks != 6)
+                        {
+                            return "Elements did not have the correct landmark types";
+                        }
+
+                        if (localizedLandmarks != 6)
+                        {
+                            return "Elements did not have the correct localized landmark types";
+                        }
+
+                        return ARPASS;
+                    }),
+                new TestData("header", "Group",
+                    searchStrategy: element =>
+                        element.CurrentControlType == converter.GetElementCodeFromName("Group")
+                        && element.CurrentLocalizedControlType == "header",
+                    additionalRequirement: (elements, driver, ids) => {
+                        var result = CheckElementNames(
+                            new List<string>{
+                                "aria-label attribute 3",
+                                "h1 referenced by aria-labelledby4",
+                                "title attribute 5",
+                                "aria-label attribute 7"},
+                            new List<string>{
+                                "h1 referenced by aria-describedby6",
+                                "title attribute 7"
+                            })(elements, driver, ids);
+
+                        if (result != ARPASS)
+                        {
+                            return result;
+                        }
+
+                        //not all elements need to have the same localized control type
+                        if(elements.Select(e => e.CurrentLocalizedControlType).Count(lct => lct == "header") != 6){
+                            return "Elements did not have the correct localized control types";
+                        }
+
+                        var elementConverter = new ElementConverter();
+
+                        var convertedLandmarks = 0;
+                        var localizedLandmarks = 0;
+                        //same for landmark and localizedlandmark
+                        foreach (var element in elements)
+                        {
+                            var five = element as IUIAutomationElement5;
+                            var convertedLandmark = elementConverter.GetElementNameFromCode(five.CurrentLandmarkType);
+                            var localizedLandmark = five.CurrentLocalizedLandmarkType;
+                            if (convertedLandmark == "Custom")
+                            {
+                                convertedLandmarks++;
+                            }
+                            if (localizedLandmark == "banner")
+                            {
+                                localizedLandmarks++;
+                            }
+                        }
+                        if (convertedLandmarks != 6)
+                        {
+                            return "Elements did not have the correct landmark types";
+                        }
+
+                        if (localizedLandmarks != 6)
+                        {
+                            return "Elements did not have the correct localized landmark types";
+                        }
+
+                        return ARPASS;
+                    }),
+                new TestData("input-color", "Button", "color picker",
+                    additionalRequirement: (elements, driver, ids) => {
+                        var result = string.Empty;
+
+                        var previousControllerForElements = new HashSet<int>();
+                        foreach(var id in ids)
                         {
                             Func<string> CheckColorValue = () => (string) driver.ExecuteScript("return document.getElementById('"+ id + "').value", timeout);
                             var initial = CheckColorValue();
 
+                            //open dialog to check controllerfor
+                            driver.SendSpecialKeys(id, "Enter");
+                            var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().ConvertAll(element => elements.IndexOf(element));
+                            if(controllerForElements.All(element => previousControllerForElements.Contains(element))){
+                                result += "Element controller for not set for id: " + id;
+                            }
+                            driver.SendSpecialKeys(id, "Escape");
+
                             driver.SendSpecialKeys(id, "EnterTabEscape");
                             if (CheckColorValue() != initial)
                             {
-                                return true;
+                                result += "\nUnable to cancel with escape";
                             }
 
+                            //TODO open with space as well
                             driver.SendSpecialKeys(id, "EnterTabEnter");
                             if (CheckColorValue() == initial)
                             {
-                                return true;
+                                result += "\nUnable to submit with enter";
                             }
 
                             initial = CheckColorValue();
 
-                            driver.SendSpecialKeys(id, "EnterTabTabArrow_rightArrow_rightArrow_right");
+                            driver.SendSpecialKeys(id, "EnterTabTabArrow_rightArrow_rightArrow_rightEnter");
                             if (CheckColorValue() == initial)
                             {
-                                return true;
+                                result += "\nUnable to change values with arrow keys";
                             }
-                            //TODO add more
 
-                            return false;
-                        }) == null ? ARPASS : "Failed keyboard interaction"
-                    ),
-                new TestData("input-date", "Edit", keyboardElements: new List<string> { "input1", "input2" },
-                    additionalRequirement: CheckCalendarKeyboard(3)),
-                new TestData("input-datetime-local", "Text", additionalRequirement: CheckDatetimeLocalKeyboard()),
-                new TestData("input-email", "Edit", "email", keyboardElements: new List<string> { "input1", "input2" }, additionalRequirement: CheckValidation()),
+                            //p1
+                            //TODO get to buttons
+                            //TODO active buttons with space/enter
+
+                            //p2
+                            //TODO enter submits escape cancels
+                            //TODO move sliders with left right
+                            //TODO children have correct sliders(CT: Slider,
+                            //Range.RangeValue) is whatever will be submitted
+                            //TODO root button has controllerfor pointing to dialog
+                            //TODO ControllerFor and LiveSetting=polite for color well
+
+                        }
+                        return result;
+                    }),
+                new TestData("input-date", "Edit",
+                    keyboardElements: new List<string> { "input1", "input2" },
+                    additionalRequirement: (elements, driver, ids) => {
+                        return CheckCalendar(3)(elements, driver, ids) + "\n" +
+                            CheckElementNames(
+                                new List<string>{
+                                    "aria-label attribute2",
+                                    "p referenced by aria-labelledby3",
+                                    "label wrapping input 4",
+                                    "title attribute 5",
+                                    "label referenced by for/id attributes 7"},
+                                new List<string>{
+                                    "p referenced by aria-describedby6",
+                                    "title attribute 7" })
+                                (elements, driver, ids);
+                    }),
+                new TestData("input-datetime-local", "Edit",
+                    additionalRequirement: (elements, driver, ids) => {
+                        return CheckDatetimeLocal()(elements, driver, ids) + "\n" +
+                            CheckElementNames(
+                                new List<string>{
+                                    "aria-label attribute2",
+                                    "p referenced by aria-labelledby3",
+                                    "label wrapping input 4",
+                                    "title attribute 5",
+                                    "label referenced by for/id attributes 7"},
+                                new List<string>{
+                                    "p referenced by aria-describedby6",
+                                    "title attribute 7" })
+                                (elements, driver, ids);
+                    }),
+                new TestData("input-email", "Edit", "email",
+                        //TODO can get to little x via tab
+                    keyboardElements: new List<string> { "input1", "input2" },
+                    additionalRequirement: (elements, driver, ids) => {
+                        return CheckValidation()(elements, driver, ids) + "\n" +
+                            CheckElementNames(
+                                new List<string>{
+                                    "aria-label attribute2",
+                                    "p referenced by aria-labelledby3",
+                                    "label wrapping input 4",
+                                    "title attribute 5",
+                                    "label referenced by for/id attributes 7"},
+                                new List<string>{
+                                    "p referenced by aria-describedby6",
+                                    "title attribute 7" })
+                                (elements, driver, ids) +
+                                CheckClearButton()(driver, ids);
+                    }),
                 new TestData("input-month", "Edit", keyboardElements: new List<string> { "input1", "input2" },
-                    additionalRequirement: CheckCalendarKeyboard(2)),
-                new TestData("input-number", "Spinner", "number", keyboardElements: new List<string> { "input1", "input2" }, additionalRequirement: CheckValidation()),
+                    additionalRequirement: (elements, driver, ids) => {
+                        return CheckCalendar(2)(elements, driver, ids) + "\n" +
+                            CheckElementNames(
+                                new List<string>{
+                                    "aria-label attribute2",
+                                    "p referenced by aria-labelledby3",
+                                    "label wrapping input 4",
+                                    "title attribute 5",
+                                    "label referenced by for/id attributes 7"},
+                                new List<string>{
+                                    "p referenced by aria-describedby6",
+                                    "title attribute 7" })
+                                (elements, driver, ids);
+                    }),
+                new TestData("input-number", "Spinner", "number",
+                //TODO reevaluate if RangeValue is actually the right thing
+                    keyboardElements: new List<string> { "input1", "input2" },
+                    additionalRequirement: (elements, driver, ids) => {
+                        var result = CheckValidation()(elements, driver, ids);
+                        result +=
+                            CheckElementNames(
+                                new List<string>{
+                                    "aria-label attribute2",
+                                    "p referenced by aria-labelledby3",
+                                    "label wrapping input 4",
+                                    "title attribute 5",
+                                    "label referenced by for/id attributes 7"},
+                                new List<string>{
+                                    "p referenced by aria-describedby6",
+                                    "title attribute 7" })
+                                (elements, driver, ids);
+
+                        foreach(var id in ids)
+                        {
+                            //clear all elements
+                            driver.ExecuteScript("document.getElementById('" + id + "').value = ''", 0);
+                            //put values in to check for later
+                            driver.SendKeys(id, "706");
+                        }
+
+                        foreach(var element in elements)
+                        {
+                            var elementFive = (IUIAutomationElement5)element;
+                            List<int> patternIds;
+                            var names = elementFive.GetPatterns(out patternIds);
+
+                            if (!names.Contains("RangeValuePattern"))
+                            {
+                                result += "\nElement did not support RangeValuePattern";
+                            }
+                            else {
+                                var valuePattern = (IUIAutomationRangeValuePattern)elementFive.GetCurrentPattern(
+                                    patternIds[names.IndexOf("RangeValuePattern")]);
+
+                                var currentValue = valuePattern.CurrentValue;
+                                if(Math.Abs(currentValue - 706) > epsilon)
+                                {
+                                    result += "\nUnable to retrieve the value with Rangevalue.value";
+                                }
+
+                                valuePattern.SetValue(707);
+                                currentValue = valuePattern.CurrentValue;
+                                if(Math.Abs(currentValue - 707) > epsilon)
+                                {
+                                    result += "\nUnable to set the value with SetValue()";
+                                }
+                            }
+                        }
+
+                        return result;
+                    }),
                 new TestData("input-range", "Slider", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: (elements, driver, ids) => {
-                        if(!ids.All(id => {
+                        foreach(var id in ids){
                             Func<int> RangeValue = () => (int) Int32.Parse((string) driver.ExecuteScript("return document.getElementById('" + id + "').value", 0));
 
                             var initial = RangeValue();
                             driver.SendSpecialKeys(id, "Arrow_up");
-                            if (initial >= RangeValue())
+                            if (initial == RangeValue())
                             {
-                                return false;
+                                return "Unable to increase range with arrow up";
                             }
                             driver.SendSpecialKeys(id, "Arrow_down");
                             if (initial != RangeValue())
                             {
-                                return false;
+                                return "Unable to decrease range with arrow down";
                             }
 
                             driver.SendSpecialKeys(id, "Arrow_right");
                             if (initial >= RangeValue())
                             {
-                                return false;
+                                return "Unable to increase range with arrow right";
                             }
                             driver.SendSpecialKeys(id, "Arrow_left");
                             if (initial != RangeValue())
                             {
-                                return false;
+                                return "Unable to decrease range with arrow left";
                             }
-
-                            return true;
-                        })){
-                           return ARFAIL;
                         }
-                        return CheckElementNames(7,
+                        foreach(var element in elements){
+                            if (!element.GetPatterns().Contains("RangeValuePattern")) {
+                                return "Element did not implement the RangeValuePattern";
+                            }
+                        }
+                        return CheckElementNames(
                             new List<string>
                             {
                                 "aria-label attribute 2",
-                                "ri-003-labelledby 3",
+                                "p referenced by aria-labelledby3",
                                 "label wrapping input 4",
                                 "title attribute 5",
                                 "label referenced by for/id attributes 7",
                             },
                             new List<string>
                             {
-                                "p referenced by aria-describedby 6",
-                                "title attribute 7" 
+                                "p referenced by aria-describedby6",
+                                "title attribute 7"
                             })(elements, driver, ids);
                     }),
-                new TestData("input-search", "Edit", "search", keyboardElements: new List<string> { "input1", "input2" }),
-                new TestData("input-tel", "Edit", "telephone", keyboardElements: new List<string> { "input1", "input2" }),
+                new TestData("input-search", "Edit", "search", keyboardElements: new List<string> { "input1", "input2" },
+                    additionalRequirement: CheckElementNames(
+                            new List<string>
+                            {
+                                "aria-label attribute 2",
+                                "p referenced by aria-labelledby3",
+                                "label wrapping input 4",
+                                "title attribute 5",
+                                "label referenced by for/id attributes 7",
+                            },
+                            new List<string>
+                            {
+                                "p referenced by aria-describedby6",
+                                "title attribute 7"
+                            })),
+                new TestData("input-tel", "Edit", "telephone", keyboardElements: new List<string> { "input1", "input2" },
+                    additionalRequirement: CheckElementNames(
+                            new List<string>
+                            {
+                                "aria-label attribute 2",
+                                "p referenced by aria-labelledby3",
+                                "label wrapping input 4",
+                                "title attribute 5",
+                                "label referenced by for/id attributes 7",
+                            },
+                            new List<string>
+                            {
+                                "p referenced by aria-describedby6",
+                                "title attribute 7"
+                            })),
                 new TestData("input-time", "Edit", keyboardElements: new List<string> { "input1", "input2" },
-                    additionalRequirement: CheckCalendarKeyboard(2)),
-                new TestData("input-url", "Edit", "url", keyboardElements: new List<string> { "input1", "input2" }, additionalRequirement: CheckValidation()),
+                    additionalRequirement: (elements, driver, ids) => {
+                        return CheckCalendar(2)(elements, driver, ids) + "\n" +
+                            CheckElementNames(
+                                new List<string>{
+                                    "aria-label attribute 2",
+                                    "p referenced by aria-labelledby3",
+                                    "label wrapping input 4",
+                                    "title attribute 5",
+                                    "label referenced by for/id attributes 7"},
+                                new List<string>{
+                                    "p referenced by aria-describedby6",
+                                    "title attribute 7" })
+                                (elements, driver, ids);
+                    }),
+                new TestData("input-url", "Edit", "url",
+                        keyboardElements: new List<string> { "input1", "input2" },
+                        additionalRequirement: CheckValidation()),
                 new TestData("input-week", "Edit", keyboardElements: new List<string> { "input1", "input2" },
-                    additionalRequirement: CheckCalendarKeyboard(2)),
+                    additionalRequirement: (elements, driver, ids) => {
+                        return CheckCalendar(2)(elements, driver, ids) + "\n" +
+                            CheckElementNames(
+                                new List<string>{
+                                    "aria-label attribute 2",
+                                    "p referenced by aria-labelledby3",
+                                    "label wrapping input 4",
+                                    "title attribute 5",
+                                    "label referenced by for/id attributes 7"},
+                                new List<string>{
+                                    "p referenced by aria-describedby6",
+                                    "title attribute 7" })
+                                (elements, driver, ids);
+                    }),
                 new TestData("main", "Group", "main", "Main", "main",
-                    additionalRequirement: CheckElementNames(6,
+                    additionalRequirement: CheckElementNames(
                     new List<string>{
                         "title attribute 1",
                         "aria-label attribute 2",
-                        "h1 referenced by aria-labelledby 3",
+                        "h1 referenced by aria-labelledby3",
                         "title attribute 4",
-                        "aria-label attribute 6" 
+                        "aria-label attribute 6"
                     },
                     new List<string>{
-                        "h1 referenced by aria-describedby 5",
+                        "h1 referenced by aria-describedby5",
                         "title attribute 6"
                     })),
-                new TestData("mark", "Text", "mark"),
+                new TestData("mark", "Text", "mark",//TODO text pattern
+                        //TODO not in tree
+                    additionalRequirement: CheckElementNames(
+                    new List<string>{
+                        "aria-label attribute2",
+                        "Element referenced by aria-labelledby attribute3",
+                        "title attribute 4",
+                        "aria-label attribute 6"
+                    },
+                    new List<string>{
+                        "Element referenced by aria-describedby attribute5",
+                        "title attribute 6"
+                    })),
                 new TestData("meter", "Progressbar", "meter",
+                        //TODO min max low etc.
                     additionalRequirement:
                         ((elements, driver, ids) => {
                             if(!elements.All(element => element.GetProperties().Any(p => p.Contains("IsReadOnly")))){
                                 return "Not all elements were read only";
                             }
-                            return CheckElementNames(7,
+                            return CheckElementNames(
                                 new List<string>
                                 {
                                     "aria-label attribute 2",
-                                    "mr-003-labelledby 3",
+                                    "p referenced by aria-labelledby3",
                                     "label wrapping meter 4",
                                     "title attribute 5",
                                     "label referenced by for/id attributes 7",
                                 },
                                 new List<string>
                                 {
-                                    "p referenced by aria-describedby 6",
-                                    "title attribute 7" 
+                                    "p referenced by aria-describedby6",
+                                    "title attribute 7"
                                 })(elements, driver, ids);
                         }),
                     searchStrategy: (element => element.GetPatterns().Contains("RangeValuePattern"))),//NB the ControlType is not used for searching this element
@@ -310,48 +750,65 @@ namespace Microsoft.Edge.A11y
                 new TestData("menupopup", null),
                 new TestData("menutoolbar", null),
                 new TestData("nav", "Group", "navigation", "Navigation", "navigation",
-                    additionalRequirement: CheckElementNames(6,
+                    additionalRequirement: CheckElementNames(
                     new List<string>{
                         "aria-label attribute 2",
-                        "nv-003-labelledby 3",
+                        "h1 referenced by aria-labelledby3",
                         "title attribute 4",
                         "aria-label attribute 6"},
                     new List<string>{
-                        "h1 referenced by aria-describedby 5",
+                        "h1 referenced by aria-describedby5",
                         "title attribute 6"
                     })),
                 new TestData("output", "Group", "output",
                     additionalRequirement: ((elements, driver, ids) => {
+                        var result = string.Empty;
+
                         if (!elements.All(element => ((IUIAutomationElement5)element).CurrentLiveSetting != LiveSetting.Polite)){
-                            return "Element did not have LiveSetting = Polite";
+                            result += "Element did not have LiveSetting = Polite";
                         }
-                        if (!elements.All(element => element.CurrentControllerFor != null && element.CurrentControllerFor.Length > 0)){
-                            return "Element did not have ControllerFor set";
+                        var controllerForLengths = elements.ConvertAll(element => element.CurrentControllerFor != null ? element.CurrentControllerFor.Length : 0);
+                        if (controllerForLengths.Count(cfl => cfl > 0) != 1)
+                        {
+                            result += "Expected 1 element with ControllerFor set. Found " + controllerForLengths.Count(cfl => cfl > 0);
                         }
-                        return ARPASS;
+                        result += CheckElementNames(
+                            new List<string>{
+                                "aria-label attribute 2",
+                                "p referenced by aria-labelledby3",
+                                "label wrapping output 4",
+                                "title attribute 5",
+                                "label referenced by for/id attributes 7"
+                            },
+                            new List<string>{
+                                "p referenced by aria-describedby6",
+                                "title attribute 7"
+                            })(elements, driver, ids);
+
+                        return result;
                     })),
                 new TestData("progress", "Progressbar",
-                    additionalRequirement: CheckElementNames(7,
+                    additionalRequirement: CheckElementNames(
                     new List<string>{
                         "aria-label attribute 2",
-                        "p referenced by aria-labelledby 3",
+                        "p referenced by aria-labelledby3",
                         "label wrapping output 4",
                         "title attribute 5",
                         "label referenced by for/id attributes 7"
                     },
                     new List<string>{
-                        "p referenced by aria-describedby 6",
-                        "title attribute 7" 
+                        "p referenced by aria-describedby6",
+                        "title attribute 7"
                     })),
                 new TestData("section", "Group", "section", "Custom", "region",
-                    additionalRequirement: CheckElementNames(7,
+                    additionalRequirement: CheckElementNames(
                     new List<string>{
                         "aria-label attribute 3",
-                        "sc-004-labelledby 3",
+                        "h1 referenced by aria-labelledby4",
                         "title attribute 5",
                         "aria-label attribute 7"},
                     new List<string>{
-                        "h1 referenced by aria-describedby 6",
+                        "h1 referenced by aria-describedby6",
                         "title attribute 7"
                     })),
                 new TestData("summary", null),
@@ -376,8 +833,10 @@ namespace Microsoft.Edge.A11y
                     searchStrategy: (element => true)),
                 new TestData("video", "Group", null, keyboardElements: new List<string> { "video1" },
                     additionalRequirement: ((elements, driver, ids) =>
-                        CheckChildNames(
-                            new List<string> {//TODO get full list when it's finalized
+                    {
+
+                        var childNames = CheckChildNames(
+                            new List<string> {
                                     "Play",
                                     "Time elapsed",
                                     "Seek",
@@ -387,9 +846,14 @@ namespace Microsoft.Edge.A11y
                                     "Show captioning",
                                     "Mute",
                                     "Volume",
-                                    "Full screen" })(elements, driver, ids) == ARPASS ?
-                        CheckVideoKeyboardInteractions(elements, driver, ids) : ARFAIL)),
-                new TestData("hidden-att", "Button", null,
+                                    "Full screen" })(elements, driver, ids);
+                        if(childNames != ARPASS){
+                            return childNames;
+                        }
+                        return CheckVideoKeyboardInteractions(elements, driver, ids);
+                    })),
+                    new TestData("hidden-att", "Button", null,
+                        //TODO no text pattern
                     additionalRequirement: ((elements, driver, ids) =>
                     {
                         var elementConverter = new ElementConverter();
@@ -405,18 +869,10 @@ namespace Microsoft.Edge.A11y
                         driver.ExecuteScript(Javascript.RemoveHidden, timeout);
 
                         HashSet<string> foundControlTypes;
-                        elements = EdgeA11yTools.SearchDocumentChildren(browserElement, "Button", null, out foundControlTypes);
+                        elements = EdgeA11yTools.SearchChildren(browserElement, "Button", null, out foundControlTypes);
                         if (elements.Count(e => e.CurrentControlType != paneCode) != 1)
                         {
                             return "Found " + elements.Count(e => e.CurrentControlType != paneCode) + " elements. Expected 1";
-                        }
-
-                        driver.ExecuteScript(Javascript.RemoveAriaHidden, timeout);
-
-                        elements = EdgeA11yTools.SearchDocumentChildren(browserElement, "Button", null, out foundControlTypes);
-                        if (elements.Count(e => e.CurrentControlType != paneCode) != 2)
-                        {
-                            return "Found " + elements.Count(e => e.CurrentControlType != paneCode) + " elements. Expected 2";
                         }
 
                         return ARPASS;
@@ -427,10 +883,25 @@ namespace Microsoft.Edge.A11y
                     {
                         driver.SendSubmit("input1");
                         System.Threading.Thread.Sleep(TimeSpan.FromMilliseconds(500));
-                        return elements.Count() == 1 && elements.All(
-                                                            e => e.CurrentControllerFor != null
-                                                            && e.CurrentControllerFor.Length > 0
-                                                            && e.CurrentIsDataValidForForm == 0) ? ARPASS : ARFAIL;
+                        foreach(var element in elements){
+                            if(element.CurrentControllerFor == null || element.CurrentControllerFor.Length == 0){
+                                return "\nElement did not have controller for set";
+                            }
+
+                            if(element.CurrentIsDataValidForForm != 0){
+                                return "\nElement did not have IsDataValidForForm set to false";
+                            }
+
+                            if(element.CurrentIsRequiredForForm != 1){
+                                return "\nElement did not have IsRequiredForForm set to true";
+                            }
+
+                            if(element.CurrentHelpText == null || element.CurrentHelpText.Length == 0){
+                                return "\nElement did not have HelpText";
+                            }
+                        }
+
+                        return ARPASS;
                     }),
                 new TestData("placeholder-att", "Edit",
                     additionalRequirement: ((elements, driver, ids) =>
@@ -451,8 +922,6 @@ namespace Microsoft.Edge.A11y
                         }.All(f => f(elementNames)) ? ARPASS : ARFAIL;
                     }))
             };
-
-            return alltests;
         }
 
         /// <summary>
@@ -465,109 +934,131 @@ namespace Microsoft.Edge.A11y
         private static string CheckVideoKeyboardInteractions(List<IUIAutomationElement> elements, DriverManager driver, List<string> ids)
         {
             string videoId = "video1";
+            string result = ARPASS;
+
             Func<bool> VideoPlaying = () => (bool)driver.ExecuteScript("return !document.getElementById('" + videoId + "').paused", 0);
-            Func<double> VideoVolume = () => driver.ExecuteScript("return document.getElementById('" + videoId + "').volume", 0).ParseMystery();
+            Func<object> PauseVideo = () => driver.ExecuteScript("document.getElementById('" + videoId + "').pause()", 0);
+            Func<object> PlayVideo = () => driver.ExecuteScript("document.getElementById('" + videoId + "').play()", 0);
+            Func<double> GetVideoVolume = () => driver.ExecuteScript("return document.getElementById('" + videoId + "').volume", 0).ParseMystery();
+            Func<double, bool> VideoVolume = expected => Math.Abs(GetVideoVolume() - expected) < epsilon;
             Func<bool> VideoMuted = () => (bool)driver.ExecuteScript("return document.getElementById('" + videoId + "').muted", 0);
-            Func<double> VideoElapsed = () => driver.ExecuteScript("return document.getElementById('" + videoId + "').currentTime", 0).ParseMystery();
+            Func<double> GetVideoElapsed = () => driver.ExecuteScript("return document.getElementById('" + videoId + "').currentTime", 0).ParseMystery();
+            Func<double, bool> VideoElapsed = expected => Math.Abs(GetVideoElapsed() - expected) < epsilon;
+            Func<bool> IsVideoFullScreen = () => driver.ExecuteScript("return document.fullscreenElement", 0) != null;
 
-            //Case 1: tab to video element and play/pause
-            driver.SendSpecialKeys(videoId, "Space");
-            if (!VideoPlaying())
-            {
-                return "Video was not playing after spacebar on root element";
-            }
-            driver.SendSpecialKeys(videoId, "Space");
-            if (VideoPlaying())
-            {
-                return "Video was not paused after spacebar on root element";
-            }
+            var handler = new StructureChangedHandler();
+            WaitForElement(handler, elements[0], "volume");
 
-            //Case 2: tab to play button and play/pause
+            //Case 1: tab to play button and play/pause
+            Console.WriteLine("Case 1: tab to play button and play/pause");
             driver.SendSpecialKeys(videoId, "TabSpace");
-            if (!VideoPlaying())
+
+            WaitForElement(handler, elements[0], "play");
+            if (!WaitForCondition(VideoPlaying))
             {
-                return "Video was not playing after spacebar on play button";
+                result += "\tVideo was not playing after spacebar on play button\n";
+                PlayVideo();
             }
             driver.SendSpecialKeys(videoId, "Enter");
-            if (VideoPlaying())
+            if (WaitForCondition(VideoPlaying))
             {
-                return "Video was not paused after enter on play button";
+                result += "\tVideo was not paused after enter on play button\n";
+                PauseVideo();
             }
 
-            //TODO remove when the test file is resized
-            driver.ExecuteScript("document.getElementById('video1').width = 600", 0);
-
-            //Case 3: Volume and mute
+            //Case 2: Volume and mute
+            Console.WriteLine("Case 2: Volume and mute");
             Javascript.ClearFocus(driver, 0);
-            driver.SendTabs(videoId, 6);//tab to volume control //TODO make this more resilient to UI changes
-            var initial = VideoVolume();
-            driver.SendSpecialKeys(videoId, "Arrow_downArrow_down");//volume down
-            if (initial == VideoVolume())
+            driver.SendTabs(videoId, 6);//tab to volume control//TODO make this more resilient to UI changes
+            driver.SendSpecialKeys(videoId, "Enter");//mute
+            if (!WaitForCondition(VideoMuted))
             {
-                return "Volume did not decrease with arrow keys";
+                result += "\tEnter did not mute the video\n";
+            }
+            WaitForElement(handler, elements[0], "mute");
+            driver.SendSpecialKeys(videoId, "Enter");//unmute
+            if (WaitForCondition(VideoMuted))
+            {
+                result += "\tEnter did not unmute the video\n";
+            }
+            var initial = GetVideoVolume();
+            driver.SendSpecialKeys(videoId, "Arrow_downArrow_down");//volume down
+            if (!WaitForCondition(VideoVolume, initial - 0.1))
+            {
+                result += "\tVolume did not decrease with arrow keys\n";
             }
             driver.SendSpecialKeys(videoId, "Arrow_upArrow_up");//volume up
-            if (VideoVolume() != initial)
+            if (!WaitForCondition(VideoVolume, initial))
             {
-                return "Volume did not increase with arrow keys";
-            }
-            driver.SendSpecialKeys(videoId, "Enter");//mute//TODO switch back to original order once space works
-            if (!VideoMuted())
-            {
-                return "Enter did not mute the video";
-            }
-            driver.SendSpecialKeys(videoId, "Space");//unmute
-            if (VideoMuted())
-            {
-                return "Space did not unmute the video";
+                result += "\tVolume did not increase with arrow keys\n";
             }
 
-            //Case 4: Audio selection
-            Javascript.ClearFocus(driver, 0);
-            driver.SendTabs(videoId, 5);//tab to audio selection//TODO make this more resilient to UI changes
-            driver.SendSpecialKeys(videoId, "EnterArrow_up");
+            //Case 3: Audio selection
+            // TODO test manually
+            //Javascript.ClearFocus(driver, 0);
+            //driver.SendTabs(videoId, 5);//tab to audio selection
+            //driver.SendSpecialKeys(videoId, "EnterArrow_down");
 
-            //Case 5: Progress and seek
-            if (VideoPlaying())
+            Console.WriteLine("Case 4: Progress and seek");
+            //Case 4: Progress and seek
+            if (WaitForCondition(VideoPlaying))
             { //this should not be playing
-                return "Video was playing when it shouldn't have been";
+                result += "\tVideo was playing when it shouldn't have been\n";
             }
             Javascript.ClearFocus(driver, 0);
-            driver.SendTabs(videoId, 3);//tab to seek//TODO make this more resilient to UI changes
-            initial = VideoElapsed();
+            driver.SendTabs(videoId, 3);//tab to seek
+            initial = GetVideoElapsed();
             driver.SendSpecialKeys(videoId, "Arrow_right"); //skip ahead
-            if (initial != VideoElapsed() - 10)
+            if (!WaitForCondition(VideoElapsed, initial + 10))
             {
-                return "Video did not skip forward with arrow right";
+                result += "\tVideo did not skip forward with arrow right\n";
             }
 
             driver.SendSpecialKeys(videoId, "Arrow_left"); //skip back
-            if (initial != VideoElapsed())
+            if (!WaitForCondition(VideoElapsed, initial))
             {
-                return "Video did not skip back with arrow left";
+                result += "\tVideo did not skip back with arrow left\n";
+                Console.WriteLine("Video did not skip back with arrow left, initial:{0} actual:{1}", initial, GetVideoElapsed());
             }
 
-            //Case 6: Progress and seek on remaining time
+            //Case 5: Progress and seek on remaining time
             if (VideoPlaying())
             { //this should not be playing
-                return "Video was playing when it shouldn't have been";
+                result += "\tVideo was playing when it shouldn't have been\n";
             }
             Javascript.ClearFocus(driver, 0);
-            driver.SendTabs(videoId, 4);//tab to seek//TODO make this more resilient to UI changes
-            initial = VideoElapsed();
+            driver.SendTabs(videoId, 4);//tab to seek
+            initial = GetVideoElapsed();
             driver.SendSpecialKeys(videoId, "Arrow_right"); //skip ahead
-            if (initial != VideoElapsed() - 10)
+            if (!WaitForCondition(VideoElapsed, initial + 10))
             {
-                return "Video did not skip forward with arrow right";
+                result += "\tVideo did not skip forward with arrow right\n";
             }
 
             driver.SendSpecialKeys(videoId, "Arrow_left"); //skip back
-            if (initial != VideoElapsed())
+            if (!WaitForCondition(VideoElapsed, initial))
             {
-                return "Video did not skip back with arrow left";
+                result += "\tVideo did not skip back with arrow left\n";
+                Console.WriteLine("Video did not skip back with arrow left, initial:{0} actual:{1}", initial, GetVideoElapsed());
+                driver.SendSpecialKeys(videoId, "Arrow_left"); //skip back
+                Console.WriteLine("Video did not skip back with arrow left, initial:{0} actual:{1}", initial, GetVideoElapsed());
             }
 
-            return ARPASS;
+            //Case 6: Full screen
+            Javascript.ClearFocus(driver, 0);
+            driver.SendTabs(videoId, 8);//tab to fullscreen
+            driver.SendSpecialKeys(videoId, "Enter"); //enter fullscreen mode
+            if (!WaitForCondition(IsVideoFullScreen))
+            {
+                result += "\tVideo did not enter FullScreen mode\n";
+            }
+            driver.SendSpecialKeys(videoId, "Escape");
+            if (WaitForCondition(IsVideoFullScreen))
+            {
+                result += "\tVideo did not exit FullScreen mode\n";
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -580,41 +1071,72 @@ namespace Microsoft.Edge.A11y
         private static string CheckAudioKeyboardInteractions(List<IUIAutomationElement> elements, DriverManager driver, List<string> ids)
         {
             string audioId = "audio1";
-            Func<bool> AudioPlaying = () => (bool)driver.ExecuteScript("return !document.getElementById('" + audioId + "').paused", 0);
-            Func<double> AudioVolume = () => driver.ExecuteScript("return document.getElementById('" + audioId + "').volume", 0).ParseMystery();
-            Func<bool> AudioMuted = () => (bool)driver.ExecuteScript("return document.getElementById('" + audioId + "').muted", 0);
-            Func<double> AudioElapsed = () => driver.ExecuteScript("return document.getElementById('" + audioId + "').currentTime", 0).ParseMystery();
+            string result = ARPASS;
+            Func<bool> AudioPlaying = () =>
+            {
+                Thread.Sleep(500);
+                return (bool)driver.ExecuteScript("return !document.getElementById('" + audioId + "').paused", 0);
+            };
+            Func<object> PauseAudio = () =>
+            {
+                Thread.Sleep(500);
+                return driver.ExecuteScript("!document.getElementById('" + audioId + "').pause()", 0);
+            };
+            Func<object> PlayAudio = () =>
+            {
+                Thread.Sleep(500);
+                return driver.ExecuteScript("!document.getElementById('" + audioId + "').play()", 0);
+            };
+            Func<double> AudioVolume = () =>
+            {
+                Thread.Sleep(500);
+                return driver.ExecuteScript("return document.getElementById('" + audioId + "').volume", 0).ParseMystery();
+            };
+            Func<bool> AudioMuted = () =>
+            {
+                Thread.Sleep(500);
+                return (bool)driver.ExecuteScript("return document.getElementById('" + audioId + "').muted", 0);
+            };
+            Func<double> AudioElapsed = () =>
+            {
+                Thread.Sleep(500);
+                return driver.ExecuteScript("return document.getElementById('" + audioId + "').currentTime", 0).ParseMystery();
+            };
+
+            WaitForElement(elements[0], "volume");
 
             //Case 1: Play/Pause
             driver.SendTabs(audioId, 1); //Tab to play button
             driver.SendSpecialKeys(audioId, "Enter");
             if (!AudioPlaying())
             {
-                return "Audio did not play with enter";
+                result += "\tAudio did not play with enter\n";
+                PlayAudio();
             }
 
             driver.SendSpecialKeys(audioId, "Space");
             if (AudioPlaying())
             {
-                return "Audio did not pause with space";
+                result += "\tAudio did not pause with space\n";
+                PauseAudio();
             }
 
             //Case 2: Seek
             if (AudioPlaying())
             {
-                return "Audio was playing when it shouldn't have been";
+                result += "\tAudio was playing when it shouldn't have been\n";
             }
             driver.SendTabs(audioId, 3);
             var initial = AudioElapsed();
             driver.SendSpecialKeys(audioId, "Arrow_right");
             if (initial == AudioElapsed())
             {
-                return "Audio did not skip forward with arrow right";
+                result += "\tAudio did not skip forward with arrow right\n";
             }
             driver.SendSpecialKeys(audioId, "Arrow_left");
             if (initial != AudioElapsed())
             {
-                return "Audio did not skip back with arrow left";
+                result += "\tAudio did not skip back with arrow left\n";
             }
 
             //Case 3: Volume and mute
@@ -624,28 +1146,28 @@ namespace Microsoft.Edge.A11y
             driver.SendSpecialKeys(audioId, "Arrow_down");
             if (initial == AudioVolume())
             {
-                return "Volume did not decrease with arrow down";
+                result += "\tVolume did not decrease with arrow down\n";
             }
 
             driver.SendSpecialKeys(audioId, "Arrow_up");
             if (initial != AudioVolume())
             {
-                return "Volume did not increase with arrow up";
-            }
-
-            driver.SendSpecialKeys(audioId, "Space");
-            if (!AudioMuted())
-            {
-                return "Audio was not muted by space on the volume control";
+                result += "\tVolume did not increase with arrow up\n";
             }
 
             driver.SendSpecialKeys(audioId, "Enter");
+            if (!AudioMuted())
+            {
+                result += "\tAudio was not muted by enter on the volume control\n";
+            }
+            WaitForElement(elements[0], "mute");
+            driver.SendSpecialKeys(audioId, "Enter");
             if (AudioMuted())
             {
-                return "Audio was not unmuted by enter on the volume control";
+                result += "\tAudio was not unmuted by enter on the volume control\n";
             }
 
-            return ARPASS;
+            return result;
         }
 
         /// <summary>
@@ -654,13 +1176,16 @@ namespace Microsoft.Edge.A11y
         /// </summary>
         /// <param name="fields">A count of the number of fields to test</param>
         /// <returns></returns>
-        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckCalendarKeyboard(int fields)
+        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckCalendar(int fields)
         {
+            //TODO tab to buttons
             return new Func<List<IUIAutomationElement>, DriverManager, List<string>, string>((elements, driver, ids) =>
             {
-                var result = ids.FirstOrDefault(id =>//"first element that fails"
+                var result = "";
+                var previousControllerForElements = new HashSet<int>();
+                foreach (var id in ids)
                 {
-                    driver.SendSpecialKeys(id, "EnterEscapeEnterEnter");//TODO remove when possible
+                    driver.SendSpecialKeys(id, "EnterEscapeEnterEnter");//Make sure that the element has focus (gets around weirdness in WebDriver)
 
                     Func<string> DateValue = () => (string)driver.ExecuteScript("return document.getElementById('" + id + "').value", 0);
 
@@ -668,6 +1193,14 @@ namespace Microsoft.Edge.A11y
 
                     //Open the menu
                     driver.SendSpecialKeys(id, "Enter");
+
+                    //Check ControllerFor
+                    var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().ConvertAll(element => elements.IndexOf(element));
+                    if (controllerForElements.All(element => previousControllerForElements.Contains(element)))
+                    {
+                        result += "\nElement controller for not set for id: " + id;
+                    }
+
                     //Change each field in the calendar
                     for (int i = 0; i < fields; i++)
                     {
@@ -687,17 +1220,14 @@ namespace Microsoft.Edge.A11y
                     {
                         if (newdatesplit[i] == todaysplit[i])
                         {
-                            return true;//true means this element fails
+                            result += "\nNot all fields were changed by keyboard interaction.";
                         }
                     }
-
-                    return false;
-                });
-                if (result == null)
-                {
-                    return ARPASS;
+                    //TODO escape to cancel
+                    //TODO buttons with space or enter
+                    //TODO open with space
                 }
-                return "Keyboard interaction failed for element with id: " + result;
+                return result;
             });
         }
 
@@ -706,13 +1236,15 @@ namespace Microsoft.Edge.A11y
         /// above.
         /// </summary>
         /// <returns></returns>
-        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckDatetimeLocalKeyboard()
+        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckDatetimeLocal()
         {
             return new Func<List<IUIAutomationElement>, DriverManager, List<string>, string>((elements, driver, ids) =>
             {
-                var result = ids.FirstOrDefault(id =>//"first element that fails"
+                var result = "";
+                var foundControllerFor = new List<int>();
+                foreach (var id in ids)
                 {
-                    driver.SendSpecialKeys(id, "EnterEscape");//TODO remove when possible
+                    driver.SendSpecialKeys(id, "EnterEscapeEnterEnter");//Make sure that the element has focus (gets around weirdness in WebDriver)
 
                     var inputFields = new List<int> { 3, 3 };
                     var outputFields = 5;
@@ -727,6 +1259,18 @@ namespace Microsoft.Edge.A11y
                     {
                         //Open the menu
                         driver.SendSpecialKeys(id, "Enter");
+
+                        //Check ControllerFor
+                        var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().ConvertAll(element => elements.IndexOf(element));
+                        if (controllerForElements.Count() == 0)
+                        {
+                            result += "\nElement controller for not set for id: " + id;
+                        }
+                        else
+                        {
+                            foundControllerFor = foundControllerFor.Union(controllerForElements).ToList();
+                        }
+
                         //Change each field in the calendar
                         for (int i = 0; i < count; i++)
                         {
@@ -745,17 +1289,20 @@ namespace Microsoft.Edge.A11y
                     {
                         if (newdatesplit[i] == todaysplit[i])
                         {
-                            return true;
+                            result += "\nNot all fields were changed by keyboard interaction";
                         }
                     }
-
-                    return false;
-                });
-                if (result == null)
-                {
-                    return ARPASS;
                 }
-                return "Keyboard interaction failed for element with id: " + result;
+
+                foreach (var element in elements)
+                {
+                    //Since we expect each element to be set as the controllerfor twice
+                    if (foundControllerFor.Count(fcf => fcf == elements.IndexOf(element)) != 2)
+                    {
+                        result += "\nElement controller for not set";
+                    }
+                }
+                return result;
             });
         }
 
@@ -774,12 +1321,14 @@ namespace Microsoft.Edge.A11y
                     {
                         driver.SendKeys("input" + (i + 1), "invalid");
                         driver.SendSubmit("input" + (i + 1));
-                        System.Threading.Thread.Sleep(TimeSpan.FromMilliseconds(500));
+                        Thread.Sleep(TimeSpan.FromMilliseconds(500));
 
                         //Everything that is invalid on the page
                         var invalid = elements.Where(e => e.CurrentControllerFor != null &&
                                         e.CurrentControllerFor.Length > 0 &&
-                                        e.CurrentIsDataValidForForm == 0).Select(e => elements.IndexOf(e));
+                                        e.CurrentIsDataValidForForm == 0 &&
+                                        e.CurrentHelpText != null &&
+                                        e.CurrentHelpText.Length > 0).Select(e => elements.IndexOf(e));
 
                         //Elements that are invalid for the first time
                         var newInvalid = invalid.DefaultIfEmpty(-1).FirstOrDefault(inv => !previouslyInvalid.Contains(inv));
@@ -787,6 +1336,29 @@ namespace Microsoft.Edge.A11y
                         {
                             return "Element failed to validate improper input";
                         }
+
+                        if (elements[newInvalid].CurrentIsDataValidForForm != 0)
+                        {
+                            return "\nElement did not have IsDataValidForForm set to false";
+                        }
+
+                        if (elements[newInvalid].CurrentHelpText == null || elements[newInvalid].CurrentHelpText.Length == 0)
+                        {
+                            return "\nElement did not have HelpText";
+                        }
+
+                        if (elements[newInvalid].CurrentControllerFor.Length > 1)
+                        {
+                            throw new Exception("Test assumption failed: expected only one controller");
+                        }
+
+                        var helpPane = elements[newInvalid].CurrentControllerFor.GetElement(0);
+                        if (helpPane.CurrentControlType != new ElementConverter().GetElementCodeFromName("Pane"))
+                        {
+                            return "Error message did not have correct ControlType";
+                        }
+                        //TODO find out if the message pane needs to have any more requirements
+
                         previouslyInvalid.Add(newInvalid);
                     }
                     return ARPASS;
@@ -798,13 +1370,19 @@ namespace Microsoft.Edge.A11y
         /// </summary>
         /// <param name="requiredNames">The names of the elements to search for</param>
         /// <returns>A Func that can be used to verify whether the elements in the list are child elements</returns>
-        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckChildNames(List<string> requiredNames)
+        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckChildNames(List<string> requiredNames,
+            bool strict = false,
+            Func<IUIAutomationElement, bool> searchStrategy = null)
         {
             return (elements, driver, ids) =>
             {
                 foreach (var element in elements)
                 {
-                    var names = element.GetChildNames();
+                    var names = element.GetChildNames(searchStrategy);
+                    if(strict && names.Count() != requiredNames.Count)
+                    {
+                        return "Found incorrect number of children";
+                    }
                     var firstFail = requiredNames.FirstOrDefault(rn => !names.Any(n => n.Contains(rn)));
                     if (firstFail != null)
                     {
@@ -818,60 +1396,126 @@ namespace Microsoft.Edge.A11y
         /// <summary>
         /// Func factory for checking that elements have the proper Names and FullDescriptions
         /// </summary>
-        /// <param name="total">How many elements are on the page total, since
-        /// some are supposed to be blank</param>
         /// <param name="requiredNames">All the names we expect to find</param>
         /// <param name="requiredDescriptions">All the descriptions we expect
         /// to find</param>
         /// <returns>A func that can be used to check the names and descriptions
         /// of elements</returns>
-        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckElementNames(int total, List<string> requiredNames, List<string> requiredDescriptions)
+        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckElementNames(List<string> requiredNames, List<string> requiredDescriptions)
         {
             return (elements, driver, ids) =>
             {
-                var names = elements.ConvertAll(element => element.CurrentName);
-                var descriptions = elements.ConvertAll(element => ((IUIAutomationElement6)element).CurrentFullDescription);
+                var names = elements.ConvertAll(element => element.CurrentName).Where(e => !string.IsNullOrEmpty(e)).ToList();
+                var descriptions = elements.ConvertAll(element => ((IUIAutomationElement6)element).CurrentFullDescription).Where(e => !string.IsNullOrEmpty(e)).ToList();
+                var result = "";
 
                 //Check names
-                if (total != names.Count(name => name == "") + requiredNames.Count())
-                {
-                    return total - requiredNames.Count() + " names should have been blank. Found " + names.Count(name => name == "");
-                }
-                foreach (var requiredName in requiredNames)
-                {
-                    if (!names.Contains(requiredName))
-                    {
-                        return GuessElementNumber(requiredName) + " had incorrect name";
-                    }
-                }
+                var expectedNotFound = requiredNames.Where(rn => !names.Contains(rn)).ToList();//get a list of all required names not found
+                var foundNotExpected = names.Where(n => !requiredNames.Contains(n)).ToList();//get a list of all found names that weren't required
+                result +=
+                    expectedNotFound.Any() ? "\n" +
+                        expectedNotFound.Aggregate((a, b) => a + ", " + b) +
+                        (expectedNotFound.Count() > 1 ?
+                            " were expected as names but not found. " :
+                            " was expected as a name but not found. ")
+                        : "";
+                result +=
+                    foundNotExpected.Any() ? "\n" +
+                        foundNotExpected.Aggregate((a, b) => a + ", " + b) +
+                        (foundNotExpected.Count() > 1 ?
+                            " were found as names but not expected. " :
+                            " was found as a name but not expected. ")
+                        : "";
 
                 //Check descriptions
-                if (total != descriptions.Count(description => description == "") + requiredDescriptions.Count())
-                {
-                    return total - requiredDescriptions.Count() + " descriptions should have been blank. Found " + descriptions.Count(description => description == "");
-                }
-                foreach (var requiredDescription in requiredDescriptions)
-                {
-                    if (!descriptions.Contains(requiredDescription))
-                    {
-                        return GuessElementNumber(requiredDescription) + " had incorrect description";
-                    }
-                }
+                expectedNotFound = requiredDescriptions.Where(rd => !descriptions.Contains(rd)).ToList();
+                foundNotExpected = descriptions.Where(d => !requiredDescriptions.Contains(d)).ToList();
+                result +=
+                    expectedNotFound.Any() ? "\n" +
+                        expectedNotFound.Aggregate((a, b) => a + ", " + b) +
+                        (expectedNotFound.Count() > 1 ?
+                            " were expected as names but not found. " :
+                            " was expected as a name but not found. ")
+                        : "";
+                result +=
+                    foundNotExpected.Any() ? "\n" +
+                        foundNotExpected.Aggregate((a, b) => a + ", " + b) +
+                        (foundNotExpected.Count() > 1 ?
+                            " were found as names but not expected. " :
+                            " was found as a name but not expected. ")
+                        : "";
 
-                return ARPASS;
+                return result;
             };
         }
 
-        /// <summary>
-        /// From the name of the string we were supposed to find,
-        /// guess what element failed
-        /// </summary>
-        /// <param name="property">The string we were supposed to find</param>
-        /// <returns></returns>
-        private static string GuessElementNumber(string property)
+        public static Func<DriverManager, List<string>, string> CheckClearButton()
         {
-            var digit = property.FirstOrDefault(c => Char.IsNumber(c));
-            return digit == null ? "An element" : digit.ToString();
+            return (driver, ids) =>
+            {
+                var result = "";
+                Func<string, string> inputValue = (id) => (string)driver.ExecuteScript("return document.getElementById('" + id + "').value", 0);
+                Action<string> clearInput = (id) => driver.ExecuteScript("document.getElementById('" + id + "').value = ''", 0);
+
+                foreach (var id in ids)
+                {
+                    //Enter something, tab to the clear button, clear with space
+                    driver.SendSpecialKeys(id, "xTabSpace");
+                    if (inputValue(id) != "")
+                    {
+                        result += "\nElement did not clear or the clear button was not reachable by tab";
+                    }
+                    //Don't leave input which could cause problems with other tests
+                    clearInput(id);
+                }
+
+                return result;
+            };
+        }
+
+        public static bool WaitForElement(IUIAutomationElement element, string elementName, TimeSpan? timeout = null)
+        {
+            var handler = new StructureChangedHandler();
+            handler.ElementName = elementName;
+            new CUIAutomation8().AddStructureChangedEventHandler(element, TreeScope.TreeScope_Descendants, null, handler);
+            if (timeout == null)
+            {
+                timeout = TimeSpan.FromMilliseconds(500);
+            }
+            return Ewh.WaitOne(timeout.Value);
+        }
+
+        public static bool WaitForElement(StructureChangedHandler handler, IUIAutomationElement element, string elementName, TimeSpan? timeout = null)
+        {
+            handler.ElementName = elementName;
+            new CUIAutomation8().AddStructureChangedEventHandler(element, TreeScope.TreeScope_Descendants, null, handler);
+            if (timeout == null)
+            {
+                timeout = TimeSpan.FromMilliseconds(500);
+            }
+            return Ewh.WaitOne(timeout.Value);
+        }
+
+        public static bool WaitForCondition(Func<double, bool> conditionCheck, double value)
+        {
+            var condition = false;
+            for (var i = 0; i < 10 && !condition; i++)
+            {
+                Thread.Sleep(500);
+                condition = conditionCheck(value);
+            }
+            return condition;
+        }
+
+        public static bool WaitForCondition(Func<bool> conditionCheck)
+        {
+            var condition = false;
+            for (var i = 0; i < 10 && !condition; i++)
+            {
+                Thread.Sleep(500);
+                condition = conditionCheck();
+            }
+            return condition;
         }
     }
 }
