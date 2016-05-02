@@ -166,7 +166,7 @@ namespace Microsoft.Edge.A11y
                                 "Time remaining",
                                 "Mute",
                                 "Volume"})//,false, element => element.CurrentIsOffscreen != 1)//TODO enable this if necessary
-                                (elements, driver, ids);//TODO ensure nothing else is read
+                                (elements, driver, ids);
                         if(childNames != ARPASS){
                             return childNames;
                         }
@@ -219,6 +219,8 @@ namespace Microsoft.Edge.A11y
                             }
                         }
                         var previousControllerForElements = new HashSet<int>();
+
+                        //keyboard a11y
                         foreach (var id in ids)
                         {
                             var initial = datalistValue(id);
@@ -232,7 +234,7 @@ namespace Microsoft.Edge.A11y
                             previousControllerForElements.Add(controllerForElements.First(element => !previousControllerForElements.Contains(element)));
 
                             driver.SendSpecialKeys(id, "Enter");
-                            if (datalistValue(id) == initial)//TODO set to specific value
+                            if (datalistValue(id) != "Item value 1")
                             {
                                 return "Unable to set the datalist with keyboard for element with id: " + id;
                             }
@@ -262,36 +264,39 @@ namespace Microsoft.Edge.A11y
 
                             var logoText = "HTML5 logo 1";
 
-                            var five = (IUIAutomationElement5)elements[0];//TODO all elements
-                            List<int> patternIds;
-                            var names = five.GetPatterns(out patternIds);
+                            //there will be only one, since element is the pane in this case
+                            foreach(var element in elements) {
+                                var five = (IUIAutomationElement5)element;
+                                List<int> patternIds;
+                                var names = five.GetPatterns(out patternIds);
 
-                            if (!names.Contains("TextPattern"))
-                            {
-                                return "Pane did not support TextPattern, unable to search";
-                            }
+                                if (!names.Contains("TextPattern"))
+                                {
+                                    return "\nPane did not support TextPattern, unable to search";
+                                }
 
-                            var textPattern = (IUIAutomationTextPattern)five.GetCurrentPattern(
-                                patternIds[names.IndexOf("TextPattern")]);
+                                var textPattern = (IUIAutomationTextPattern)five.GetCurrentPattern(
+                                    patternIds[names.IndexOf("TextPattern")]);
 
-                            var documentRange = textPattern.DocumentRange;
+                                var documentRange = textPattern.DocumentRange;
 
-                            var foundText = documentRange.GetText(1000);
-                            if (!foundText.Contains(logoText))
-                            {
-                                return "Text not found on page";
-                            }
+                                var foundText = documentRange.GetText(1000);
+                                if (!foundText.Contains(logoText))
+                                {
+                                    result += "\nText not found on page";
+                                }
 
-                            var foundControlTypes = new HashSet<string>();
-                            var figure = EdgeA11yTools.SearchChildren(elements[0], "Group", null, out foundControlTypes);
+                                var foundControlTypes = new HashSet<string>();
+                                var figure = EdgeA11yTools.SearchChildren(element, "Group", null, out foundControlTypes);
 
-                            var childRange = textPattern.RangeFromChild(figure[0]);
+                                var childRange = textPattern.RangeFromChild(figure[0]);
 
-                            var childRangeText = childRange.GetText(1000).Trim();
+                                var childRangeText = childRange.GetText(1000).Trim();
 
-                            if(childRangeText != logoText)
-                            {
-                                return string.Format("Unable to find correct text range. Found '{0}' instead", childRangeText);
+                                if(childRangeText != logoText)
+                                {
+                                    result += string.Format("\nUnable to find correct text range. Found '{0}' instead", childRangeText);
+                                }
                             }
 
                             //TOOD not in tree
