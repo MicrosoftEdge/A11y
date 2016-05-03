@@ -591,6 +591,7 @@ namespace Microsoft.Edge.A11y
                         return result;
                     }),
                 new TestData("input-range", "Slider", keyboardElements: new List<string> { "input1", "input2" },
+                    //TODO check x button
                     additionalRequirement: (elements, driver, ids) => {
                         foreach(var id in ids){
                             Func<int> RangeValue = () => (int) Int32.Parse((string) driver.ExecuteScript("return document.getElementById('" + id + "').value", 0));
@@ -654,6 +655,7 @@ namespace Microsoft.Edge.A11y
                                 "title attribute 7"
                             })),
                 new TestData("input-tel", "Edit", "telephone", keyboardElements: new List<string> { "input1", "input2" },
+                    //TODO check x button
                     additionalRequirement: CheckElementNames(
                             new List<string>
                             {
@@ -715,7 +717,7 @@ namespace Microsoft.Edge.A11y
                         "title attribute 6"
                     })),
                 new TestData("mark", "Text", "mark",//TODO text pattern
-                        //TODO not in tree
+                    //TODO styleid = Custom, stylename = mark
                     additionalRequirement: CheckElementNames(
                     new List<string>{
                         "aria-label attribute2",
@@ -729,6 +731,9 @@ namespace Microsoft.Edge.A11y
                     })),
                 new TestData("meter", "Progressbar", "meter",
                         //TODO min max low etc.
+                        //TODO rangevalue.max, rangevalue.min
+                        //TODO rangevalue.value
+                        //TODO value.value
                     additionalRequirement:
                         ((elements, driver, ids) => {
                             if(!elements.All(element => element.GetProperties().Any(p => p.Contains("IsReadOnly")))){
@@ -749,7 +754,7 @@ namespace Microsoft.Edge.A11y
                                     "title attribute 7"
                                 })(elements, driver, ids);
                         }),
-                    searchStrategy: (element => element.GetPatterns().Contains("RangeValuePattern"))),//NB the ControlType is not used for searching this element
+                    searchStrategy: (element => element.GetPatterns().Contains("RangeValuePattern"))),//NB the ControlType is not used for searching this element//TODO why?
                 new TestData("menuitem", null),
                 new TestData("menupopup", null),
                 new TestData("menutoolbar", null),
@@ -792,6 +797,7 @@ namespace Microsoft.Edge.A11y
                         return result;
                     })),
                 new TestData("progress", "Progressbar",
+                    //TODO rangevalue.value .maximum .minimum
                     additionalRequirement: CheckElementNames(
                     new List<string>{
                         "aria-label attribute 2",
@@ -910,6 +916,7 @@ namespace Microsoft.Edge.A11y
                     {
                         driver.SendSubmit("input1");
                         System.Threading.Thread.Sleep(TimeSpan.FromMilliseconds(500));
+                        //TODO check all as with CheckValidation
                         foreach(var element in elements){
                             if(element.CurrentControllerFor == null || element.CurrentControllerFor.Length == 0){
                                 return "\nElement did not have controller for set";
