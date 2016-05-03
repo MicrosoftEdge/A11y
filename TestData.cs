@@ -591,8 +591,11 @@ namespace Microsoft.Edge.A11y
                         return result;
                     }),
                 new TestData("input-range", "Slider", keyboardElements: new List<string> { "input1", "input2" },
-                    //TODO check x button
+                    //TODO maybe a livesetting:polite, wait for cyns before implementing
                     additionalRequirement: (elements, driver, ids) => {
+                        var result = "";
+
+                        //keyboard interaction
                         foreach(var id in ids){
                             Func<int> RangeValue = () => (int) Int32.Parse((string) driver.ExecuteScript("return document.getElementById('" + id + "').value", 0));
 
@@ -600,31 +603,39 @@ namespace Microsoft.Edge.A11y
                             driver.SendSpecialKeys(id, "Arrow_up");
                             if (initial == RangeValue())
                             {
-                                return "Unable to increase range with arrow up";
+                                result += "\nUnable to increase range with arrow up";
+                                break;
                             }
                             driver.SendSpecialKeys(id, "Arrow_down");
                             if (initial != RangeValue())
                             {
-                                return "Unable to decrease range with arrow down";
+                                result += "\nUnable to decrease range with arrow down";
+                                break;
                             }
 
                             driver.SendSpecialKeys(id, "Arrow_right");
                             if (initial >= RangeValue())
                             {
-                                return "Unable to increase range with arrow right";
+                                result += "\nUnable to increase range with arrow right";
+                                break;
                             }
                             driver.SendSpecialKeys(id, "Arrow_left");
                             if (initial != RangeValue())
                             {
-                                return "Unable to decrease range with arrow left";
+                                result += "\nUnable to decrease range with arrow left";
+                                break;
                             }
                         }
+
+                        //rangevalue pattern
                         foreach(var element in elements){
                             if (!element.GetPatterns().Contains("RangeValuePattern")) {
-                                return "Element did not implement the RangeValuePattern";
+                                result += "\nElement did not implement the RangeValuePattern";
                             }
                         }
-                        return CheckElementNames(
+
+                        //naming
+                        result += CheckElementNames(
                             new List<string>
                             {
                                 "aria-label attribute 2",
@@ -638,6 +649,11 @@ namespace Microsoft.Edge.A11y
                                 "p referenced by aria-describedby6",
                                 "title attribute 7"
                             })(elements, driver, ids);
+
+                        //clear button
+                        result += CheckClearButton()(driver, ids);
+
+                        return result;
                     }),
                 new TestData("input-search", "Edit", "search", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: CheckElementNames(
@@ -655,8 +671,7 @@ namespace Microsoft.Edge.A11y
                                 "title attribute 7"
                             })),
                 new TestData("input-tel", "Edit", "telephone", keyboardElements: new List<string> { "input1", "input2" },
-                    //TODO check x button
-                    additionalRequirement: CheckElementNames(
+                    additionalRequirement: (elements, driver, ids) => CheckElementNames(
                             new List<string>
                             {
                                 "aria-label attribute 2",
@@ -669,7 +684,10 @@ namespace Microsoft.Edge.A11y
                             {
                                 "p referenced by aria-describedby6",
                                 "title attribute 7"
-                            })),
+                            })(elements, driver, ids) +
+                            //clear button
+                            CheckClearButton()(driver, ids)
+                            ),
                 new TestData("input-time", "Edit", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: (elements, driver, ids) => {
                         return CheckCalendar(2)(elements, driver, ids) + "\n" +
@@ -730,16 +748,16 @@ namespace Microsoft.Edge.A11y
                         "title attribute 6"
                     })),
                 new TestData("meter", "Progressbar", "meter",
-                        //TODO min max low etc.
-                        //TODO rangevalue.max, rangevalue.min
-                        //TODO rangevalue.value
-                        //TODO value.value
                     additionalRequirement:
                         ((elements, driver, ids) => {
+                            var result = "";
+                            //readonly
                             if(!elements.All(element => element.GetProperties().Any(p => p.Contains("IsReadOnly")))){
-                                return "Not all elements were read only";
+                                result += "Not all elements were read only";
                             }
-                            return CheckElementNames(
+
+                            //naming
+                            result += CheckElementNames(
                                 new List<string>
                                 {
                                     "aria-label attribute 2",
@@ -753,6 +771,63 @@ namespace Microsoft.Edge.A11y
                                     "p referenced by aria-describedby6",
                                     "title attribute 7"
                                 })(elements, driver, ids);
+
+                            //rangevalue
+                            foreach (var element in elements)
+                            {
+                                List<string> patternNames;
+                                List<int> patternIds;
+                                var patternName = "RangeValuePattern";
+
+                                patternNames = element.GetPatterns(out patternIds);
+                                if(!patternNames.Contains(patternName))
+                                {
+                                    result += "\nElement did not support " + patternName;
+                                }
+                                else
+                                {
+                                    IUIAutomationRangeValuePattern rangeValuePattern = ((IUIAutomationElement5)element).GetCurrentPattern(patternIds[patternNames.IndexOf(patternName)]);
+                                    if (rangeValuePattern.CurrentMaximum - 100 > epsilon)
+                                    {
+                                        result += "\nElement did not have the correct max";
+                                    }
+                                    if (rangeValuePattern.CurrentMinimum - 0 > epsilon)
+                                    {
+                                        result += "\nElement did not have the correct min";
+                                    }
+                                    var value = 83.5;//All the meters are set to this
+                                    if (rangeValuePattern.CurrentValue - value > epsilon)
+                                    {
+                                        result += "\nElement did not have the correct value";
+                                    }
+                                }
+                            }
+
+                            //value
+                            foreach (var element in elements)
+                            {
+                                List<string> patternNames;
+                                List<int> patternIds;
+                                var patternName = "ValuePattern";
+
+                                patternNames = element.GetPatterns(out patternIds);
+                                if(!patternNames.Contains(patternName))
+                                {
+                                    result += "\nElement did not support " + patternName;
+                                }
+                                else
+                                {
+                                    IUIAutomationValuePattern valuePattern = ((IUIAutomationElement5)element).GetCurrentPattern(patternIds[patternNames.IndexOf(patternName)]);
+                                    var currentValue = valuePattern.CurrentValue;
+                                    if (currentValue == null || currentValue == "")
+                                    {
+                                        result += "\nElement did not have value.value set";
+                                        //TODO make sure good/fair/poor is tested
+                                    }
+                                }
+                            }
+
+                            return result;
                         }),
                     searchStrategy: (element => element.GetPatterns().Contains("RangeValuePattern"))),//NB the ControlType is not used for searching this element//TODO why?
                 new TestData("menuitem", null),
