@@ -424,50 +424,124 @@ namespace Microsoft.Edge.A11y
                         foreach(var id in ids)
                         {
                             Func<string> CheckColorValue = () => (string) driver.ExecuteScript("return document.getElementById('"+ id + "').value", timeout);
+                            Func<string> ActiveElement = () => (string)driver.ExecuteScript("return document.activeElement.id", 0);
+
                             var initial = CheckColorValue();
 
                             //open dialog to check controllerfor
                             driver.SendSpecialKeys(id, "Enter");
                             var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().ConvertAll(element => elements.IndexOf(element));
                             if(controllerForElements.All(element => previousControllerForElements.Contains(element))){
-                                result += "Element controller for not set for id: " + id;
+                                result += "\nElement controller for not set for id: " + id;
                             }
-                            driver.SendSpecialKeys(id, "Escape");
+                            else
+                            {
+                                //the element that corresponds to this id
+                                var thisElement = elements[controllerForElements.First(element => !previousControllerForElements.Contains(element))];
+                                if(thisElement.CurrentControllerFor.Length > 1){
+                                    throw new Exception("\nMore than one ControllerFor present, test assumption failed");
+                                }
+                                var thisDialog = thisElement.CurrentControllerFor.GetElement(0);
+                                var descendents = thisDialog.GetAllDescendents();
 
-                            driver.SendSpecialKeys(id, "EnterTabEscape");
+                                //sliders
+                                var sliders = descendents.Where(d => d.CurrentControlType == converter.GetElementCodeFromName("Slider"));
+                                if(sliders.Count() != 3){
+                                    result += "\nDialog did not have three slider elements";
+                                }
+                                else if (!sliders.All(s => s.GetPatterns().Contains("RangeValuePattern")))
+                                {
+                                    result += "\nDialog's sliders did not implement RangeValuePattern";
+                                }
+
+                                //buttons
+                                if (descendents.Count(d => d.CurrentControlType == converter.GetElementCodeFromName("Button")) != 2)
+                                {
+                                    result += "\nDialog did not have two button elements";
+                                }
+
+                                //color well
+                                if(!descendents.
+                                    //Neither controllerfor nor livesetting:polite is ideal for searching, so just do both at
+                                    //the same time
+                                    Where(d => d.CurrentControllerFor != null && d.CurrentControllerFor.Length > 0).
+                                    Any(d => ((IUIAutomationElement5)d).CurrentLiveSetting == LiveSetting.Polite)){
+                                        result += "\nUnable to find a color well with ControllerFor and LiveSetting:Polite set";
+                                }
+                            }
+
+                            //open with enter, close with escape
+                            driver.SendSpecialKeys(id, "EscapeEnterTabArrow_rightArrow_rightEscape");
                             if (CheckColorValue() != initial)
                             {
                                 result += "\nUnable to cancel with escape";
                             }
 
-                            //TODO open with space as well
-                            driver.SendSpecialKeys(id, "EnterTabEnter");
+                            //open with enter, close with enter
+                            driver.SendSpecialKeys(id, "EscapeEnterTabArrow_rightArrow_rightEnter");
                             if (CheckColorValue() == initial)
                             {
-                                result += "\nUnable to submit with enter";
+                                result += "\nUnable to change value with arrow keys and submit with enter";
+                            }
+
+                            //open with space, close with enter
+                            initial = CheckColorValue();
+                            driver.SendSpecialKeys(id, "EscapeSpaceTabArrow_rightArrow_rightEnter");
+                            if (initial == CheckColorValue())
+                            {
+                                result += "\nUnable to open dialog with space";
                             }
 
                             initial = CheckColorValue();
 
-                            driver.SendSpecialKeys(id, "EnterTabTabArrow_rightArrow_rightArrow_rightEnter");
-                            if (CheckColorValue() == initial)
+                            driver.SendSpecialKeys(id, "EnterTabTabTab");
+                            if (ActiveElement() != id)
                             {
-                                result += "\nUnable to change values with arrow keys";
+                                result += "\nUnable to reach accept/dismiss buttons via tab";
                             }
+                            else//only try to use the buttons if they're there
+                            {
+                                //**Dismiss button**
+                                //Open the dialog, change hue, tab to cancel button, activate it with space,
+                                //check that tabbing moves to the previous button (on the page not the dialog)
+                                driver.SendSpecialKeys(id, "EscapeEnterArrow_rightArrow_rightTabTabTabTabSpaceShiftTabShift");
+                                if (initial != CheckColorValue() || ActiveElement() == id)
+                                {
+                                    result += "\nUnable to cancel with dismiss button via space";
+                                }
 
-                            //p1
-                            //TODO get to buttons
-                            //TODO active buttons with space/enter
+                                //do the same as above, but activate the button with enter this time
+                                driver.SendSpecialKeys(id, "EscapeEnterArrow_rightArrow_rightTabTabTabTabEnterShiftTabShift");
+                                if (initial != CheckColorValue() || ActiveElement() == id)
+                                {
+                                    result += "\nUnable to cancel with dismiss button via enter";
+                                }
 
-                            //p2
-                            //TODO enter submits escape cancels
-                            //TODO move sliders with left right
-                            //TODO children have correct sliders(CT: Slider,
-                            //Range.RangeValue) is whatever will be submitted
-                            //TODO root button has controllerfor pointing to dialog
-                            //TODO ControllerFor and LiveSetting=polite for color well
 
+                                //**Accept button**
+                                initial = CheckColorValue();
+
+                                //Open the dialog, tab to hue, change hue, tab to accept button, activate it with space,
+                                //send tab (since the dialog should be closed, this will transfer focus to the next
+                                //input-color button)
+                                driver.SendSpecialKeys(id, "EscapeEnterArrow_rightArrow_rightTabTabTabSpaceTab");
+                                if (initial == CheckColorValue() || ActiveElement() == id)
+                                {
+                                    result += "\nUnable to accept with accept button via space";
+                                }
+
+                                initial = CheckColorValue();//the value hopefully changed above, but just to be safe
+
+                                //Open the dialog, tab to hue, change hue, tab to accept button, activate it with enter
+                                //We don't have to worry about why the dialog closed here (button or global enter)
+                                driver.SendSpecialKeys(id, "EscapeEnterArrow_rightArrow_rightTabTabTabEnterTab");
+                                if (initial == CheckColorValue() || ActiveElement() == id)
+                                {
+                                    result += "\nUnable to accept with accept button via enter";
+                                }
+                            }
                         }
+
                         return result;
                     }),
                 new TestData("input-date", "Edit",
@@ -730,7 +804,7 @@ namespace Microsoft.Edge.A11y
                         "h1 referenced by aria-describedby5",
                         "title attribute 6"
                     })),
-                new TestData("mark", "Text", "mark",//TODO text pattern
+                new TestData("mark", "Text", "mark",//TODO see what cyns says
                     //TODO styleid = Custom, stylename = mark
                     additionalRequirement: CheckElementNames(
                     new List<string>{

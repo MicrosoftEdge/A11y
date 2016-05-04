@@ -325,17 +325,42 @@ namespace Microsoft.Edge.A11y
         /// <returns>A list of all the children's names</returns>
         public static List<string> GetChildNames(this IUIAutomationElement element, Func<IUIAutomationElement, bool> searchStrategy = null)
         {
-            var toreturn = new List<string>();
+            var toReturn = new List<string>();
             var walker = new CUIAutomation8().RawViewWalker;
             for (var child = walker.GetFirstChildElement(element); child != null; child = walker.GetNextSiblingElement(child))
             {
                 if (searchStrategy == null || searchStrategy(child))
                 {
-                    toreturn.Add(child.CurrentName);
+                    toReturn.Add(child.CurrentName);
                 }
             }
 
-            return toreturn;
+            return toReturn;
+        }
+
+        public static List<IUIAutomationElement> GetAllDescendents(this IUIAutomationElement element, Func<IUIAutomationElement, bool> searchStrategy = null)
+        {
+            var toReturn = new List<IUIAutomationElement>();
+            var walker = new CUIAutomation8().RawViewWalker;
+
+            var toSearch = new Queue<IUIAutomationElement>();//BFS
+            toSearch.Enqueue(element);
+
+            while (toSearch.Any())//beware infinite recursion
+            {
+                var current = toSearch.Dequeue();
+                for (var child = walker.GetFirstChildElement(current); child != null; child = walker.GetNextSiblingElement(child))
+                {
+                    toSearch.Enqueue(child);
+                }
+
+                if (searchStrategy == null || searchStrategy(current))
+                {
+                    toReturn.Add(current);
+                }
+            }
+
+            return toReturn;
         }
 
         /// <summary>
