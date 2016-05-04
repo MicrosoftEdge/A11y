@@ -1657,20 +1657,33 @@ namespace Microsoft.Edge.A11y
         {
             return (elements, driver, ids) =>
             {
+                var result = string.Empty;
                 foreach (var element in elements)
                 {
                     var names = element.GetChildNames(searchStrategy);
+
+                    var expectedNotFound = requiredNames.Where(rn => !names.Contains(rn)).ToList();//get a list of all required names not found
+                    var foundNotExpected = names.Where(n => !requiredNames.Contains(n)).ToList();//get a list of all found names that weren't required
+
                     if (strict && names.Count() != requiredNames.Count)
                     {
-                        return "Found incorrect number of children";
-                    }
-                    var firstFail = requiredNames.FirstOrDefault(rn => !names.Any(n => n.Contains(rn)));
-                    if (firstFail != null)
-                    {
-                        return "Failed to find " + firstFail;
+                    result +=
+                        expectedNotFound.Any() ? "\n" +
+                            expectedNotFound.Aggregate((a, b) => a + ", " + b) +
+                            (expectedNotFound.Count() > 1 ?
+                                " were expected as names but not found. " :
+                                " was expected as a name but not found. ")
+                            : "";
+                    result +=
+                        foundNotExpected.Any() ? "\n" +
+                            foundNotExpected.Aggregate((a, b) => a + ", " + b) +
+                            (foundNotExpected.Count() > 1 ?
+                                " were found as names but not expected. " :
+                                " was found as a name but not expected. ")
+                            : "";
                     }
                 }
-                return ARPASS;
+                return result;
             };
         }
 
