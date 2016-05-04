@@ -1013,7 +1013,7 @@ namespace Microsoft.Edge.A11y
                 new TestData("video", "Group", null, keyboardElements: new List<string> { "video1" },
                     additionalRequirement: ((elements, driver, ids) =>
                     {
-                        var childNames = CheckChildNames(
+                        return CheckChildNames(
                             new List<string> {
                                     "Play",
                                     "Time elapsed",
@@ -1024,14 +1024,10 @@ namespace Microsoft.Edge.A11y
                                     "Show captioning",
                                     "Mute",
                                     "Volume",
-                                    "Full screen" })(elements, driver, ids);
-                        if(childNames != ARPASS){
-                            return childNames;
-                        }
-                        return ARPASS;//CheckVideoKeyboardInteractions(elements, driver, ids);
+                                    "Full screen" }, true, element => element.CurrentIsOffscreen != 1)(elements, driver, ids) +
+                       CheckVideoKeyboardInteractions(elements, driver, ids);
                     })),
                     new TestData("hidden-att", "Button", null,
-                        //TODO fix hidden dynamic removal
                     additionalRequirement: ((elements, driver, ids) =>
                     {
                         var result = string.Empty;
@@ -1792,13 +1788,15 @@ namespace Microsoft.Edge.A11y
 
         public static bool WaitForCondition(Func<double, bool> conditionCheck, double value)
         {
-            var condition = false;
-            for (var i = 0; i < 10 && !condition; i++)
+            for (var i = 0; i < 100; i++)
             {
-                Thread.Sleep(500);
-                condition = conditionCheck(value);
+                Thread.Sleep(50);
+                if (conditionCheck(value))
+                {
+                    return true;
+                }
             }
-            return condition;
+            return false;
         }
 
         public static bool WaitForCondition(Func<bool> conditionCheck)
