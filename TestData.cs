@@ -883,7 +883,7 @@ namespace Microsoft.Edge.A11y
                                     if (patterned.CurrentValue == null || patterned.CurrentValue == "")
                                     {
                                         result += "\nElement did not have value set";
-                                        //TODO make sure good/fair/poor is tested
+                                        //TODO make sure good/fair/poor is tested, waiting on cyns for clarification
                                     }
                                 }
                             }
@@ -1031,6 +1031,7 @@ namespace Microsoft.Edge.A11y
                         return ARPASS;//CheckVideoKeyboardInteractions(elements, driver, ids);
                     })),
                     new TestData("hidden-att", "Button", null,
+                        //TODO fix hidden dynamic removal
                     additionalRequirement: ((elements, driver, ids) =>
                     {
                         var result = string.Empty;
@@ -1069,8 +1070,18 @@ namespace Microsoft.Edge.A11y
                         //remove hidden attribute
                         driver.ExecuteScript(Javascript.RemoveHidden, timeout);
 
-                        //make sure the buttons show up now that their parents are not hidden
+                        //make sure the button show up now that their parents are not hidden
                         HashSet<string> foundControlTypes;
+                        elements = EdgeA11yTools.SearchChildren(browserElement, "Button", null, out foundControlTypes);
+                        if (elements.Count(e => e.CurrentControlType != paneCode) != 1)
+                        {
+                            result += "\nFound " + elements.Count(e => e.CurrentControlType != paneCode) + " elements. Expected 1";
+                        }
+
+                        //remove aria-hidden attribute
+                        driver.ExecuteScript(Javascript.RemoveAriaHidden, timeout);
+
+                        //both buttons should now be visible, since both aria-hidden and hidden attribute are missing
                         elements = EdgeA11yTools.SearchChildren(browserElement, "Button", null, out foundControlTypes);
                         if (elements.Count(e => e.CurrentControlType != paneCode) != 2)
                         {
@@ -1433,7 +1444,6 @@ namespace Microsoft.Edge.A11y
                     if (ActiveElement() != id)
                     {
                         result += "\nUnable to get to accept/dismiss buttons by tab";
-                        //TODO interact with buttons once that's defined
                     }
 
                     //Close the menu (only necessary for time)
