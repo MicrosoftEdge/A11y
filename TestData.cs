@@ -165,7 +165,7 @@ namespace Microsoft.Edge.A11y
                                 "Seek",
                                 "Time remaining",
                                 "Mute",
-                                "Volume"})//,false, element => element.CurrentIsOffscreen != 1)//TODO enable this if necessary
+                                "Volume"}, true, element => element.CurrentIsOffscreen != 1)
                                 (elements, driver, ids);
                         if(childNames != ARPASS){
                             return childNames;
@@ -560,28 +560,24 @@ namespace Microsoft.Edge.A11y
 
                         foreach(var element in elements)
                         {
-                            var elementFive = (IUIAutomationElement5)element;
-                            List<int> patternIds;
-                            var names = elementFive.GetPatterns(out patternIds);
+                            var patternName = "ValuePattern";
 
-                            //TODO reevaluate if RangeValue is actually the right thing
-                            if (!names.Contains("RangeValuePattern"))
+                            var patterned = GetPattern<IUIAutomationValuePattern>(patternName, element);
+
+                            if (patterned == null)
                             {
-                                result += "\nElement did not support RangeValuePattern";
+                                result += "\nElement did not support " + patternName;
                             }
                             else {
-                                var valuePattern = (IUIAutomationRangeValuePattern)elementFive.GetCurrentPattern(
-                                    patternIds[names.IndexOf("RangeValuePattern")]);
-
-                                var currentValue = valuePattern.CurrentValue;
-                                if(Math.Abs(currentValue - 706) > epsilon)
+                                var currentValue = patterned.CurrentValue;
+                                if(currentValue != "706")
                                 {
                                     result += "\nUnable to retrieve the value with Rangevalue.value";
                                 }
 
-                                valuePattern.SetValue(707);
-                                currentValue = valuePattern.CurrentValue;
-                                if(Math.Abs(currentValue - 707) > epsilon)
+                                patterned.SetValue("707");
+                                currentValue = patterned.CurrentValue;
+                                if(currentValue != "707")
                                 {
                                     result += "\nUnable to set the value with SetValue()";
                                 }
@@ -775,28 +771,25 @@ namespace Microsoft.Edge.A11y
                             //rangevalue
                             foreach (var element in elements)
                             {
-                                List<string> patternNames;
-                                List<int> patternIds;
                                 var patternName = "RangeValuePattern";
 
-                                patternNames = element.GetPatterns(out patternIds);
-                                if(!patternNames.Contains(patternName))
+                                var patterned = GetPattern<IUIAutomationRangeValuePattern>(patternName, element);
+                                if(patterned == null)
                                 {
                                     result += "\nElement did not support " + patternName;
                                 }
                                 else
                                 {
-                                    IUIAutomationRangeValuePattern rangeValuePattern = ((IUIAutomationElement5)element).GetCurrentPattern(patternIds[patternNames.IndexOf(patternName)]);
-                                    if (rangeValuePattern.CurrentMaximum - 100 > epsilon)
+                                    if (patterned.CurrentMaximum - 100 > epsilon)
                                     {
                                         result += "\nElement did not have the correct max";
                                     }
-                                    if (rangeValuePattern.CurrentMinimum - 0 > epsilon)
+                                    if (patterned.CurrentMinimum - 0 > epsilon)
                                     {
                                         result += "\nElement did not have the correct min";
                                     }
                                     var value = 83.5;//All the meters are set to this
-                                    if (rangeValuePattern.CurrentValue - value > epsilon)
+                                    if (patterned.CurrentValue - value > epsilon)
                                     {
                                         result += "\nElement did not have the correct value";
                                     }
@@ -806,22 +799,16 @@ namespace Microsoft.Edge.A11y
                             //value
                             foreach (var element in elements)
                             {
-                                List<string> patternNames;
-                                List<int> patternIds;
-                                var patternName = "ValuePattern";
-
-                                patternNames = element.GetPatterns(out patternIds);
-                                if(!patternNames.Contains(patternName))
+                                var patterned = GetPattern<IUIAutomationValuePattern>("ValuePattern", element);
+                                if (patterned == null)
                                 {
-                                    result += "\nElement did not support " + patternName;
+                                    result += "\nElement did not support ValuePattern";
                                 }
                                 else
                                 {
-                                    IUIAutomationValuePattern valuePattern = ((IUIAutomationElement5)element).GetCurrentPattern(patternIds[patternNames.IndexOf(patternName)]);
-                                    var currentValue = valuePattern.CurrentValue;
-                                    if (currentValue == null || currentValue == "")
+                                    if (patterned.CurrentValue == null || patterned.CurrentValue == "")
                                     {
-                                        result += "\nElement did not have value.value set";
+                                        result += "\nElement did not have value set";
                                         //TODO make sure good/fair/poor is tested
                                     }
                                 }
@@ -829,7 +816,7 @@ namespace Microsoft.Edge.A11y
 
                             return result;
                         }),
-                    searchStrategy: (element => element.GetPatterns().Contains("RangeValuePattern"))),//NB the ControlType is not used for searching this element//TODO why?
+                    searchStrategy: (element => element.GetPatterns().Contains("RangeValuePattern"))),//NB the ControlType is not used for searching this element
                 new TestData("menuitem", null),
                 new TestData("menupopup", null),
                 new TestData("menutoolbar", null),
@@ -872,19 +859,52 @@ namespace Microsoft.Edge.A11y
                         return result;
                     })),
                 new TestData("progress", "Progressbar",
-                    //TODO rangevalue.value .maximum .minimum
-                    additionalRequirement: CheckElementNames(
-                    new List<string>{
-                        "aria-label attribute 2",
-                        "p referenced by aria-labelledby3",
-                        "label wrapping output 4",
-                        "title attribute 5",
-                        "label referenced by for/id attributes 7"
-                    },
-                    new List<string>{
-                        "p referenced by aria-describedby6",
-                        "title attribute 7"
-                    })),
+                    additionalRequirement: (elements, driver, ids) => {
+                    var result = string.Empty;
+
+                    result += CheckElementNames(
+                        new List<string>{
+                            "aria-label attribute 2",
+                            "p referenced by aria-labelledby3",
+                            "label wrapping output 4",
+                            "title attribute 5",
+                            "label referenced by for/id attributes 7"
+                        },
+                        new List<string>{
+                            "p referenced by aria-describedby6",
+                            "title attribute 7"
+                        })(elements, driver, ids);
+
+                    //rangevalue
+                    foreach (var element in elements)
+                    {
+                        var patternName = "RangeValuePattern";
+
+                        var patterned = GetPattern<IUIAutomationRangeValuePattern>(patternName, element);
+                        if(patterned == null)
+                        {
+                            result += "\nElement did not support " + patternName;
+                        }
+                        else
+                        {
+                            if (patterned.CurrentMaximum - 100 > epsilon)
+                            {
+                                result += "\nElement did not have the correct max";
+                            }
+                            if (patterned.CurrentMinimum - 0 > epsilon)
+                            {
+                                result += "\nElement did not have the correct min";
+                            }
+                            var value = 22;//All the progress bars are set to this
+                            if (patterned.CurrentValue - value > epsilon)
+                            {
+                                result += "\nElement did not have the correct value";
+                            }
+                        }
+                    }
+
+                    return result;
+                    }),
                 new TestData("section", "Group", "section", "Custom", "region",
                     additionalRequirement: CheckElementNames(
                     new List<string>{
@@ -991,8 +1011,7 @@ namespace Microsoft.Edge.A11y
                     {
                         driver.SendSubmit("input1");
                         System.Threading.Thread.Sleep(TimeSpan.FromMilliseconds(500));
-                        //TODO check all as with CheckValidation
-                        foreach(var element in elements){
+                        foreach(var element in elements){//there can only be one
                             if(element.CurrentControllerFor == null || element.CurrentControllerFor.Length == 0){
                                 return "\nElement did not have controller for set";
                             }
@@ -1031,6 +1050,23 @@ namespace Microsoft.Edge.A11y
                         }.All(f => f(elementNames)) ? ARPASS : ARFAIL;
                     }))
             };
+        }
+
+        private static T GetPattern<T>(string patternName, IUIAutomationElement element)
+        {
+            List<string> patternNames;
+            List<int> patternIds;
+
+            patternNames = element.GetPatterns(out patternIds);
+            if (!patternNames.Contains(patternName))
+            {
+                return default(T);
+            }
+            else
+            {
+                T pattern = ((IUIAutomationElement5)element).GetCurrentPattern(patternIds[patternNames.IndexOf(patternName)]);
+                return pattern;
+            }
         }
 
         /// <summary>
@@ -1103,7 +1139,7 @@ namespace Microsoft.Edge.A11y
             }
 
             //Case 3: Audio selection
-            // TODO test manually
+            //TODO test manually
             //Javascript.ClearFocus(driver, 0);
             //driver.SendTabs(videoId, 5);//tab to audio selection
             //driver.SendSpecialKeys(videoId, "EnterArrow_down");
@@ -1287,7 +1323,9 @@ namespace Microsoft.Edge.A11y
         /// <returns></returns>
         public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckCalendar(int fields)
         {
-            //TODO tab to buttons
+            //TODO escape to cancel
+            //TODO buttons with space or enter
+            //TODO open with space
             return new Func<List<IUIAutomationElement>, DriverManager, List<string>, string>((elements, driver, ids) =>
             {
                 var result = "";
@@ -1297,6 +1335,7 @@ namespace Microsoft.Edge.A11y
                     driver.SendSpecialKeys(id, "EnterEscapeEnterEnter");//Make sure that the element has focus (gets around weirdness in WebDriver)
 
                     Func<string> DateValue = () => (string)driver.ExecuteScript("return document.getElementById('" + id + "').value", 0);
+                    Func<string> ActiveElement = () => (string)driver.ExecuteScript("return document.activeElement.id", 0);
 
                     var today = DateValue();
 
@@ -1315,6 +1354,14 @@ namespace Microsoft.Edge.A11y
                     {
                         driver.SendSpecialKeys(id, "Arrow_downTab");
                     }
+
+                    //Check that the accept and cancel buttons are in the tab order
+                    if (ActiveElement() != id)
+                    {
+                        result += "\nUnable to get to accept/dismiss buttons by tab";
+                        //TODO interact with buttons once that's defined
+                    }
+
                     //Close the menu (only necessary for time)
                     driver.SendSpecialKeys(id, "Enter");
 
@@ -1332,10 +1379,25 @@ namespace Microsoft.Edge.A11y
                             result += "\nNot all fields were changed by keyboard interaction.";
                         }
                     }
-                    //TODO escape to cancel
-                    //TODO buttons with space or enter
-                    //TODO open with space
                 }
+
+                foreach (var element in elements)
+                {
+                    var patternName = "ValuePattern";
+                    var patterned = GetPattern<IUIAutomationValuePattern>(patternName, element);
+                    if (patterned == null)
+                    {
+                        result += "\nElement did not support " + patternName;
+                    }
+                    else
+                    {
+                        if (patterned.CurrentValue == null || patterned.CurrentValue == "")
+                        {
+                            result += "\nElement did not have value.value set";
+                        }
+                    }
+                }
+
                 return result;
             });
         }
@@ -1358,6 +1420,7 @@ namespace Microsoft.Edge.A11y
                     var inputFields = new List<int> { 3, 3 };
                     var outputFields = 5;
                     Func<string> DateValue = () => (string)driver.ExecuteScript("return document.getElementById('" + id + "').value", 0);
+                    Func<string> ActiveElement = () => (string)driver.ExecuteScript("return document.activeElement.id", 0);
 
                     driver.SendSpecialKeys(id, "EnterEnterTabEnterEnter");
 
@@ -1385,6 +1448,13 @@ namespace Microsoft.Edge.A11y
                         {
                             driver.SendSpecialKeys(id, "Arrow_downTab");
                         }
+
+                        //Check that the accept and cancel buttons are in the tab order
+                        if (ActiveElement() != id)
+                        {
+                            result += "\nUnable to get to accept/dismiss buttons by tab";
+                            //TODO interact with buttons once that's defined
+                        }
                     }
 
                     //Get the altered value, which should be one off the default
@@ -1411,6 +1481,24 @@ namespace Microsoft.Edge.A11y
                         result += "\nElement controller for not set";
                     }
                 }
+
+                foreach (var element in elements)
+                {
+                    var patternName = "ValuePattern";
+                    var patterned = GetPattern<IUIAutomationValuePattern>(patternName, element);
+                    if (patterned == null)
+                    {
+                        result += "\nElement did not support " + patternName;
+                    }
+                    else
+                    {
+                        if (patterned.CurrentValue == null || patterned.CurrentValue == "")
+                        {
+                            result += "\nElement did not have value.value set";
+                        }
+                    }
+                }
+
                 return result;
             });
         }
@@ -1433,9 +1521,10 @@ namespace Microsoft.Edge.A11y
                         Thread.Sleep(TimeSpan.FromMilliseconds(500));
 
                         //Everything that is invalid on the page
-                        var invalid = elements.Where(e => e.CurrentControllerFor != null &&
-                                        e.CurrentControllerFor.Length > 0 &&
-                                        e.CurrentIsDataValidForForm == 0 &&
+                        //We search by both with an OR condition because it gives a better chance to
+                        //find elements that are partially correct.
+                        var invalid = elements.Where(e =>
+                                        e.CurrentIsDataValidForForm == 0 ||
                                         e.CurrentHelpText != null &&
                                         e.CurrentHelpText.Length > 0).Select(e => elements.IndexOf(e));
 
@@ -1466,7 +1555,6 @@ namespace Microsoft.Edge.A11y
                         {
                             return "Error message did not have correct ControlType";
                         }
-                        //TODO find out if the message pane needs to have any more requirements
 
                         previouslyInvalid.Add(newInvalid);
                     }
@@ -1488,7 +1576,7 @@ namespace Microsoft.Edge.A11y
                 foreach (var element in elements)
                 {
                     var names = element.GetChildNames(searchStrategy);
-                    if(strict && names.Count() != requiredNames.Count)
+                    if (strict && names.Count() != requiredNames.Count)
                     {
                         return "Found incorrect number of children";
                     }
