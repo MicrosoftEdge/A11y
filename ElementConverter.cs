@@ -18,7 +18,14 @@ namespace Microsoft.Edge.A11y
         /// <returns></returns>
         public string GetElementNameFromCode(int key)
         {
-            return UI8Mapping[key];
+            if (UI8Mapping.ContainsKey(key))
+            {
+                return UI8Mapping[key];
+            }
+            else
+            {
+                throw new Exception("Code " + key + " was not found.");
+            }
         }
 
         /// <summary>
