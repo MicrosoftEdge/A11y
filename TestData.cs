@@ -1436,6 +1436,34 @@ namespace Microsoft.Edge.A11y
                         driver.SendSpecialKeys(id, "Arrow_downTab");
                     }
 
+
+                    //Close the menu (only necessary for time)
+                    driver.SendSpecialKeys(id, "Enter");
+
+                    //Get the altered value, which should be one off the default
+                    //for each field
+                    var newdate = DateValue();
+                    var newdatesplit = newdate.Split('-', ':');
+                    var todaysplit = today.Split('-', ':');
+
+                    //ensure that all fields have been changed
+                    for (int i = 0; i < fields; i++)
+                    {
+                        if (newdatesplit[i] == todaysplit[i])
+                        {
+                            result += "\nNot all fields were changed by keyboard interaction.";
+                        }
+                    }
+
+
+                    var fieldTabs = "";
+                    for(var i = 0; i<fields; i++)
+                    {
+                        fieldTabs += "Tab";
+                    }
+
+                    driver.SendSpecialKeys(id, fieldTabs);
+
                     //Check that the accept and cancel buttons are in the tab order
                     if (ActiveElement() != id)
                     {
@@ -1443,11 +1471,6 @@ namespace Microsoft.Edge.A11y
                     }
                     else//only try to use the buttons if they're there
                     {
-                        var fieldTabs = "";
-                        for(var i = 0; i<fields; i++)
-                        {
-                            fieldTabs += "Tab";
-                        }
                         var initial = DateValue();
                         //**Dismiss button**
                         //Open the dialog, change a field, tab to cancel button, activate it with space,
@@ -1486,24 +1509,6 @@ namespace Microsoft.Edge.A11y
                         if (initial == DateValue() || ActiveElement() == id)
                         {
                             result += "\nUnable to accept with accept button via enter";
-                        }
-                    }
-
-                    //Close the menu (only necessary for time)
-                    driver.SendSpecialKeys(id, "Enter");
-
-                    //Get the altered value, which should be one off the default
-                    //for each field
-                    var newdate = DateValue();
-                    var newdatesplit = newdate.Split('-', ':');
-                    var todaysplit = today.Split('-', ':');
-
-                    //ensure that all fields have been changed
-                    for (int i = 0; i < fields; i++)
-                    {
-                        if (newdatesplit[i] == todaysplit[i])
-                        {
-                            result += "\nNot all fields were changed by keyboard interaction.";
                         }
                     }
                 }
