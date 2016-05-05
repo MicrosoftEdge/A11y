@@ -760,7 +760,7 @@ namespace Microsoft.Edge.A11y
                             ),
                 new TestData("input-time", "Edit", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: (elements, driver, ids) => {
-                        return CheckCalendar(2)(elements, driver, ids) + "\n" +
+                        return CheckCalendar(3)(elements, driver, ids) + "\n" +
                             CheckElementNames(
                                 new List<string>{
                                     "aria-label attribute 2",
