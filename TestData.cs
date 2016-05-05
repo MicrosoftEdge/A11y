@@ -760,7 +760,7 @@ namespace Microsoft.Edge.A11y
                             ),
                 new TestData("input-time", "Edit", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: (elements, driver, ids) => {
-                        return CheckCalendar(3)(elements, driver, ids) + "\n" +
+                        return CheckCalendar(3, 2)(elements, driver, ids) + "\n" +
                             CheckElementNames(
                                 new List<string>{
                                     "aria-label attribute 2",
@@ -1402,13 +1402,16 @@ namespace Microsoft.Edge.A11y
         /// </summary>
         /// <param name="fields">A count of the number of fields to test</param>
         /// <returns></returns>
-        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckCalendar(int fields)
+        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckCalendar(int fields, int outputFields = -1)
         {
             //TODO escape to cancel
             //TODO buttons with space or enter
             //TODO open with space
             return new Func<List<IUIAutomationElement>, DriverManager, List<string>, string>((elements, driver, ids) =>
             {
+                //set to the number of fields by default
+                outputFields = outputFields == -1 ? fields : outputFields;
+
                 var result = "";
                 var previousControllerForElements = new HashSet<int>();
                 foreach (var id in ids)
