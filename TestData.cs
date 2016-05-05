@@ -1450,14 +1450,13 @@ namespace Microsoft.Edge.A11y
                     var todaysplit = today.Split('-', ':');
 
                     //ensure that all fields have been changed
-                    for (int i = 0; i < fields; i++)
+                    for (int i = 0; i < outputFields; i++)
                     {
                         if (newdatesplit[i] == todaysplit[i])
                         {
                             result += "\nNot all fields were changed by keyboard interaction.";
                         }
                     }
-
 
                     var fieldTabs = "";
                     for(var i = 0; i<fields; i++)
