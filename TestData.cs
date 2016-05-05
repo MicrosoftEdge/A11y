@@ -909,12 +909,12 @@ namespace Microsoft.Edge.A11y
                         var result = string.Empty;
 
                         if (!elements.All(element => ((IUIAutomationElement5)element).CurrentLiveSetting != LiveSetting.Polite)){
-                            result += "Element did not have LiveSetting = Polite";
+                            result += "\nElement did not have LiveSetting = Polite";
                         }
                         var controllerForLengths = elements.ConvertAll(element => element.CurrentControllerFor != null ? element.CurrentControllerFor.Length : 0);
                         if (controllerForLengths.Count(cfl => cfl > 0) != 1)
                         {
-                            result += "Expected 1 element with ControllerFor set. Found " + controllerForLengths.Count(cfl => cfl > 0);
+                            result += "\nExpected 1 element with ControllerFor set. Found " + controllerForLengths.Count(cfl => cfl > 0);
                         }
                         result += CheckElementNames(
                             new List<string>{
@@ -1420,7 +1420,7 @@ namespace Microsoft.Edge.A11y
                     var today = DateValue();
 
                     //Open the menu
-                    driver.SendSpecialKeys(id, "Enter");
+                    driver.SendSpecialKeys(id, "EscapeEnter");
 
                     //Check ControllerFor
                     var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().ConvertAll(element => elements.IndexOf(element));
