@@ -317,14 +317,9 @@ namespace Microsoft.Edge.A11y
                                 "title attribute 7"
                             })(elements, driver, ids);
 
-                        if (result != ARPASS)
-                        {
-                            return result;
-                        }
-
                         //not all elements need to have the same localized control type
                         if(elements.Select(e => e.CurrentLocalizedControlType).Count(lct => lct == "footer") != 1){
-                            return "\nFound " + elements.Select(e => e.CurrentLocalizedControlType).Count(lct => lct == "footer") + 
+                            result += "\nFound " + elements.Select(e => e.CurrentLocalizedControlType).Count(lct => lct == "footer") + 
                                 " elements with LocalizedControlType footer, expected 1";
                         }
 
@@ -349,15 +344,15 @@ namespace Microsoft.Edge.A11y
                         }
                         if (convertedLandmarks != 1)
                         {
-                            return "\nFound " + convertedLandmarks + " elements with landmark type Custom, expected 1";
+                            result += "\nFound " + convertedLandmarks + " elements with landmark type Custom, expected 1";
                         }
 
                         if (localizedLandmarks != 1)
                         {
-                            return "\nFound " + localizedLandmarks + " elements with localized landmark type content information, expected 1";
+                            result += "\nFound " + localizedLandmarks + " elements with localized landmark type content information, expected 1";
                         }
 
-                        return ARPASS;
+                        return result;
                     }),
                 new TestData("header", "Group",
                     searchStrategy: element =>
@@ -375,14 +370,9 @@ namespace Microsoft.Edge.A11y
                                 "title attribute 7"
                             })(elements, driver, ids);
 
-                        if (result != ARPASS)
-                        {
-                            return result;
-                        }
-
                         //not all elements need to have the same localized control type
                         if(elements.Select(e => e.CurrentLocalizedControlType).Count(lct => lct == "header") != 1){
-                            return "Elements did not have the correct localized control types";
+                            result += "Elements did not have the correct localized control types";
                         }
 
                         var elementConverter = new ElementConverter();
@@ -406,15 +396,15 @@ namespace Microsoft.Edge.A11y
                         }
                         if (convertedLandmarks != 1)
                         {
-                            return "\nFound " + convertedLandmarks + " elements with landmark type Custom, expected 1";
+                            result += "\nFound " + convertedLandmarks + " elements with landmark type Custom, expected 1";
                         }
 
                         if (localizedLandmarks != 1)
                         {
-                            return "\nFound " + localizedLandmarks + " elements with localized landmark type banner, expected 1";
+                            result += "\nFound " + localizedLandmarks + " elements with localized landmark type banner, expected 1";
                         }
 
-                        return ARPASS;
+                        return result;
                     }),
                 new TestData("input-color", "Button", "color picker",
                     additionalRequirement: (elements, driver, ids) => {
