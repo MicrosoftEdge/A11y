@@ -11,7 +11,7 @@ namespace Microsoft.Edge.A11y
         {
             var testName = args.FirstOrDefault();
 
-            TestStrategy a11yStrategy = new EdgeStrategy(fileSuffix: ".html");
+            TestStrategy a11yStrategy = new EdgeStrategy("http://www.bing.com");
 
             var results = TestData.alltests.Value.Where(td =>
                 td._ControlType != null && //Control type == null means skip the test

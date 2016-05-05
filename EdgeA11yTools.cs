@@ -12,7 +12,7 @@ namespace Microsoft.Edge.A11y
     static class EdgeA11yTools
     {
         const int RETRIES = 5;
-        const int RECURSIONDEPTH = 5;
+        const int RECURSIONDEPTH = 10;
 
         public const string ExceptionMessage = "Currently only Edge is supported";
 

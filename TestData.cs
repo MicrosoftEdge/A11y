@@ -51,6 +51,10 @@ namespace Microsoft.Edge.A11y
         /// tested (instead of matching _ControlType).
         /// </summary>
         public Func<IUIAutomationElement, bool> _SearchStrategy;
+        /// <summary>
+        /// If not null, this will be appended to the repro path to create a full URL
+        /// </summary>
+        public string _RelativePath;
 
         /// <summary>
         /// Simple ctor
@@ -69,7 +73,8 @@ namespace Microsoft.Edge.A11y
             string localizedLandmarkType = null,
             List<string> keyboardElements = null,
             Func<List<IUIAutomationElement>, DriverManager, List<string>, string> additionalRequirement = null,
-            Func<IUIAutomationElement, bool> searchStrategy = null)
+            Func<IUIAutomationElement, bool> searchStrategy = null,
+            string relativePath = null)
         {
             _TestName = testName;
             _ControlType = controlType;
@@ -79,6 +84,7 @@ namespace Microsoft.Edge.A11y
             _KeyboardElements = keyboardElements;
             _AdditionalRequirement = additionalRequirement;
             _SearchStrategy = searchStrategy;
+            _RelativePath = relativePath;
         }
 
         //All the tests to run
@@ -101,7 +107,7 @@ namespace Microsoft.Edge.A11y
         static List<TestData> AllTests()
         {
             return new List<TestData>{
-                new TestData("sample", "Combobox", null, keyboardElements: new List<string> { "datalist" })
+                new TestData("Search Button", "Button", relativePath: "/")
             };
         }
     }

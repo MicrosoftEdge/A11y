@@ -15,9 +15,19 @@ namespace Microsoft.Edge.A11y
         protected string _RepositoryPath;
         protected string _FileSuffix;
 
-        private string BuildTestUrl(string testName)
+        private string BuildTestUrl(TestData testData)
         {
-            return _RepositoryPath + testName;
+            string url = _RepositoryPath;
+
+            if (String.Empty != testData._RelativePath)
+            {
+                url += testData._RelativePath;
+            }
+            else {
+                url += testData._TestName + _FileSuffix;
+            }
+
+            return url;
         }
 
         /// <summary>
@@ -28,7 +38,9 @@ namespace Microsoft.Edge.A11y
         /// <returns></returns>
         public IEnumerable<TestCaseResult> Execute(TestData testData)
         {
-            _driverManager.NavigateToUrl(BuildTestUrl(testData._TestName + _FileSuffix));
+
+            string url = BuildTestUrl(testData);
+            _driverManager.NavigateToUrl(url);
             return testData._ControlType == null ? Skip(testData._TestName) : TestElement(testData);
         }
 
