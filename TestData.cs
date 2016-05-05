@@ -165,8 +165,7 @@ namespace Microsoft.Edge.A11y
                                 "Seek",
                                 "Time remaining",
                                 "Mute",
-                                "Volume"}, true, element => element.CurrentIsOffscreen != 1)
-                                (elements, driver, ids);
+                                "Volume"})(elements, driver, ids);
                         if(childNames != ARPASS){
                             return childNames;
                         }
@@ -880,10 +879,9 @@ namespace Microsoft.Edge.A11y
                                 }
                                 else
                                 {
-                                    if (patterned.CurrentValue == null || patterned.CurrentValue == "")
+                                    if (patterned.CurrentValue == null || patterned.CurrentValue != "Good")
                                     {
                                         result += "\nElement did not have value set";
-                                        //TODO make sure good/fair/poor is tested, waiting on cyns for clarification
                                     }
                                 }
                             }
@@ -1024,7 +1022,7 @@ namespace Microsoft.Edge.A11y
                                     "Show captioning",
                                     "Mute",
                                     "Volume",
-                                    "Full screen" }, true, element => element.CurrentIsOffscreen != 1)(elements, driver, ids) +
+                                    "Full screen" })(elements, driver, ids) +
                        CheckVideoKeyboardInteractions(elements, driver, ids);
                     })),
                     new TestData("hidden-att", "Button", null,
