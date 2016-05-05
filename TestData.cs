@@ -805,7 +805,6 @@ namespace Microsoft.Edge.A11y
                         "title attribute 6"
                     })),
                 new TestData("mark", "Text", "mark",//TODO see what cyns says
-                    //TODO styleid = Custom, stylename = mark
                     additionalRequirement: CheckElementNames(
                     new List<string>{
                         "aria-label attribute2",
@@ -1404,7 +1403,6 @@ namespace Microsoft.Edge.A11y
         /// <returns></returns>
         public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckCalendar(int fields, int outputFields = -1)
         {
-            //TODO open with space
             return new Func<List<IUIAutomationElement>, DriverManager, List<string>, string>((elements, driver, ids) =>
             {
                 //set to the number of fields by default
@@ -1464,6 +1462,8 @@ namespace Microsoft.Edge.A11y
 
                     driver.SendSpecialKeys(id, "Enter" + fieldTabs);
 
+                    var initial = "";
+
                     //Check that the accept and cancel buttons are in the tab order
                     if (ActiveElement() != id)
                     {
@@ -1471,7 +1471,7 @@ namespace Microsoft.Edge.A11y
                     }
                     else//only try to use the buttons if they're there
                     {
-                        var initial = DateValue();
+                        initial = DateValue();
                         //**Dismiss button**
                         //Open the dialog, change a field, tab to cancel button, activate it with space,
                         //check that tabbing moves to the previous button (on the page not the dialog)
@@ -1511,6 +1511,14 @@ namespace Microsoft.Edge.A11y
                             result += "\nUnable to accept with accept button via enter";
                         }
                     }
+
+                    //open with space, close with enter
+                    initial = DateValue();
+                    driver.SendSpecialKeys(id, "SpaceArrow_downEnter");
+                    if(DateValue() == initial)
+                    {
+                        result += "\nUnable to open dialog with space";
+                    }
                 }
 
                 foreach (var element in elements)
@@ -1541,7 +1549,6 @@ namespace Microsoft.Edge.A11y
         /// <returns></returns>
         public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckDatetimeLocal()
         {
-            //TODO open with space
             return new Func<List<IUIAutomationElement>, DriverManager, List<string>, string>((elements, driver, ids) =>
             {
                 var inputFields = new List<int> { 3, 3 };
@@ -1595,6 +1602,8 @@ namespace Microsoft.Edge.A11y
                         }
                     }
 
+                    var initial = "";
+
                     for(var i = 0; i < inputFields.Count(); i++)
                     {
                         var fieldTabs = "";
@@ -1605,7 +1614,7 @@ namespace Microsoft.Edge.A11y
 
                         var secondPass = i == 1 ? "Tab" : "";
 
-                        var initial = DateValue();
+                        initial = DateValue();
                         //**Dismiss button**
                         //Open the dialog, change a field, tab to cancel button, activate it with space,
                         //check that tabbing moves to the previous button (on the page not the dialog)
@@ -1644,6 +1653,14 @@ namespace Microsoft.Edge.A11y
                         {
                             result += "\nUnable to accept with accept button via enter";
                         }
+                    }
+
+                    //open with space, close with enter
+                    initial = DateValue();
+                    driver.SendSpecialKeys(id, "SpaceArrow_downEnter");
+                    if(DateValue() == initial)
+                    {
+                        result += "\nUnable to open dialog with space";
                     }
                 }
 
