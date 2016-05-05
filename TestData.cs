@@ -1404,8 +1404,6 @@ namespace Microsoft.Edge.A11y
         /// <returns></returns>
         public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckCalendar(int fields, int outputFields = -1)
         {
-            //TODO escape to cancel
-            //TODO buttons with space or enter
             //TODO open with space
             return new Func<List<IUIAutomationElement>, DriverManager, List<string>, string>((elements, driver, ids) =>
             {
@@ -1543,76 +1541,111 @@ namespace Microsoft.Edge.A11y
         /// <returns></returns>
         public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckDatetimeLocal()
         {
+            //TODO open with space
             return new Func<List<IUIAutomationElement>, DriverManager, List<string>, string>((elements, driver, ids) =>
             {
+                var inputFields = new List<int> { 3, 3 };
+                var outputFields = 5;
                 var result = "";
-                var foundControllerFor = new List<int>();
+
+                var previousControllerForElements = new HashSet<int>();
                 foreach (var id in ids)
                 {
-                    driver.SendSpecialKeys(id, "EnterEscapeEnterEnter");//Make sure that the element has focus (gets around weirdness in WebDriver)
+                    driver.SendSpecialKeys(id, "EnterEnterEscape");//Make sure that the element has focus (gets around weirdness in WebDriver)
 
-                    var inputFields = new List<int> { 3, 3 };
-                    var outputFields = 5;
                     Func<string> DateValue = () => (string)driver.ExecuteScript("return document.getElementById('" + id + "').value", 0);
                     Func<string> ActiveElement = () => (string)driver.ExecuteScript("return document.activeElement.id", 0);
 
                     driver.SendSpecialKeys(id, "EnterEnterTabEnterEnter");
-
                     var today = DateValue();
 
-                    driver.SendSpecialKeys(id, "ShiftTabShift");//Shift focus back to main control
+                    //Open the menu
+                    driver.SendSpecialKeys(id, "Enter");
+
+                    //Check ControllerFor
+                    var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().ConvertAll(element => elements.IndexOf(element));
+                    if (controllerForElements.All(element => previousControllerForElements.Contains(element)))
+                    {
+                        result += "\nElement controller for not set for id: " + id;
+                    }
+
                     foreach (var count in inputFields)
                     {
-                        //Open the menu
-                        driver.SendSpecialKeys(id, "Enter");
-
-                        //Check ControllerFor
-                        var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().ConvertAll(element => elements.IndexOf(element));
-                        if (controllerForElements.Count() == 0)
-                        {
-                            result += "\nElement controller for not set for id: " + id;
-                        }
-                        else
-                        {
-                            foundControllerFor = foundControllerFor.Union(controllerForElements).ToList();
-                        }
-
                         //Change each field in the calendar
                         for (int i = 0; i < count; i++)
                         {
                             driver.SendSpecialKeys(id, "Arrow_downTab");
                         }
 
-                        //Check that the accept and cancel buttons are in the tab order
-                        if (ActiveElement() != id)
-                        {
-                            result += "\nUnable to get to accept/dismiss buttons by tab";
-                            //TODO interact with buttons once that's defined
-                        }
+                        driver.SendSpecialKeys(id, "EnterTab");
                     }
 
                     //Get the altered value, which should be one off the default
                     //for each field
                     var newdate = DateValue();
-                    var newdatesplit = newdate.Split('-', 'T', ':');
-                    var todaysplit = today.Split('-', 'T', ':');
+                    var newdatesplit = newdate.Split('-', ':', 'T');
+                    var todaysplit = today.Split('-', ':', 'T');
 
                     //ensure that all fields have been changed
                     for (int i = 0; i < outputFields; i++)
                     {
                         if (newdatesplit[i] == todaysplit[i])
                         {
-                            result += "\nNot all fields were changed by keyboard interaction";
+                            result += "\nNot all fields were changed by keyboard interaction.";
                         }
                     }
-                }
 
-                foreach (var element in elements)
-                {
-                    //Since we expect each element to be set as the controllerfor twice
-                    if (foundControllerFor.Count(fcf => fcf == elements.IndexOf(element)) != 2)
+                    for(var i = 0; i < inputFields.Count(); i++)
                     {
-                        result += "\nElement controller for not set";
+                        var fieldTabs = "";
+                        for (var j = 0; j < inputFields.Take(i + 1).Sum(); j++)
+                        {
+                            fieldTabs += "Tab";
+                            if (j == inputFields[0] - 1 && i > 0)
+                            {
+                                fieldTabs += "Enter";
+                            }
+                        }
+
+                        var initial = DateValue();
+                        //**Dismiss button**
+                        //Open the dialog, change a field, tab to cancel button, activate it with space,
+                        //check that tabbing moves to the previous button (on the page not the dialog)
+                        driver.SendSpecialKeys(id, "EscapeEnterArrow_down" + fieldTabs + "TabSpaceShiftTabShift");
+                        if (initial != DateValue() || ActiveElement() == id)
+                        {
+                            result += "\nUnable to cancel with dismiss button via space";
+                        }
+
+                        //do the same as above, but activate the button with enter this time
+                        driver.SendSpecialKeys(id, "EscapeEnterArrow_down" + fieldTabs + "TabEnterShiftTabShift");
+                        if (initial != DateValue() || ActiveElement() == id)
+                        {
+                            result += "\nUnable to cancel with dismiss button via enter";
+                        }
+
+
+                        //**Accept button**
+                        initial = DateValue();
+
+                        //Open the dialog, change a field, tab to accept button, activate it with space,
+                        //send tab (since the dialog should be closed, this will transfer focus to the next
+                        //input-color button)
+                        driver.SendSpecialKeys(id, "EscapeEnterArrow_down" + fieldTabs + "SpaceTab");
+                        if (initial == DateValue() || ActiveElement() == id)
+                        {
+                            result += "\nUnable to accept with accept button via space";
+                        }
+
+                        initial = DateValue();//the value hopefully changed above, but just to be safe
+
+                        //Open the dialog, tab to hue, change hue, tab to accept button, activate it with enter
+                        //We don't have to worry about why the dialog closed here (button or global enter)
+                        driver.SendSpecialKeys(id, "EscapeEnterArrow_down" + fieldTabs + "EnterTab");
+                        if (initial == DateValue() || ActiveElement() == id)
+                        {
+                            result += "\nUnable to accept with accept button via enter";
+                        }
                     }
                 }
 
