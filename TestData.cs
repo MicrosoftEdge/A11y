@@ -427,6 +427,7 @@ namespace Microsoft.Edge.A11y
                             Func<string> ActiveElement = () => (string)driver.ExecuteScript("return document.activeElement.id", 0);
 
                             var initial = CheckColorValue();
+                            driver.SendSpecialKeys(id, "EnterEscapeEnterEnter");
 
                             //open dialog to check controllerfor
                             driver.SendSpecialKeys(id, "Enter");
@@ -1514,7 +1515,7 @@ namespace Microsoft.Edge.A11y
 
                     //open with space, close with enter
                     initial = DateValue();
-                    driver.SendSpecialKeys(id, "SpaceArrow_downEnter");
+                    driver.SendSpecialKeys(id, "EscapeSpaceArrow_downEnter");
                     if(DateValue() == initial)
                     {
                         result += "\nUnable to open dialog with space";
@@ -1556,7 +1557,7 @@ namespace Microsoft.Edge.A11y
                 var result = "";
 
                 var previousControllerForElements = new HashSet<int>();
-                foreach (var id in ids)
+                foreach (var id in ids.Take(1))//TODO add for all
                 {
                     driver.SendSpecialKeys(id, "EnterEnterEscape");//Make sure that the element has focus (gets around weirdness in WebDriver)
 
@@ -1638,7 +1639,7 @@ namespace Microsoft.Edge.A11y
                         //Open the dialog, change a field, tab to accept button, activate it with space,
                         //send tab (since the dialog should be closed, this will transfer focus to the next
                         //input-color button)
-                        driver.SendSpecialKeys(id, secondPass + "EnterArrow_down" + fieldTabs + "SpaceTab");
+                        driver.SendSpecialKeys(id, "Escape" + secondPass + "EnterArrow_down" + fieldTabs + "SpaceTab");
                         if (initial == DateValue())
                         {
                             result += "\nUnable to accept with accept button via space";
@@ -1648,7 +1649,7 @@ namespace Microsoft.Edge.A11y
 
                         //Open the dialog, tab to hue, change hue, tab to accept button, activate it with enter
                         //We don't have to worry about why the dialog closed here (button or global enter)
-                        driver.SendSpecialKeys(id, secondPass + "EnterArrow_down" + fieldTabs + "EnterTab");
+                        driver.SendSpecialKeys(id, "Escape" + secondPass + "EnterArrow_down" + fieldTabs + "EnterTab");
                         if (initial == DateValue())
                         {
                             result += "\nUnable to accept with accept button via enter";
@@ -1657,7 +1658,7 @@ namespace Microsoft.Edge.A11y
 
                     //open with space, close with enter
                     initial = DateValue();
-                    driver.SendSpecialKeys(id, "SpaceArrow_downEnter");
+                    driver.SendSpecialKeys(id, "EscapeSpaceArrow_downEnter");
                     if(DateValue() == initial)
                     {
                         result += "\nUnable to open dialog with space";
