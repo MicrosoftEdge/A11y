@@ -304,7 +304,7 @@ namespace Microsoft.Edge.A11y
                 new TestData("footer", "Group",
                     searchStrategy: element =>
                         element.CurrentControlType == converter.GetElementCodeFromName("Group")
-                        && element.CurrentLocalizedControlType == "footer",
+                        && element.CurrentLocalizedControlType != "article",
                     additionalRequirement: (elements, driver, ids) => {
                         var result = CheckElementNames(
                             new List<string>{
@@ -323,8 +323,9 @@ namespace Microsoft.Edge.A11y
                         }
 
                         //not all elements need to have the same localized control type
-                        if(elements.Select(e => e.CurrentLocalizedControlType).Count(lct => lct == "footer") != 6){
-                            return "Elements did not have the correct localized control types";
+                        if(elements.Select(e => e.CurrentLocalizedControlType).Count(lct => lct == "footer") != 1){
+                            return "\nFound " + elements.Select(e => e.CurrentLocalizedControlType).Count(lct => lct == "footer") + 
+                                " elements with LocalizedControlType footer, expected 1";
                         }
 
                         var elementConverter = new ElementConverter();
@@ -346,14 +347,14 @@ namespace Microsoft.Edge.A11y
                                 localizedLandmarks++;
                             }
                         }
-                        if (convertedLandmarks != 6)
+                        if (convertedLandmarks != 1)
                         {
-                            return "Elements did not have the correct landmark types";
+                            return "\nFound " + convertedLandmarks + " elements with landmark type Custom, expected 1";
                         }
 
-                        if (localizedLandmarks != 6)
+                        if (localizedLandmarks != 1)
                         {
-                            return "Elements did not have the correct localized landmark types";
+                            return "\nFound " + localizedLandmarks + " elements with localized landmark type content information, expected 1";
                         }
 
                         return ARPASS;
@@ -361,7 +362,7 @@ namespace Microsoft.Edge.A11y
                 new TestData("header", "Group",
                     searchStrategy: element =>
                         element.CurrentControlType == converter.GetElementCodeFromName("Group")
-                        && element.CurrentLocalizedControlType == "header",
+                        && element.CurrentLocalizedControlType != "article",
                     additionalRequirement: (elements, driver, ids) => {
                         var result = CheckElementNames(
                             new List<string>{
@@ -380,7 +381,7 @@ namespace Microsoft.Edge.A11y
                         }
 
                         //not all elements need to have the same localized control type
-                        if(elements.Select(e => e.CurrentLocalizedControlType).Count(lct => lct == "header") != 6){
+                        if(elements.Select(e => e.CurrentLocalizedControlType).Count(lct => lct == "header") != 1){
                             return "Elements did not have the correct localized control types";
                         }
 
@@ -403,14 +404,14 @@ namespace Microsoft.Edge.A11y
                                 localizedLandmarks++;
                             }
                         }
-                        if (convertedLandmarks != 6)
+                        if (convertedLandmarks != 1)
                         {
-                            return "Elements did not have the correct landmark types";
+                            return "\nFound " + convertedLandmarks + " elements with landmark type Custom, expected 1";
                         }
 
-                        if (localizedLandmarks != 6)
+                        if (localizedLandmarks != 1)
                         {
-                            return "Elements did not have the correct localized landmark types";
+                            return "\nFound " + localizedLandmarks + " elements with localized landmark type banner, expected 1";
                         }
 
                         return ARPASS;
@@ -661,7 +662,6 @@ namespace Microsoft.Edge.A11y
                         return result;
                     }),
                 new TestData("input-range", "Slider", keyboardElements: new List<string> { "input1", "input2" },
-                    //TODO maybe a livesetting:polite, wait for cyns before implementing
                     additionalRequirement: (elements, driver, ids) => {
                         var result = "";
 
