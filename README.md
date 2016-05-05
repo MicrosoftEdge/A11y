@@ -34,7 +34,7 @@ After the tests have run, the results are printed to the console and saved in th
 directory of the project with the name "scores.csv".
 
 ## Testing your site
-It's possible to use A11y to automate testing of your site as well. To understand how to do this view the [site testing documentation](https://github.com/MicrosoftEdge/A11y/tree/site_testing).
+It's possible to use A11y to automate testing of your site as well. To understand how to do this view the [site testing documentation](https://github.com/MicrosoftEdge/A11y/blob/site_testing/site-automation.md).
 
 ### Pass and failure conditions
 The TestData.cs file contains the logic of the tests and an explanation of the built-in
