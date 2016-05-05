@@ -461,9 +461,9 @@ namespace Microsoft.Edge.A11y
                                 }
 
                                 //color well
+                                //Neither controllerfor nor livesetting:polite is ideal for searching, so just do both at
+                                //the same time
                                 if(!descendents.
-                                    //Neither controllerfor nor livesetting:polite is ideal for searching, so just do both at
-                                    //the same time
                                     Where(d => d.CurrentControllerFor != null && d.CurrentControllerFor.Length > 0).
                                     Any(d => ((IUIAutomationElement5)d).CurrentLiveSetting == LiveSetting.Polite)){
                                         result += "\nUnable to find a color well with ControllerFor and LiveSetting:Polite set";
@@ -1440,6 +1440,53 @@ namespace Microsoft.Edge.A11y
                     if (ActiveElement() != id)
                     {
                         result += "\nUnable to get to accept/dismiss buttons by tab";
+                    }
+                    else//only try to use the buttons if they're there
+                    {
+                        var fieldTabs = "";
+                        for(var i = 0; i<fields; i++)
+                        {
+                            fieldTabs += "Tab";
+                        }
+                        var initial = DateValue();
+                        //**Dismiss button**
+                        //Open the dialog, change a field, tab to cancel button, activate it with space,
+                        //check that tabbing moves to the previous button (on the page not the dialog)
+                        driver.SendSpecialKeys(id, "EscapeEnterArrow_down" + fieldTabs + "TabSpaceShiftTabShift");
+                        if (initial != DateValue() || ActiveElement() == id)
+                        {
+                            result += "\nUnable to cancel with dismiss button via space";
+                        }
+
+                        //do the same as above, but activate the button with enter this time
+                        driver.SendSpecialKeys(id, "EscapeEnterArrow_down" + fieldTabs + "TabEnterShiftTabShift");
+                        if (initial != DateValue() || ActiveElement() == id)
+                        {
+                            result += "\nUnable to cancel with dismiss button via enter";
+                        }
+
+
+                        //**Accept button**
+                        initial = DateValue();
+
+                        //Open the dialog, change a field, tab to accept button, activate it with space,
+                        //send tab (since the dialog should be closed, this will transfer focus to the next
+                        //input-color button)
+                        driver.SendSpecialKeys(id, "EscapeEnterArrow_down" + fieldTabs + "SpaceTab");
+                        if (initial == DateValue() || ActiveElement() == id)
+                        {
+                            result += "\nUnable to accept with accept button via space";
+                        }
+
+                        initial = DateValue();//the value hopefully changed above, but just to be safe
+
+                        //Open the dialog, tab to hue, change hue, tab to accept button, activate it with enter
+                        //We don't have to worry about why the dialog closed here (button or global enter)
+                        driver.SendSpecialKeys(id, "EscapeEnterArrow_down" + fieldTabs + "EnterTab");
+                        if (initial == DateValue() || ActiveElement() == id)
+                        {
+                            result += "\nUnable to accept with accept button via enter";
+                        }
                     }
 
                     //Close the menu (only necessary for time)
