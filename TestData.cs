@@ -991,7 +991,7 @@ namespace Microsoft.Edge.A11y
                         "title attribute 7"
                     })),
                 new TestData("summary", null),
-                new TestData("time", "Group", "time",
+                new TestData("time", "Text", "time",
                     additionalRequirement: ((elements, driver, ids) => {
                         if (!elements.All(element => {
                             var fullDescription = ((IUIAutomationElement6)element).CurrentFullDescription;
