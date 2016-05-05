@@ -317,13 +317,12 @@ namespace Microsoft.Edge.A11y
                                 "title attribute 7"
                             })(elements, driver, ids);
 
-                        //not all elements need to have the same localized control type
-                        if(elements.Select(e => e.CurrentLocalizedControlType).Count(lct => lct == "footer") != 1){
-                            result += "\nFound " + elements.Select(e => e.CurrentLocalizedControlType).Count(lct => lct == "footer") + 
-                                " elements with LocalizedControlType footer, expected 1";
-                        }
-
                         var elementConverter = new ElementConverter();
+
+                        if (elements.Count() != 7)
+                        {
+                            result += "\nFound " + elements.Count() + " elements, expected 7.";
+                        }
 
                         var convertedLandmarks = 0;
                         var localizedLandmarks = 0;
@@ -370,12 +369,12 @@ namespace Microsoft.Edge.A11y
                                 "title attribute 7"
                             })(elements, driver, ids);
 
-                        //not all elements need to have the same localized control type
-                        if(elements.Select(e => e.CurrentLocalizedControlType).Count(lct => lct == "header") != 1){
-                            result += "Elements did not have the correct localized control types";
-                        }
-
                         var elementConverter = new ElementConverter();
+
+                        if (elements.Count() != 7)
+                        {
+                            result += "\nFound " + elements.Count() + " elements, expected 7.";
+                        }
 
                         var convertedLandmarks = 0;
                         var localizedLandmarks = 0;
