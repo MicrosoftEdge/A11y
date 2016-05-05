@@ -1462,7 +1462,7 @@ namespace Microsoft.Edge.A11y
                         fieldTabs += "Tab";
                     }
 
-                    driver.SendSpecialKeys(id, fieldTabs);
+                    driver.SendSpecialKeys(id, "Enter" + fieldTabs);
 
                     //Check that the accept and cancel buttons are in the tab order
                     if (ActiveElement() != id)
