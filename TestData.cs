@@ -220,7 +220,7 @@ namespace Microsoft.Edge.A11y
                         var previousControllerForElements = new HashSet<int>();
 
                         //keyboard a11y
-                        foreach (var id in ids)
+                        foreach (var id in ids.Take(1))
                         {
                             var initial = datalistValue(id);
                             driver.SendSpecialKeys(id, "Arrow_down");
@@ -410,7 +410,7 @@ namespace Microsoft.Edge.A11y
                         var result = string.Empty;
 
                         var previousControllerForElements = new HashSet<int>();
-                        foreach(var id in ids)
+                        foreach(var id in ids.Take(1))
                         {
                             Func<string> CheckColorValue = () => (string) driver.ExecuteScript("return document.getElementById('"+ id + "').value", timeout);
                             Func<string> ActiveElement = () => (string)driver.ExecuteScript("return document.activeElement.id", 0);
@@ -453,9 +453,8 @@ namespace Microsoft.Edge.A11y
                                 //color well
                                 //Neither controllerfor nor livesetting:polite is ideal for searching, so just do both at
                                 //the same time
-                                if(!descendents.
-                                    Where(d => d.CurrentControllerFor != null && d.CurrentControllerFor.Length > 0).
-                                    Any(d => ((IUIAutomationElement5)d).CurrentLiveSetting == LiveSetting.Polite)){
+                                if(descendents.Where(d => d.CurrentControllerFor != null && d.CurrentControllerFor.Length > 0)
+                                              .All(d => ((IUIAutomationElement5) d).CurrentLiveSetting != LiveSetting.Polite)){
                                         result += "\nUnable to find a color well with ControllerFor and LiveSetting:Polite set";
                                 }
                             }
@@ -468,7 +467,7 @@ namespace Microsoft.Edge.A11y
                             }
 
                             //open with enter, close with enter
-                            driver.SendSpecialKeys(id, "EscapeEnterTabArrow_rightArrow_rightEnter");
+                            driver.SendSpecialKeys(id, "EscapeEnterTabTabArrow_rightArrow_rightEnter");
                             if (CheckColorValue() == initial)
                             {
                                 result += "\nUnable to change value with arrow keys and submit with enter";
@@ -476,7 +475,7 @@ namespace Microsoft.Edge.A11y
 
                             //open with space, close with enter
                             initial = CheckColorValue();
-                            driver.SendSpecialKeys(id, "EscapeSpaceTabArrow_rightArrow_rightEnter");
+                            driver.SendSpecialKeys(id, "EscapeSpaceTabTabArrow_rightArrow_rightEnter");
                             if (initial == CheckColorValue())
                             {
                                 result += "\nUnable to open dialog with space";
@@ -514,7 +513,7 @@ namespace Microsoft.Edge.A11y
                                 //Open the dialog, tab to hue, change hue, tab to accept button, activate it with space,
                                 //send tab (since the dialog should be closed, this will transfer focus to the next
                                 //input-color button)
-                                driver.SendSpecialKeys(id, "EscapeEnterArrow_rightArrow_rightTabTabTabSpaceTab");
+                                driver.SendSpecialKeys(id, "EscapeEnterTabTabArrow_rightArrow_rightTabSpaceTab");
                                 if (initial == CheckColorValue() || ActiveElement() == id)
                                 {
                                     result += "\nUnable to accept with accept button via space";
@@ -524,7 +523,7 @@ namespace Microsoft.Edge.A11y
 
                                 //Open the dialog, tab to hue, change hue, tab to accept button, activate it with enter
                                 //We don't have to worry about why the dialog closed here (button or global enter)
-                                driver.SendSpecialKeys(id, "EscapeEnterArrow_rightArrow_rightTabTabTabEnterTab");
+                                driver.SendSpecialKeys(id, "EscapeEnterTabTabArrow_rightArrow_rightTabEnterTab");
                                 if (initial == CheckColorValue() || ActiveElement() == id)
                                 {
                                     result += "\nUnable to accept with accept button via enter";
@@ -618,7 +617,7 @@ namespace Microsoft.Edge.A11y
                         var result = "";
 
                         //keyboard interaction
-                        foreach(var id in ids){
+                        foreach(var id in ids.Take(1)){
                             Func<int> RangeValue = () => (int) Int32.Parse((string) driver.ExecuteScript("return document.getElementById('" + id + "').value", 0));
 
                             var initial = RangeValue();
@@ -1364,7 +1363,7 @@ namespace Microsoft.Edge.A11y
 
                 var result = "";
                 var previousControllerForElements = new HashSet<int>();
-                foreach (var id in ids)
+                foreach (var id in ids.Take(1))
                 {
                     driver.SendSpecialKeys(id, "EnterEscapeEnterEnter");//Make sure that the element has focus (gets around weirdness in WebDriver)
 
@@ -1510,7 +1509,7 @@ namespace Microsoft.Edge.A11y
                 var result = "";
 
                 var previousControllerForElements = new HashSet<int>();
-                foreach (var id in ids.Take(1))//TODO add for all
+                foreach (var id in ids.Take(1))
                 {
                     driver.SendSpecialKeys(id, "EnterEnterEscape");//Make sure that the element has focus (gets around weirdness in WebDriver)
 
@@ -1800,7 +1799,7 @@ namespace Microsoft.Edge.A11y
                 Func<string, string> inputValue = (id) => (string)driver.ExecuteScript("return document.getElementById('" + id + "').value", 0);
                 Action<string> clearInput = (id) => driver.ExecuteScript("document.getElementById('" + id + "').value = ''", 0);
 
-                foreach (var id in ids)
+                foreach (var id in ids.Take(1))
                 {
                     //Enter something, tab to the clear button, clear with space
                     driver.SendSpecialKeys(id, "xTabSpace");
