@@ -15,7 +15,6 @@ namespace Microsoft.Edge.A11y
         {
             if (changeType == StructureChangeType.StructureChangeType_ChildAdded)
             {
-                //Console.WriteLine("{0} -Added {1} child", DateTime.Now.Millisecond, sender.CurrentName);
                 if (ElementName.Equals(sender.CurrentName, StringComparison.InvariantCultureIgnoreCase))
                 {
                     TestData.Ewh.Set();
@@ -1128,7 +1127,6 @@ namespace Microsoft.Edge.A11y
             WaitForElement(handler, elements[0], "volume");
 
             //Case 1: tab to play button and play/pause
-            Console.WriteLine("Case 1: tab to play button and play/pause");
             driver.SendSpecialKeys(videoId, "TabSpace");
 
             WaitForElement(handler, elements[0], "play");
@@ -1145,7 +1143,6 @@ namespace Microsoft.Edge.A11y
             }
 
             //Case 2: Volume and mute
-            Console.WriteLine("Case 2: Volume and mute");
             Javascript.ClearFocus(driver, 0);
             driver.SendTabs(videoId, 6);//tab to volume control//TODO make this more resilient to UI changes
             driver.SendSpecialKeys(videoId, "Enter");//mute
@@ -1177,7 +1174,6 @@ namespace Microsoft.Edge.A11y
             //driver.SendTabs(videoId, 5);//tab to audio selection
             //driver.SendSpecialKeys(videoId, "EnterArrow_down");
 
-            Console.WriteLine("Case 4: Progress and seek");
             //Case 4: Progress and seek
             if (WaitForCondition(VideoPlaying))
             { //this should not be playing
@@ -1196,7 +1192,6 @@ namespace Microsoft.Edge.A11y
             if (!WaitForCondition(VideoElapsed, initial))
             {
                 result += "\tVideo did not skip back with arrow left\n";
-                Console.WriteLine("Video did not skip back with arrow left, initial:{0} actual:{1}", initial, GetVideoElapsed());
             }
 
             //Case 5: Progress and seek on remaining time
@@ -1217,9 +1212,7 @@ namespace Microsoft.Edge.A11y
             if (!WaitForCondition(VideoElapsed, initial))
             {
                 result += "\tVideo did not skip back with arrow left\n";
-                Console.WriteLine("Video did not skip back with arrow left, initial:{0} actual:{1}", initial, GetVideoElapsed());
                 driver.SendSpecialKeys(videoId, "Arrow_left"); //skip back
-                Console.WriteLine("Video did not skip back with arrow left, initial:{0} actual:{1}", initial, GetVideoElapsed());
             }
 
             //Case 6: Full screen
