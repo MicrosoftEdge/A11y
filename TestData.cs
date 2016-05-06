@@ -979,15 +979,22 @@ namespace Microsoft.Edge.A11y
                     })),
                 new TestData("summary", null),
                 new TestData("time", "Text", "time",
-                    additionalRequirement: ((elements, driver, ids) => {
-                        if (!elements.All(element => {
-                            var fullDescription = ((IUIAutomationElement6)element).CurrentFullDescription;
-                            return fullDescription != null && fullDescription == "2015-10-28";}))
-                        {
-                            return "Element did not have the correct FullDescription";
-                        }
-                        return ARPASS;
-                    })),
+                    additionalRequirement:
+                    CheckElementNames(
+                        new List<string>{
+                            "aria-label attribute2",
+                            "Element referenced by aria-labelledby attribute 3",
+                            "title attribute 4",
+                            "aria-label attribute 6"
+                        },
+                        new List<string>{
+                            "2015-10-01",
+                            "2015-10-02",
+                            "2015-10-03",
+                            "2015-10-04",
+                            "Element referenced by aria-describedby attribute",
+                            "title attribute 6",
+                        })),
                 new TestData("track", "track",
                     additionalRequirement: ((elements, driver, ids) =>
                     {
