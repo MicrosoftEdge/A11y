@@ -1123,7 +1123,7 @@ namespace Microsoft.Edge.A11y
             Func<bool> VideoMuted = () => (bool)driver.ExecuteScript("return document.getElementById('" + videoId + "').muted", 0);
             Func<double> GetVideoElapsed = () => driver.ExecuteScript("return document.getElementById('" + videoId + "').currentTime", 0).ParseMystery();
             Func<double, bool> VideoElapsed = expected => Math.Abs(GetVideoElapsed() - expected) < epsilon;
-            Func<bool> IsVideoFullScreen = () => driver.ExecuteScript("return document.fullscreenElement", 0) != null;
+            Func<bool> IsVideoFullScreen = () => driver.ExecuteScript("return document.webkitFullscreenElement", 0) != null;
 
             var handler = new StructureChangedHandler();
             WaitForElement(handler, elements[0], "volume");
@@ -1669,7 +1669,7 @@ namespace Microsoft.Edge.A11y
                         var newInvalid = invalid.DefaultIfEmpty(-1).FirstOrDefault(inv => !previouslyInvalid.Contains(inv));
                         if (newInvalid == -1)
                         {
-                            result += "\nElement failed to validate improper input";
+                            return "\nElement failed to validate improper input";
                         }
 
                         if (elements[newInvalid].CurrentHelpText == null || elements[newInvalid].CurrentHelpText.Length == 0)
@@ -1677,9 +1677,9 @@ namespace Microsoft.Edge.A11y
                             result += "\nElement did not have HelpText";
                         }
 
-                        if (elements[newInvalid].CurrentControllerFor.Length > 1)
+                        if (elements[newInvalid].CurrentControllerFor.Length != 1)
                         {
-                            throw new Exception("Test assumption failed: expected only one controller");
+                            return "\nElement did not have 1 ControllerFor";
                         }
 
                         var helpPane = elements[newInvalid].CurrentControllerFor.GetElement(0);
