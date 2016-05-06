@@ -42,7 +42,7 @@ namespace Microsoft.Edge.A11y
             var testElements = EdgeA11yTools.SearchChildren(browserElement, testData._ControlType, testData._SearchStrategy, out foundControlTypes);
             if (testElements.Count == 0)
             {
-                return Fail(testData._TestName, testData._SearchStrategy == null ? 
+                return Fail(testData._TestName, testData._SearchStrategy == null ?
                     "Unable to find the element, found these instead: " + foundControlTypes.Aggregate((a, b) => a + ", " + b):
                     "Unable to find the element using the alternate search strategy");
             }

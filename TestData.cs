@@ -869,7 +869,7 @@ namespace Microsoft.Edge.A11y
                             new List<string>{
                                 "aria-label attribute 2",
                                 "p referenced by aria-labelledby3",
-                                "label wrapping output 4",
+                                "label wrapping output 410",
                                 "title attribute 5",
                                 "label referenced by for/id attributes 7"
                             },
