@@ -896,7 +896,7 @@ namespace Microsoft.Edge.A11y
                     additionalRequirement: ((elements, driver, ids) => {
                         var result = string.Empty;
 
-                        if (!elements.All(element => ((IUIAutomationElement5)element).CurrentLiveSetting != LiveSetting.Polite)){
+                        if (!elements.All(element => ((IUIAutomationElement5)element).CurrentLiveSetting == LiveSetting.Polite)){
                             result += "\nElement did not have LiveSetting = Polite";
                         }
                         var controllerForLengths = elements.ConvertAll(element => element.CurrentControllerFor != null ? element.CurrentControllerFor.Length : 0);
@@ -1814,15 +1814,15 @@ namespace Microsoft.Edge.A11y
                     expectedNotFound.Any() ? "\n" +
                         expectedNotFound.Aggregate((a, b) => a + ", " + b) +
                         (expectedNotFound.Count() > 1 ?
-                            " were expected as names but not found. " :
-                            " was expected as a name but not found. ")
+                            " were expected as descriptions but not found. " :
+                            " was expected as a description but not found. ")
                         : "";
                 result +=
                     foundNotExpected.Any() ? "\n" +
                         foundNotExpected.Aggregate((a, b) => a + ", " + b) +
                         (foundNotExpected.Count() > 1 ?
-                            " were found as names but not expected. " :
-                            " was found as a name but not expected. ")
+                            " were found as descriptions but not expected. " :
+                            " was found as a description but not expected. ")
                         : "";
 
                 return result;
