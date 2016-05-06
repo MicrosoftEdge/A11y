@@ -599,9 +599,8 @@ namespace Microsoft.Edge.A11y
                     }),
                 new TestData("input-number", "Spinner", "number",
                     keyboardElements: new List<string> { "input1", "input2" },
-                    additionalRequirement: (elements, driver, ids) => {
-                        var result = CheckValidation()(elements, driver, ids);
-                        result +=
+                    additionalRequirement: (elements, driver, ids) =>
+                        CheckValidation()(elements, driver, ids) +
                             CheckElementNames(
                                 new List<string>{
                                     "aria-label attribute2",
@@ -612,44 +611,8 @@ namespace Microsoft.Edge.A11y
                                 new List<string>{
                                     "p referenced by aria-describedby6",
                                     "title attribute 7" })
-                                (elements, driver, ids);
-
-                        foreach(var id in ids)
-                        {
-                            //clear all elements
-                            driver.ExecuteScript("document.getElementById('" + id + "').value = ''", 0);
-                            //put values in to check for later
-                            driver.SendKeys(id, "706");
-                        }
-
-                        foreach(var element in elements)
-                        {
-                            var patternName = "ValuePattern";
-
-                            var patterned = GetPattern<IUIAutomationValuePattern>(patternName, element);
-
-                            if (patterned == null)
-                            {
-                                result += "\nElement did not support " + patternName;
-                            }
-                            else {
-                                var currentValue = patterned.CurrentValue;
-                                if(currentValue != "706")
-                                {
-                                    result += "\nUnable to retrieve the value with Rangevalue.value";
-                                }
-
-                                patterned.SetValue("707");
-                                currentValue = patterned.CurrentValue;
-                                if(currentValue != "707")
-                                {
-                                    result += "\nUnable to set the value with SetValue()";
-                                }
-                            }
-                        }
-
-                        return result;
-                    }),
+                                (elements, driver, ids)
+                    ),
                 new TestData("input-range", "Slider", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: (elements, driver, ids) => {
                         var result = "";
@@ -793,7 +756,7 @@ namespace Microsoft.Edge.A11y
                         "h1 referenced by aria-describedby5",
                         "title attribute 6"
                     })),
-                new TestData("mark", "Text", "mark",//TODO see what cyns says
+                new TestData("mark", "Text", "mark",
                     additionalRequirement: CheckElementNames(
                     new List<string>{
                         "aria-label attribute2",
@@ -1089,10 +1052,6 @@ namespace Microsoft.Edge.A11y
                         foreach(var element in elements){//there can only be one
                             if(element.CurrentControllerFor == null || element.CurrentControllerFor.Length == 0){
                                 return "\nElement did not have controller for set";
-                            }
-
-                            if(element.CurrentIsDataValidForForm != 0){
-                                return "\nElement did not have IsDataValidForForm set to false";
                             }
 
                             if(element.CurrentIsRequiredForForm != 1){
@@ -1689,6 +1648,7 @@ namespace Microsoft.Edge.A11y
         {
             return (elements, driver, ids) =>
                 {
+                    var result = "";
                     //The indices of the elements that have been found to be invalid before
                     var previouslyInvalid = new HashSet<int>();
                     for (var i = 0; i < elements.Count; i++)
@@ -1709,17 +1669,12 @@ namespace Microsoft.Edge.A11y
                         var newInvalid = invalid.DefaultIfEmpty(-1).FirstOrDefault(inv => !previouslyInvalid.Contains(inv));
                         if (newInvalid == -1)
                         {
-                            return "Element failed to validate improper input";
-                        }
-
-                        if (elements[newInvalid].CurrentIsDataValidForForm != 0)
-                        {
-                            return "\nElement did not have IsDataValidForForm set to false";
+                            result += "\nElement failed to validate improper input";
                         }
 
                         if (elements[newInvalid].CurrentHelpText == null || elements[newInvalid].CurrentHelpText.Length == 0)
                         {
-                            return "\nElement did not have HelpText";
+                            result += "\nElement did not have HelpText";
                         }
 
                         if (elements[newInvalid].CurrentControllerFor.Length > 1)
@@ -1730,12 +1685,13 @@ namespace Microsoft.Edge.A11y
                         var helpPane = elements[newInvalid].CurrentControllerFor.GetElement(0);
                         if (helpPane.CurrentControlType != new ElementConverter().GetElementCodeFromName("Pane"))
                         {
-                            return "Error message did not have correct ControlType";
+                            result += "Error message did not have correct ControlType";
                         }
 
                         previouslyInvalid.Add(newInvalid);
                     }
-                    return ARPASS;
+
+                    return result;
                 };
         }
 
