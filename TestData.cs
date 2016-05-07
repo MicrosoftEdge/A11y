@@ -1643,19 +1643,17 @@ namespace Microsoft.Edge.A11y
                     var result = "";
                     //The indices of the elements that have been found to be invalid before
                     var previouslyInvalid = new HashSet<int>();
-                    for (var i = 0; i < elements.Count; i++)
+                    foreach (var id in ids)
                     {
-                        driver.SendKeys("input" + (i + 1), "invalid");
-                        driver.SendSubmit("input" + (i + 1));
+                        driver.SendKeys(id, "invalid");
+                        driver.SendSubmit(id);
                         Thread.Sleep(TimeSpan.FromMilliseconds(500));
 
                         //Everything that is invalid on the page
                         //We search by both with an OR condition because it gives a better chance to
                         //find elements that are partially correct.
                         var invalid = elements.Where(e =>
-                                        e.CurrentIsDataValidForForm == 0 ||
-                                        e.CurrentHelpText != null &&
-                                        e.CurrentHelpText.Length > 0).Select(e => elements.IndexOf(e));
+                                        e.CurrentIsDataValidForForm == 0).Select(e => elements.IndexOf(e));
 
                         //Elements that are invalid for the first time
                         var newInvalid = invalid.DefaultIfEmpty(-1).FirstOrDefault(inv => !previouslyInvalid.Contains(inv));
@@ -1671,7 +1669,7 @@ namespace Microsoft.Edge.A11y
 
                         if (elements[newInvalid].CurrentControllerFor.Length != 1)
                         {
-                            return "\nElement did not have 1 ControllerFor";
+                            return result + "\n" + id + " did not have 1 ControllerFor " + elements[newInvalid].CurrentControllerFor.Length;
                         }
 
                         var helpPane = elements[newInvalid].CurrentControllerFor.GetElement(0);
