@@ -278,7 +278,7 @@ namespace Microsoft.Edge.A11y
                 var changedKeystring = keystring;
                 foreach (var key in specialKeys.Value)
                 {
-                    changedKeystring = keystring.Replace(key.Key, key.Value);
+                    changedKeystring = changedKeystring.Replace(key.Key, key.Value);
                 }
                 driver.SendKeys(elementId, changedKeystring);
                 if (keystrings.ToList().IndexOf(keystring) < keystrings.Count() - 1)
