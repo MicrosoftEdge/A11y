@@ -340,14 +340,14 @@ namespace Microsoft.Edge.A11y
                                 localizedLandmarks++;
                             }
                         }
-                        if (convertedLandmarks != 1)
+                        if (convertedLandmarks != 7)
                         {
-                            result += "\nFound " + convertedLandmarks + " elements with landmark type Custom, expected 1";
+                            result += "\nFound " + convertedLandmarks + " elements with landmark type Custom, expected 7";
                         }
 
-                        if (localizedLandmarks != 1)
+                        if (localizedLandmarks != 7)
                         {
-                            result += "\nFound " + localizedLandmarks + " elements with localized landmark type content information, expected 1";
+                            result += "\nFound " + localizedLandmarks + " elements with localized landmark type content information, expected 7";
                         }
 
                         return result;
@@ -392,14 +392,14 @@ namespace Microsoft.Edge.A11y
                                 localizedLandmarks++;
                             }
                         }
-                        if (convertedLandmarks != 1)
+                        if (convertedLandmarks != 7)
                         {
-                            result += "\nFound " + convertedLandmarks + " elements with landmark type Custom, expected 1";
+                            result += "\nFound " + convertedLandmarks + " elements with landmark type Custom, expected 7";
                         }
 
-                        if (localizedLandmarks != 1)
+                        if (localizedLandmarks != 7)
                         {
-                            result += "\nFound " + localizedLandmarks + " elements with localized landmark type banner, expected 1";
+                            result += "\nFound " + localizedLandmarks + " elements with localized landmark type banner, expected 7";
                         }
 
                         return result;
@@ -1444,7 +1444,7 @@ namespace Microsoft.Edge.A11y
                         driver.SendSpecialKeys(id, "EscapeEnterArrow_down" + fieldTabs + "SpaceTab");
                         if (initial == DateValue() || ActiveElement() == id)
                         {
-                            result += "\nUnable to accept with accept button via space";
+                            result += "\nUnable to accept with accept button via space. Found value: " + DateValue() + " with active element: " + ActiveElement();
                         }
 
                         initial = DateValue();//the value hopefully changed above, but just to be safe
@@ -1454,7 +1454,7 @@ namespace Microsoft.Edge.A11y
                         driver.SendSpecialKeys(id, "EscapeEnterArrow_down" + fieldTabs + "EnterTab");
                         if (initial == DateValue() || ActiveElement() == id)
                         {
-                            result += "\nUnable to accept with accept button via enter";
+                            result += "\nUnable to accept with accept button via enter. Found value: " + DateValue() + " with active element: " + ActiveElement();
                         }
                     }
 
