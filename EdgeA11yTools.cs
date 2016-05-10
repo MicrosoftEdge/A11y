@@ -347,6 +347,12 @@ namespace Microsoft.Edge.A11y
             return toReturn;
         }
 
+        /// <summary>
+        /// Find all descendents of a given element, optionally searching with the given strategy
+        /// </summary>
+        /// <param name="element">The element whose descendents we need to find</param>
+        /// <param name="searchStrategy">The strategy we should use to evaluate children</param>
+        /// <returns>All elements that pass the searchStrategy</returns>
         public static List<IUIAutomationElement> GetAllDescendents(this IUIAutomationElement element, Func<IUIAutomationElement, bool> searchStrategy = null)
         {
             var toReturn = new List<IUIAutomationElement>();
@@ -355,7 +361,7 @@ namespace Microsoft.Edge.A11y
             var toSearch = new Queue<IUIAutomationElement>();//BFS
             toSearch.Enqueue(element);
 
-            while (toSearch.Any())//beware infinite recursion
+            while (toSearch.Any())//beware infinite recursion. If this becomes a problem add a limit
             {
                 var current = toSearch.Dequeue();
                 for (var child = walker.GetFirstChildElement(current); child != null; child = walker.GetNextSiblingElement(child))

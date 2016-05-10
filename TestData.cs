@@ -7,10 +7,21 @@ using System.Threading;
 
 namespace Microsoft.Edge.A11y
 {
+    /// <summary>
+    /// This is used to wait for structure changed events
+    /// </summary>
     public class StructureChangedHandler : IUIAutomationStructureChangedEventHandler
     {
+        /// <summary>
+        /// The element whose structure will be changed
+        /// </summary>
         public string ElementName { get; set; }
 
+        /// <summary>
+        /// This is called when the event fires
+        /// </summary>
+        /// <param name="sender">The element in question</param>
+        /// <param name="changeType">The type of change</param>
         void IUIAutomationStructureChangedEventHandler.HandleStructureChangedEvent(IUIAutomationElement sender, StructureChangeType changeType, int[] runtimeId)
         {
             if (changeType == StructureChangeType.StructureChangeType_ChildAdded)
@@ -1084,6 +1095,13 @@ namespace Microsoft.Edge.A11y
             };
         }
 
+        /// <summary>
+        /// Convert an element into a pattern interface
+        /// </summary>
+        /// <typeparam name="T">The pattern interface to implement</typeparam>
+        /// <param name="patternName">The friendly name of the pattern</param>
+        /// <param name="element">The element to convert</param>
+        /// <returns>The element as an implementation of the pattern</returns>
         private static T GetPattern<T>(string patternName, IUIAutomationElement element)
         {
             List<string> patternNames;
@@ -1096,7 +1114,7 @@ namespace Microsoft.Edge.A11y
             }
             else
             {
-                T pattern = ((IUIAutomationElement5)element).GetCurrentPattern(patternIds[patternNames.IndexOf(patternName)]);
+                T pattern = (T)((IUIAutomationElement5)element).GetCurrentPattern(patternIds[patternNames.IndexOf(patternName)]);
                 return pattern;
             }
         }
@@ -1170,9 +1188,6 @@ namespace Microsoft.Edge.A11y
 
             //Case 3: Audio selection
             //TODO test manually
-            //Javascript.ClearFocus(driver, 0);
-            //driver.SendTabs(videoId, 5);//tab to audio selection
-            //driver.SendSpecialKeys(videoId, "EnterArrow_down");
 
             //Case 4: Progress and seek
             if (WaitForCondition(VideoPlaying))
@@ -1235,9 +1250,9 @@ namespace Microsoft.Edge.A11y
         /// <summary>
         /// Check basic keyboard interactions for the audio control
         /// </summary>
-        /// <param name="elements"></param>
-        /// <param name="driver"></param>
-        /// <param name="ids"></param>
+        /// <param name="elements">The elements found on the page</param>
+        /// <param name="driver">The driver</param>
+        /// <param name="ids">The html ids of the elements on the page</param>
         /// <returns>An empty string if an element fails, otherwise an explanation</returns>
         private static string CheckAudioKeyboardInteractions(List<IUIAutomationElement> elements, DriverManager driver, List<string> ids)
         {
@@ -1346,6 +1361,7 @@ namespace Microsoft.Edge.A11y
         /// amended method below.
         /// </summary>
         /// <param name="fields">A count of the number of fields to test</param>
+        /// <param name="outputFields">A count of the number of output fields to test</param>
         /// <returns></returns>
         public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckCalendar(int fields, int outputFields = -1)
         {
@@ -1782,6 +1798,10 @@ namespace Microsoft.Edge.A11y
             };
         }
 
+        /// <summary>
+        /// Check that the clear button can be tabbed to and that it can be activated with space
+        /// </summary>
+        /// <returns></returns>
         public static Func<DriverManager, List<string>, string> CheckClearButton()
         {
             return (driver, ids) =>
@@ -1806,6 +1826,13 @@ namespace Microsoft.Edge.A11y
             };
         }
 
+        /// <summary>
+        /// Wait for a given element's structure to change before continuing
+        /// </summary>
+        /// <param name="element">The element to change</param>
+        /// <param name="elementName">The child element to be added</param>
+        /// <param name="timeout">How long to wait</param>
+        /// <returns></returns>
         public static bool WaitForElement(IUIAutomationElement element, string elementName, TimeSpan? timeout = null)
         {
             var handler = new StructureChangedHandler();
@@ -1818,6 +1845,14 @@ namespace Microsoft.Edge.A11y
             return Ewh.WaitOne(timeout.Value);
         }
 
+        /// <summary>
+        /// Wait for a given element's structure to change before continuing
+        /// </summary>
+        /// <param name="handler">If the caller already has a stucture changed handler, it can be passed in</param>
+        /// <param name="element">The element to change</param>
+        /// <param name="elementName">The child element to be added</param>
+        /// <param name="timeout">How long to wait</param>
+        /// <returns></returns>
         public static bool WaitForElement(StructureChangedHandler handler, IUIAutomationElement element, string elementName, TimeSpan? timeout = null)
         {
             handler.ElementName = elementName;
@@ -1829,6 +1864,12 @@ namespace Microsoft.Edge.A11y
             return Ewh.WaitOne(timeout.Value);
         }
 
+        /// <summary>
+        /// Wait for a condition that tests a double value
+        /// </summary>
+        /// <param name="conditionCheck">The condition checker</param>
+        /// <param name="value">The double value to look for</param>
+        /// <returns></returns>
         public static bool WaitForCondition(Func<double, bool> conditionCheck, double value)
         {
             for (var i = 0; i < 100; i++)
@@ -1842,6 +1883,11 @@ namespace Microsoft.Edge.A11y
             return false;
         }
 
+        /// <summary>
+        /// Wait for a condition that only returns a boolean value
+        /// </summary>
+        /// <param name="conditionCheck">The condition checker</param>
+        /// <returns></returns>
         public static bool WaitForCondition(Func<bool> conditionCheck)
         {
             var condition = false;
