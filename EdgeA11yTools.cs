@@ -86,9 +86,9 @@ namespace Microsoft.Edge.A11y
         /// <param name="foundControlTypes">A list of all control types found on the page, for error reporting</param>
         /// <returns>The elements found which match the tag given</returns>
         public static List<IUIAutomationElement> SearchChildren(
-            IUIAutomationElement browserElement, 
-            string controlType, 
-            Func<IUIAutomationElement, bool> searchStrategy, 
+            IUIAutomationElement browserElement,
+            string controlType,
+            Func<IUIAutomationElement, bool> searchStrategy,
             out HashSet<string> foundControlTypes)
         {
             var uia = new CUIAutomation8();
@@ -272,11 +272,20 @@ namespace Microsoft.Edge.A11y
         /// <param name="keysToSend"></param>
         public static void SendSpecialKeys(this DriverManager driver, string elementId, string keysToSend)
         {
-            foreach (var key in specialKeys.Value)
+            var keystrings = keysToSend.Split(new string[] { "Wait" }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var keystring in keystrings)
             {
-                keysToSend = keysToSend.Replace(key.Key, key.Value);
+                var changedKeystring = keystring;
+                foreach (var key in specialKeys.Value)
+                {
+                    changedKeystring = keystring.Replace(key.Key, key.Value);
+                }
+                driver.SendKeys(elementId, changedKeystring);
+                if (keystrings.ToList().IndexOf(keystring) < keystrings.Count() - 1)
+                {
+                    System.Threading.Thread.Sleep(1000);
+                }
             }
-            driver.SendKeys(elementId, keysToSend);
         }
 
         /// <summary>
