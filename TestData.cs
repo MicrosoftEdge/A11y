@@ -340,14 +340,14 @@ namespace Microsoft.Edge.A11y
                                 localizedLandmarks++;
                             }
                         }
-                        if (convertedLandmarks != 7)
+                        if (convertedLandmarks != 1)
                         {
-                            result += "\nFound " + convertedLandmarks + " elements with landmark type Custom, expected 7";
+                            result += "\nFound " + convertedLandmarks + " elements with landmark type Custom, expected 1";
                         }
 
-                        if (localizedLandmarks != 7)
+                        if (localizedLandmarks != 1)
                         {
-                            result += "\nFound " + localizedLandmarks + " elements with localized landmark type content information, expected 7";
+                            result += "\nFound " + localizedLandmarks + " elements with localized landmark type content information, expected 1";
                         }
 
                         return result;
@@ -392,14 +392,14 @@ namespace Microsoft.Edge.A11y
                                 localizedLandmarks++;
                             }
                         }
-                        if (convertedLandmarks != 7)
+                        if (convertedLandmarks != 1)
                         {
-                            result += "\nFound " + convertedLandmarks + " elements with landmark type Custom, expected 7";
+                            result += "\nFound " + convertedLandmarks + " elements with landmark type Custom, expected 1";
                         }
 
-                        if (localizedLandmarks != 7)
+                        if (localizedLandmarks != 1)
                         {
-                            result += "\nFound " + localizedLandmarks + " elements with localized landmark type banner, expected 7";
+                            result += "\nFound " + localizedLandmarks + " elements with localized landmark type banner, expected 1";
                         }
 
                         return result;
