@@ -1366,7 +1366,7 @@ namespace Microsoft.Edge.A11y
                     var today = DateValue();
 
                     //Open the menu
-                    driver.SendSpecialKeys(id, "EscapeEnter");
+                    driver.SendSpecialKeys(id, "EscapeEnterWait");
 
                     //Check ControllerFor
                     var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().ConvertAll(element => elements.IndexOf(element));
@@ -1406,7 +1406,7 @@ namespace Microsoft.Edge.A11y
                         fieldTabs += "Tab";
                     }
 
-                    driver.SendSpecialKeys(id, "Enter" + fieldTabs);
+                    driver.SendSpecialKeys(id, "EnterWait" + fieldTabs);
 
                     var initial = "";
 
@@ -1421,14 +1421,14 @@ namespace Microsoft.Edge.A11y
                         //**Dismiss button**
                         //Open the dialog, change a field, tab to cancel button, activate it with space,
                         //check that tabbing moves to the previous button (on the page not the dialog)
-                        driver.SendSpecialKeys(id, "EscapeEnterArrow_down" + fieldTabs + "TabSpaceShiftTabShift");
+                        driver.SendSpecialKeys(id, "EscapeEnterWaitArrow_down" + fieldTabs + "TabSpaceShiftTabShift");
                         if (initial != DateValue() || ActiveElement() == id)
                         {
                             result += "\nUnable to cancel with dismiss button via space";
                         }
 
                         //do the same as above, but activate the button with enter this time
-                        driver.SendSpecialKeys(id, "EscapeEnterArrow_down" + fieldTabs + "TabEnterShiftTabShift");
+                        driver.SendSpecialKeys(id, "EscapeEnterWaitArrow_down" + fieldTabs + "TabEnterShiftTabShift");
                         if (initial != DateValue() || ActiveElement() == id)
                         {
                             result += "\nUnable to cancel with dismiss button via enter";
@@ -1441,7 +1441,7 @@ namespace Microsoft.Edge.A11y
                         //Open the dialog, change a field, tab to accept button, activate it with space,
                         //send tab (since the dialog should be closed, this will transfer focus to the next
                         //input-color button)
-                        driver.SendSpecialKeys(id, "EscapeEnterArrow_down" + fieldTabs + "SpaceTab");
+                        driver.SendSpecialKeys(id, "EscapeEnterWaitArrow_down" + fieldTabs + "SpaceTab");
                         if (initial == DateValue() || ActiveElement() == id)
                         {
                             result += "\nUnable to accept with accept button via space. Found value: " + DateValue() + " with active element: " + ActiveElement();
@@ -1451,7 +1451,7 @@ namespace Microsoft.Edge.A11y
 
                         //Open the dialog, tab to hue, change hue, tab to accept button, activate it with enter
                         //We don't have to worry about why the dialog closed here (button or global enter)
-                        driver.SendSpecialKeys(id, "EscapeEnterArrow_down" + fieldTabs + "EnterTab");
+                        driver.SendSpecialKeys(id, "EscapeEnterWaitArrow_down" + fieldTabs + "EnterTab");
                         if (initial == DateValue() || ActiveElement() == id)
                         {
                             result += "\nUnable to accept with accept button via enter. Found value: " + DateValue() + " with active element: " + ActiveElement();
@@ -1513,7 +1513,7 @@ namespace Microsoft.Edge.A11y
                     var today = DateValue();
 
                     //Open the menu
-                    driver.SendSpecialKeys(id, "Enter");
+                    driver.SendSpecialKeys(id, "EnterWait");
 
                     //Check ControllerFor
                     var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().ConvertAll(element => elements.IndexOf(element));
@@ -1530,7 +1530,7 @@ namespace Microsoft.Edge.A11y
                             driver.SendSpecialKeys(id, "Arrow_downTab");
                         }
 
-                        driver.SendSpecialKeys(id, "EnterTab");
+                        driver.SendSpecialKeys(id, "EnterWaitTab");
                     }
 
                     //Get the altered value, which should be one off the default
@@ -1564,14 +1564,14 @@ namespace Microsoft.Edge.A11y
                         //**Dismiss button**
                         //Open the dialog, change a field, tab to cancel button, activate it with space,
                         //check that tabbing moves to the previous button (on the page not the dialog)
-                        driver.SendSpecialKeys(id, secondPass + "EnterArrow_down" + fieldTabs + "TabSpaceShiftTabShift");
+                        driver.SendSpecialKeys(id, secondPass + "EnterWaitArrow_down" + fieldTabs + "TabSpaceShiftTabShift");
                         if (initial != DateValue())
                         {
                             result += "\nUnable to cancel with dismiss button via space";
                         }
 
                         //do the same as above, but activate the button with enter this time
-                        driver.SendSpecialKeys(id, secondPass + "EnterArrow_down" + fieldTabs + "TabEnterShiftTabShift");
+                        driver.SendSpecialKeys(id, secondPass + "EnterWaitArrow_down" + fieldTabs + "TabEnterShiftTabShift");
                         if (initial != DateValue())
                         {
                             result += "\nUnable to cancel with dismiss button via enter";
@@ -1584,7 +1584,7 @@ namespace Microsoft.Edge.A11y
                         //Open the dialog, change a field, tab to accept button, activate it with space,
                         //send tab (since the dialog should be closed, this will transfer focus to the next
                         //input-color button)
-                        driver.SendSpecialKeys(id, "Escape" + secondPass + "EnterArrow_down" + fieldTabs + "SpaceTab");
+                        driver.SendSpecialKeys(id, "Escape" + secondPass + "EnterWaitArrow_down" + fieldTabs + "SpaceTab");
                         if (initial == DateValue())
                         {
                             result += "\nUnable to accept with accept button via space";
@@ -1594,7 +1594,7 @@ namespace Microsoft.Edge.A11y
 
                         //Open the dialog, tab to hue, change hue, tab to accept button, activate it with enter
                         //We don't have to worry about why the dialog closed here (button or global enter)
-                        driver.SendSpecialKeys(id, "Escape" + secondPass + "EnterArrow_down" + fieldTabs + "EnterTab");
+                        driver.SendSpecialKeys(id, "Escape" + secondPass + "EnterWaitArrow_down" + fieldTabs + "EnterTab");
                         if (initial == DateValue())
                         {
                             result += "\nUnable to accept with accept button via enter";
@@ -1603,7 +1603,7 @@ namespace Microsoft.Edge.A11y
 
                     //open with space, close with enter
                     initial = DateValue();
-                    driver.SendSpecialKeys(id, "EscapeSpaceArrow_downEnter");
+                    driver.SendSpecialKeys(id, "EscapeSpaceWaitArrow_downEnter");
                     if(DateValue() == initial)
                     {
                         result += "\nUnable to open dialog with space";
