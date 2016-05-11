@@ -1662,8 +1662,7 @@ namespace Microsoft.Edge.A11y
                     foreach (var id in ids)
                     {
                         driver.SendKeys(id, "invalid");
-                        driver.SendSubmit(id);
-                        Thread.Sleep(TimeSpan.FromMilliseconds(500));
+                        driver.SendSpecialKeys(id, "EnterWait");
 
                         //Everything that is invalid on the page
                         //We search by both with an OR condition because it gives a better chance to
