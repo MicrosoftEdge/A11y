@@ -24,7 +24,7 @@ namespace Microsoft.Edge.A11y
             }
             else
             {
-                throw new Exception("Code " + key + " was not found.");
+                return null;
             }
         }
 
