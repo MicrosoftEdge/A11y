@@ -388,11 +388,13 @@ namespace Microsoft.Edge.A11y
 
                         var convertedLandmarks = 0;
                         var localizedLandmarks = 0;
+                        var landmarkCode = 0;
                         //same for landmark and localizedlandmark
                         foreach (var element in elements)
                         {
                             var five = element as IUIAutomationElement5;
                             var convertedLandmark = elementConverter.GetElementNameFromCode(five.CurrentLandmarkType);
+                            landmarkCode = five.CurrentLandmarkType;
                             var localizedLandmark = five.CurrentLocalizedLandmarkType;
                             if (convertedLandmark == "Custom")
                             {
@@ -405,7 +407,7 @@ namespace Microsoft.Edge.A11y
                         }
                         if (convertedLandmarks != 1)
                         {
-                            result += "\nFound " + convertedLandmarks + " elements with landmark type Custom, expected 1";
+                            result += "\nFound " + convertedLandmarks + " elements with landmark type Custom, expected 1: " + landmarkCode;
                         }
 
                         if (localizedLandmarks != 1)
@@ -423,6 +425,7 @@ namespace Microsoft.Edge.A11y
                         foreach(var id in ids.Take(1))
                         {
                             Func<string> CheckColorValue = () => (string) driver.ExecuteScript("return document.getElementById('"+ id + "').value", timeout);
+                            Action<string> ChangeColorValue = (value) => driver.ExecuteScript("document.getElementById('"+ id + "').value = '" + value + "'", timeout);
                             Func<string> ActiveElement = () => (string)driver.ExecuteScript("return document.activeElement.id", 0);
 
                             var initial = CheckColorValue();
@@ -461,11 +464,35 @@ namespace Microsoft.Edge.A11y
                                 }
 
                                 //color well
-                                //Neither controllerfor nor livesetting:polite is ideal for searching, so just do both at
-                                //the same time
-                                if(descendents.Where(d => d.CurrentControllerFor != null && d.CurrentControllerFor.Length > 0)
-                                              .All(d => ((IUIAutomationElement5) d).CurrentLiveSetting != LiveSetting.Polite)){
-                                        result += "\nUnable to find a color well with ControllerFor and LiveSetting:Polite set";
+                                var outputs = descendents.Where(d => converter.GetElementNameFromCode(d.CurrentControlType) == "Group" && d.CurrentLocalizedControlType == "output");
+                                if (outputs.Count() > 1)
+                                {
+                                    throw new Exception("Test assumption failed: expected color dialog to have at most one output");
+                                }
+                                else if (outputs.Count() == 0)
+                                {
+                                    result += "\nCould not find output in color dialog";
+                                }
+                                else if (outputs.Count() == 1)
+                                {
+                                    var output = outputs.First();
+                                    if (output.CurrentName == null || output.CurrentName == "")
+                                    {
+                                        result += "\nColor dialog output did not have name set";
+                                    }
+                                    else
+                                    {
+                                        var initialName = output.CurrentName;
+
+                                        driver.SendSpecialKeys(id, "TabTabArrow_rightArrow_right");
+
+                                        if (output.CurrentName == initialName)
+                                        {
+                                            result += "\nColor dialog output did not change name when color changed: " + output.CurrentName;
+                                        }
+
+                                        ChangeColorValue("#000000");//Ensure that the color is clear before continuing
+                                    }
                                 }
                             }
 
@@ -1599,7 +1626,7 @@ namespace Microsoft.Edge.A11y
 
                         //Open the dialog, change a field, tab to accept button, activate it with space,
                         //send tab (since the dialog should be closed, this will transfer focus to the next
-                        //input-color button)
+                        //button)
                         driver.SendSpecialKeys(id, "Escape" + secondPass + "EnterWaitArrow_down" + fieldTabs + "SpaceTab");
                         if (initial == DateValue())
                         {

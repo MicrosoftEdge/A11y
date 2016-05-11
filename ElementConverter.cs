@@ -137,17 +137,11 @@ namespace Microsoft.Edge.A11y
             UI8Mapping.Add(50039, "Semanticzoom");
             UI8Mapping.Add(50040, "Appbar");
 
-            //Landmark types (both 8**** and 0**** since the enum isn't always the same)
             UI8Mapping.Add(80000, "Custom");
-            UI8Mapping.Add(00000, "Custom");
             UI8Mapping.Add(80001, "Form");
-            UI8Mapping.Add(00001, "Form");
             UI8Mapping.Add(80002, "Main");
-            UI8Mapping.Add(00002, "Main");
             UI8Mapping.Add(80003, "Navigation");
-            UI8Mapping.Add(00003, "Navigation");
             UI8Mapping.Add(80004, "Search");
-            UI8Mapping.Add(00004, "Search");
         }
     }
 }
