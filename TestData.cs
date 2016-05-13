@@ -1704,6 +1704,11 @@ namespace Microsoft.Edge.A11y
                             return "\nElement failed to validate improper input";
                         }
 
+                        if (elements[newInvalid].CurrentIsDataValidForForm != 0)
+                        {
+                            result += "\nElement did not have IsDataValidForForm set to false";
+                        }
+
                         if (elements[newInvalid].CurrentHelpText == null || elements[newInvalid].CurrentHelpText.Length == 0)
                         {
                             result += "\nElement did not have HelpText";
