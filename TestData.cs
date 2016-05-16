@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Remoting.Messaging;
 using System.Threading;
 
 namespace Microsoft.Edge.A11y
@@ -616,7 +615,7 @@ namespace Microsoft.Edge.A11y
                                     "p referenced by aria-describedby6",
                                     "title attribute 7" })
                                 (elements, driver, ids) +
-                                CheckClearButton()(driver, ids);
+                                CheckClearButton()(elements, driver, ids);
                     }),
                 new TestData("input-month", "Edit", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: (elements, driver, ids) => {
@@ -708,13 +707,10 @@ namespace Microsoft.Edge.A11y
                                 "title attribute 7"
                             })(elements, driver, ids);
 
-                        //clear button
-                        result += CheckClearButton()(driver, ids);
-
                         return result;
                     }),
                 new TestData("input-search", "Edit", "search", keyboardElements: new List<string> { "input1", "input2" },
-                    additionalRequirement: CheckElementNames(
+                    additionalRequirement: (elements, driver, ids) => CheckElementNames(
                             new List<string>
                             {
                                 "aria-label attribute 2",
@@ -727,7 +723,8 @@ namespace Microsoft.Edge.A11y
                             {
                                 "p referenced by aria-describedby6",
                                 "title attribute 7"
-                            })),
+                            })(elements, driver, ids) +
+                            CheckClearButton()(elements, driver, ids)),
                 new TestData("input-tel", "Edit", "telephone", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: (elements, driver, ids) => CheckElementNames(
                             new List<string>
@@ -744,7 +741,7 @@ namespace Microsoft.Edge.A11y
                                 "title attribute 7"
                             })(elements, driver, ids) +
                             //clear button
-                            CheckClearButton()(driver, ids)
+                            CheckClearButton()(elements, driver, ids)
                             ),
                 new TestData("input-time", "Edit", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: (elements, driver, ids) => {
@@ -766,7 +763,7 @@ namespace Microsoft.Edge.A11y
                         additionalRequirement: CheckValidation()),
                 new TestData("input-week", "Edit", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: (elements, driver, ids) => {
-                        return CheckCalendar(2)(elements, driver, ids) + "\n" +
+                        return CheckCalendar(2)(elements, driver, ids) +
                             CheckElementNames(
                                 new List<string>{
                                     "aria-label attribute 2",
@@ -777,7 +774,8 @@ namespace Microsoft.Edge.A11y
                                 new List<string>{
                                     "p referenced by aria-describedby6",
                                     "title attribute 7" })
-                                (elements, driver, ids);
+                                (elements, driver, ids) +
+                            CheckClearButton()(elements, driver, ids);
                     }),
                 new TestData("main", "Group", "main", "Main", "main",
                     additionalRequirement: CheckElementNames(
@@ -1084,7 +1082,7 @@ namespace Microsoft.Edge.A11y
                     additionalRequirement: (elements, driver, ids) =>
                     {
                         driver.SendSubmit("input1");
-                        System.Threading.Thread.Sleep(TimeSpan.FromMilliseconds(500));
+                        Thread.Sleep(TimeSpan.FromMilliseconds(500));
                         foreach(var element in elements){//there can only be one
                             if(element.CurrentControllerFor == null || element.CurrentControllerFor.Length == 0){
                                 return "\nElement did not have controller for set";
@@ -1444,7 +1442,7 @@ namespace Microsoft.Edge.A11y
                     }
 
                     var fieldTabs = "";
-                    for(var i = 0; i<fields; i++)
+                    for (var i = 0; i < fields; i++)
                     {
                         fieldTabs += "Tab";
                     }
@@ -1504,7 +1502,7 @@ namespace Microsoft.Edge.A11y
                     //open with space, close with enter
                     initial = DateValue();
                     driver.SendSpecialKeys(id, "EscapeSpaceArrow_downEnter");
-                    if(DateValue() == initial)
+                    if (DateValue() == initial)
                     {
                         result += "\nUnable to open dialog with space";
                     }
@@ -1593,7 +1591,7 @@ namespace Microsoft.Edge.A11y
 
                     var initial = "";
 
-                    for(var i = 0; i < inputFields.Count(); i++)
+                    for (var i = 0; i < inputFields.Count(); i++)
                     {
                         var fieldTabs = "";
                         for (var j = 0; j < inputFields[0]; j++)
@@ -1647,7 +1645,7 @@ namespace Microsoft.Edge.A11y
                     //open with space, close with enter
                     initial = DateValue();
                     driver.SendSpecialKeys(id, "EscapeSpaceWaitArrow_downEnter");
-                    if(DateValue() == initial)
+                    if (DateValue() == initial)
                     {
                         result += "\nUnable to open dialog with space";
                     }
@@ -1753,20 +1751,20 @@ namespace Microsoft.Edge.A11y
 
                     if (strict && names.Count() != requiredNames.Count)
                     {
-                    result +=
-                        expectedNotFound.Any() ? "\n" +
-                            expectedNotFound.Aggregate((a, b) => a + ", " + b) +
-                            (expectedNotFound.Count() > 1 ?
-                                " were expected as names but not found. " :
-                                " was expected as a name but not found. ")
-                            : "";
-                    result +=
-                        foundNotExpected.Any() ? "\n" +
-                            foundNotExpected.Aggregate((a, b) => a + ", " + b) +
-                            (foundNotExpected.Count() > 1 ?
-                                " were found as names but not expected. " :
-                                " was found as a name but not expected. ")
-                            : "";
+                        result +=
+                            expectedNotFound.Any() ? "\n" +
+                                expectedNotFound.Aggregate((a, b) => a + ", " + b) +
+                                (expectedNotFound.Count() > 1 ?
+                                    " were expected as names but not found. " :
+                                    " was expected as a name but not found. ")
+                                : "";
+                        result +=
+                            foundNotExpected.Any() ? "\n" +
+                                foundNotExpected.Aggregate((a, b) => a + ", " + b) +
+                                (foundNotExpected.Count() > 1 ?
+                                    " were found as names but not expected. " :
+                                    " was found as a name but not expected. ")
+                                : "";
                     }
                 }
                 return result;
@@ -1833,9 +1831,9 @@ namespace Microsoft.Edge.A11y
         /// Check that the clear button can be tabbed to and that it can be activated with space
         /// </summary>
         /// <returns></returns>
-        public static Func<DriverManager, List<string>, string> CheckClearButton()
+        public static Func<IEnumerable<IUIAutomationElement>, DriverManager, List<string>, string> CheckClearButton()
         {
-            return (driver, ids) =>
+            return (elements, driver, ids) =>
             {
                 var result = "";
                 Func<string, string> inputValue = (id) => (string)driver.ExecuteScript("return document.getElementById('" + id + "').value", 0);
@@ -1844,10 +1842,10 @@ namespace Microsoft.Edge.A11y
                 foreach (var id in ids.Take(1))
                 {
                     //Enter something, tab to the clear button, clear with space
-                    driver.SendSpecialKeys(id, "xTabSpace");
-                    if (inputValue(id) != "")
+                    driver.SendSpecialKeys(id, "xWait");
+                    if (!elements.Any(e => e.GetAllDescendents().Any(d => d.CurrentName.ToLowerInvariant().Contains("clear value"))))
                     {
-                        result += "\nElement did not clear or the clear button was not reachable by tab";
+                        result += "\nUnable to find a clear button as a child of any element";
                     }
                     //Don't leave input which could cause problems with other tests
                     clearInput(id);
