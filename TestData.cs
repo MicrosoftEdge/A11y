@@ -760,7 +760,9 @@ namespace Microsoft.Edge.A11y
                     }),
                 new TestData("input-url", "Edit", "url",
                         keyboardElements: new List<string> { "input1", "input2" },
-                        additionalRequirement: CheckValidation()),
+                        additionalRequirement: (elements, driver, ids) =>
+                            CheckValidation()(elements, driver, ids) +
+                            CheckClearButton()(elements, driver, ids)),
                 new TestData("input-week", "Edit", keyboardElements: new List<string> { "input1", "input2" },
                     additionalRequirement: (elements, driver, ids) => {
                         return CheckCalendar(2)(elements, driver, ids) +
@@ -774,8 +776,7 @@ namespace Microsoft.Edge.A11y
                                 new List<string>{
                                     "p referenced by aria-describedby6",
                                     "title attribute 7" })
-                                (elements, driver, ids) +
-                            CheckClearButton()(elements, driver, ids);
+                                (elements, driver, ids);
                     }),
                 new TestData("main", "Group", "main", "Main", "main",
                     additionalRequirement: CheckElementNames(
