@@ -70,15 +70,17 @@ namespace Microsoft.Edge.A11y
         /// </summary>
         public List<string> _KeyboardElements;
         /// <summary>
-        /// A func that allows extending the tests for specific elements. If an empty string is
-        /// returned, the element passes. Otherwise, an explanation of its failure is returned.
-        /// </summary>
-        public Func<List<IUIAutomationElement>, DriverManager, List<string>, string> _AdditionalRequirement;
-        /// <summary>
         /// If not null, this func will be used to test elements to see if they should be
         /// tested (instead of matching _ControlType).
         /// </summary>
         public Func<IUIAutomationElement, bool> _SearchStrategy;
+        public List<string> _requiredNames;
+        public List<string> _requiredDescriptions;
+        /// <summary>
+        /// A func that allows extending the tests for specific elements. If an empty string is
+        /// returned, the element passes. Otherwise, an explanation of its failure is returned.
+        /// </summary>
+        public Func<List<IUIAutomationElement>, DriverManager, List<string>, string> _AdditionalRequirement;
 
         /// <summary>
         /// Manual reset event waiter used to wait for elements to be added to UIA tree
@@ -91,7 +93,7 @@ namespace Microsoft.Edge.A11y
         public static readonly string[] WaitForElements = { "volume" };
 
         /// <summary>
-        /// Simple ctor
+        /// Simple Ctor
         /// </summary>
         /// <param name="testName"></param>
         /// <param name="controlType"></param>
@@ -99,6 +101,9 @@ namespace Microsoft.Edge.A11y
         /// <param name="landmarkType"></param>
         /// <param name="localizedLandmarkType"></param>
         /// <param name="keyboardElements"></param>
+        /// <param name="searchStrategy"></param>
+        /// <param name="requiredNames"></param>
+        /// <param name="requiredDescriptions"></param>
         /// <param name="additionalRequirement"></param>
         public TestData(string testName,
             string controlType,
@@ -106,8 +111,10 @@ namespace Microsoft.Edge.A11y
             string landmarkType = null,
             string localizedLandmarkType = null,
             List<string> keyboardElements = null,
-            Func<List<IUIAutomationElement>, DriverManager, List<string>, string> additionalRequirement = null,
-            Func<IUIAutomationElement, bool> searchStrategy = null)
+            Func<IUIAutomationElement, bool> searchStrategy = null,
+            List<string> requiredNames = null,
+            List<string> requiredDescriptions = null,
+            Func<List<IUIAutomationElement>, DriverManager, List<string>, string> additionalRequirement = null)
         {
             _TestName = testName;
             _ControlType = controlType;
@@ -115,8 +122,10 @@ namespace Microsoft.Edge.A11y
             _LandmarkType = landmarkType;
             _LocalizedLandmarkType = localizedLandmarkType;
             _KeyboardElements = keyboardElements;
-            _AdditionalRequirement = additionalRequirement;
             _SearchStrategy = searchStrategy;
+            _requiredNames = requiredNames;
+            _requiredDescriptions = requiredDescriptions;
+            _AdditionalRequirement = additionalRequirement;
         }
 
         //All the tests to run
@@ -145,41 +154,40 @@ namespace Microsoft.Edge.A11y
 
             return new List<TestData>{
                 new TestData("article", "Group", "article",
-                    additionalRequirement: CheckElementNames(
-                    new List<string>{
-                        "aria-label attribute 3",
-                        "h1 referenced by aria-labelledby4",
-                        "title attribute 5",
-                        "aria-label attribute 7"},
-                    new List<string>{
-                        "h1 referenced by aria-describedby6",
-                        "title attribute 7"
-                    })),
+                    requiredNames:
+                        new List<string>{
+                            "aria-label attribute 3",
+                            "h1 referenced by aria-labelledby4",
+                            "title attribute 5",
+                            "aria-label attribute 7"},
+                    requiredDescriptions:
+                        new List<string>{
+                            "h1 referenced by aria-describedby6",
+                            "title attribute 7"
+                    }),
                 new TestData("aside", "Group", "aside", "Custom", "complementary",
-                    additionalRequirement: CheckElementNames(
-                    new List<string>{
-                        "aria-label attribute 3",
-                        "h1 referenced by aria-labelledby4",
-                        "title attribute 5",
-                        "aria-label attribute 7"},
-                    new List<string>{
-                        "h1 referenced by aria-describedby6",
-                        "title attribute 7"
-                    })),
+                    requiredNames:
+                        new List<string>{
+                            "aria-label attribute 3",
+                            "h1 referenced by aria-labelledby4",
+                            "title attribute 5",
+                            "aria-label attribute 7"},
+                    requiredDescriptions:
+                        new List<string>{
+                            "h1 referenced by aria-describedby6",
+                            "title attribute 7"
+                    }),
                 new TestData("audio", "Group", "audio",
-                    additionalRequirement: ((elements, driver, ids) => {
-                        var childNames = CheckChildNames(new List<string> {
+                    additionalRequirement: ((elements, driver, ids) =>
+                        CheckChildNames(new List<string> {
                                 "Play",
                                 "Time elapsed",
                                 "Seek",
                                 "Time remaining",
                                 "Mute",
-                                "Volume"})(elements, driver, ids);
-                        if(childNames != ARPASS){
-                            return childNames;
-                        }
-                        return CheckAudioKeyboardInteractions(elements, driver, ids);
-                    })),
+                                "Volume"})(elements, driver, ids) +
+                        CheckAudioKeyboardInteractions(elements, driver, ids)
+                    )),
                 new TestData("canvas", "Image",
                     additionalRequirement: ((elements, driver, ids) => {
                         var result = string.Empty;
@@ -253,17 +261,18 @@ namespace Microsoft.Edge.A11y
                 new TestData("details", null),
                 new TestData("dialog", null),
                 new TestData("figure", "Group", "figure",
-                    additionalRequirement: CheckElementNames(
-                    new List<string>{
-                        "aria-label attribute 2",
-                        "p referenced by aria-labelledby3",
-                        "title attribute 4",
-                        "Figcaption element 5",
-                        "Figcaption element 7"},
-                    new List<string>{
-                        "p referenced by aria-describedby6",
-                        "title attribute 7"
-                    })),
+                    requiredNames:
+                        new List<string>{
+                            "aria-label attribute 2",
+                            "p referenced by aria-labelledby3",
+                            "title attribute 4",
+                            "Figcaption element 5",
+                            "Figcaption element 7"},
+                    requiredDescriptions:
+                        new List<string>{
+                            "p referenced by aria-describedby6",
+                            "title attribute 7"
+                    }),
                 new TestData("figure-figcaption", "",
                     searchStrategy: element => true, //Verify this element via text range
                     additionalRequirement: ((elements, driver, ids) =>
@@ -314,19 +323,19 @@ namespace Microsoft.Edge.A11y
                     searchStrategy: element =>
                         element.CurrentControlType == converter.GetElementCodeFromName("Group")
                         && element.CurrentLocalizedControlType != "article",
+                    requiredNames:
+                        new List<string>{
+                            "aria-label attribute 3",
+                            "small referenced by aria-labelledby4",
+                            "title attribute 5",
+                            "aria-label attribute 7"},
+                    requiredDescriptions:
+                        new List<string>{
+                            "small referenced by aria-describedby6",
+                            "title attribute 7"
+                        },
                     additionalRequirement: (elements, driver, ids) => {
-                        var result = CheckElementNames(
-                            new List<string>{
-                                "aria-label attribute 3",
-                                "small referenced by aria-labelledby4",
-                                "title attribute 5",
-                                "aria-label attribute 7"},
-                            new List<string>{
-                                "small referenced by aria-describedby6",
-                                "title attribute 7"
-                            })(elements, driver, ids);
-
-                        var elementConverter = new ElementConverter();
+                        var result = "";
 
                         if (elements.Count() != 7)
                         {
@@ -339,7 +348,7 @@ namespace Microsoft.Edge.A11y
                         foreach (var element in elements)
                         {
                             var five = element as IUIAutomationElement5;
-                            var convertedLandmark = elementConverter.GetElementNameFromCode(five.CurrentLandmarkType);
+                            var convertedLandmark = converter.GetElementNameFromCode(five.CurrentLandmarkType);
                             var localizedLandmark = five.CurrentLocalizedLandmarkType;
                             if (convertedLandmark == "Custom")
                             {
@@ -366,19 +375,18 @@ namespace Microsoft.Edge.A11y
                     searchStrategy: element =>
                         element.CurrentControlType == converter.GetElementCodeFromName("Group")
                         && element.CurrentLocalizedControlType != "article",
+                    requiredNames:
+                        new List<string>{
+                            "aria-label attribute 3",
+                            "h1 referenced by aria-labelledby4",
+                            "title attribute 5",
+                            "aria-label attribute 7"},
+                    requiredDescriptions:
+                        new List<string>{
+                            "h1 referenced by aria-describedby6",
+                            "title attribute 7"},
                     additionalRequirement: (elements, driver, ids) => {
-                        var result = CheckElementNames(
-                            new List<string>{
-                                "aria-label attribute 3",
-                                "h1 referenced by aria-labelledby4",
-                                "title attribute 5",
-                                "aria-label attribute 7"},
-                            new List<string>{
-                                "h1 referenced by aria-describedby6",
-                                "title attribute 7"
-                            })(elements, driver, ids);
-
-                        var elementConverter = new ElementConverter();
+                        var result = "";
 
                         if (elements.Count() != 7)
                         {
@@ -392,7 +400,7 @@ namespace Microsoft.Edge.A11y
                         foreach (var element in elements)
                         {
                             var five = element as IUIAutomationElement5;
-                            var convertedLandmark = elementConverter.GetElementNameFromCode(five.CurrentLandmarkType);
+                            var convertedLandmark = converter.GetElementNameFromCode(five.CurrentLandmarkType);
                             landmarkCode = five.CurrentLandmarkType;
                             var localizedLandmark = five.CurrentLocalizedLandmarkType;
                             if (convertedLandmark == "Custom")
@@ -571,84 +579,91 @@ namespace Microsoft.Edge.A11y
                     }),
                 new TestData("input-date", "Edit",
                     keyboardElements: new List<string> { "input1", "input2" },
-                    additionalRequirement: (elements, driver, ids) => {
-                        return CheckCalendar(3)(elements, driver, ids) + "\n" +
-                            CheckElementNames(
-                                new List<string>{
-                                    "aria-label attribute2",
-                                    "p referenced by aria-labelledby3",
-                                    "label wrapping input 4",
-                                    "title attribute 5",
-                                    "label referenced by for/id attributes 7"},
-                                new List<string>{
-                                    "p referenced by aria-describedby6",
-                                    "title attribute 7" })
-                                (elements, driver, ids);
-                    }),
+                    requiredNames:
+                        new List<string>{
+                            "aria-label attribute2",
+                            "p referenced by aria-labelledby3",
+                            "label wrapping input 4",
+                            "title attribute 5",
+                            "label referenced by for/id attributes 7"},
+                    requiredDescriptions:
+                        new List<string>{
+                            "p referenced by aria-describedby6",
+                            "title attribute 7" },
+                    additionalRequirement:
+                        CheckCalendar(3)),
                 new TestData("input-datetime-local", "Edit",
-                    additionalRequirement: (elements, driver, ids) => {
-                        return CheckDatetimeLocal()(elements, driver, ids) + "\n" +
-                            CheckElementNames(
-                                new List<string>{
-                                    "aria-label attribute2",
-                                    "p referenced by aria-labelledby3",
-                                    "label wrapping input 4",
-                                    "title attribute 5",
-                                    "label referenced by for/id attributes 7"},
-                                new List<string>{
-                                    "p referenced by aria-describedby6",
-                                    "title attribute 7" })
-                                (elements, driver, ids);
-                    }),
+                    requiredNames:
+                        new List<string>{
+                            "aria-label attribute2",
+                            "p referenced by aria-labelledby3",
+                            "label wrapping input 4",
+                            "title attribute 5",
+                            "label referenced by for/id attributes 7"},
+                    requiredDescriptions:
+                        new List<string>{
+                            "p referenced by aria-describedby6",
+                            "title attribute 7" },
+                    additionalRequirement:
+                        CheckDatetimeLocal()),
                 new TestData("input-email", "Edit", "email",
                     keyboardElements: new List<string> { "input1", "input2" },
+                    requiredNames:
+                        new List<string>{
+                            "aria-label attribute2",
+                            "p referenced by aria-labelledby3",
+                            "label wrapping input 4",
+                            "title attribute 5",
+                            "label referenced by for/id attributes 7"},
+                    requiredDescriptions:
+                        new List<string>{
+                            "p referenced by aria-describedby6",
+                            "title attribute 7" },
                     additionalRequirement: (elements, driver, ids) => {
                         return CheckValidation()(elements, driver, ids) + "\n" +
-                            CheckElementNames(
-                                new List<string>{
-                                    "aria-label attribute2",
-                                    "p referenced by aria-labelledby3",
-                                    "label wrapping input 4",
-                                    "title attribute 5",
-                                    "label referenced by for/id attributes 7"},
-                                new List<string>{
-                                    "p referenced by aria-describedby6",
-                                    "title attribute 7" })
-                                (elements, driver, ids) +
-                                CheckClearButton()(elements, driver, ids);
+                            CheckClearButton()(elements, driver, ids);
                     }),
                 new TestData("input-month", "Edit", keyboardElements: new List<string> { "input1", "input2" },
-                    additionalRequirement: (elements, driver, ids) => {
-                        return CheckCalendar(2)(elements, driver, ids) + "\n" +
-                            CheckElementNames(
-                                new List<string>{
-                                    "aria-label attribute2",
-                                    "p referenced by aria-labelledby3",
-                                    "label wrapping input 4",
-                                    "title attribute 5",
-                                    "label referenced by for/id attributes 7"},
-                                new List<string>{
-                                    "p referenced by aria-describedby6",
-                                    "title attribute 7" })
-                                (elements, driver, ids);
-                    }),
+                    requiredNames:
+                        new List<string>{
+                            "aria-label attribute2",
+                            "p referenced by aria-labelledby3",
+                            "label wrapping input 4",
+                            "title attribute 5",
+                            "label referenced by for/id attributes 7"},
+                    requiredDescriptions:
+                        new List<string>{
+                            "p referenced by aria-describedby6",
+                            "title attribute 7" },
+                    additionalRequirement:
+                        CheckCalendar(2)),
                 new TestData("input-number", "Spinner", "number",
                     keyboardElements: new List<string> { "input1", "input2" },
-                    additionalRequirement: (elements, driver, ids) =>
-                        CheckValidation()(elements, driver, ids) +
-                            CheckElementNames(
-                                new List<string>{
-                                    "aria-label attribute2",
-                                    "p referenced by aria-labelledby3",
-                                    "label wrapping input 4",
-                                    "title attribute 5",
-                                    "label referenced by for/id attributes 7"},
-                                new List<string>{
-                                    "p referenced by aria-describedby6",
-                                    "title attribute 7" })
-                                (elements, driver, ids)
-                    ),
+                    requiredNames:
+                        new List<string>{
+                            "aria-label attribute2",
+                            "p referenced by aria-labelledby3",
+                            "label wrapping input 4",
+                            "title attribute 5",
+                            "label referenced by for/id attributes 7"},
+                    requiredDescriptions:
+                        new List<string>{
+                            "p referenced by aria-describedby6",
+                            "title attribute 7" },
+                    additionalRequirement:
+                        CheckValidation()),
                 new TestData("input-range", "Slider", keyboardElements: new List<string> { "input1", "input2" },
+                    requiredNames:
+                        new List<string>{
+                            "aria-label attribute 2",
+                            "p referenced by aria-labelledby3",
+                            "label wrapping input 4",
+                            "title attribute 5",
+                            "label referenced by for/id attributes 7"},
+                    requiredDescriptions:
+                        new List<string>{
+                            "p referenced by aria-describedby6",
+                            "title attribute 7"},
                     additionalRequirement: (elements, driver, ids) => {
                         var result = "";
 
@@ -690,120 +705,106 @@ namespace Microsoft.Edge.A11y
                                 result += "\nElement did not implement the RangeValuePattern";
                             }
                         }
-
-                        //naming
-                        result += CheckElementNames(
-                            new List<string>
-                            {
-                                "aria-label attribute 2",
-                                "p referenced by aria-labelledby3",
-                                "label wrapping input 4",
-                                "title attribute 5",
-                                "label referenced by for/id attributes 7",
-                            },
-                            new List<string>
-                            {
-                                "p referenced by aria-describedby6",
-                                "title attribute 7"
-                            })(elements, driver, ids);
-
                         return result;
                     }),
                 new TestData("input-search", "Edit", "search", keyboardElements: new List<string> { "input1", "input2" },
-                    additionalRequirement: (elements, driver, ids) => CheckElementNames(
-                            new List<string>
-                            {
-                                "aria-label attribute 2",
-                                "p referenced by aria-labelledby3",
-                                "label wrapping input 4",
-                                "title attribute 5",
-                                "label referenced by for/id attributes 7",
-                            },
-                            new List<string>
-                            {
-                                "p referenced by aria-describedby6",
-                                "title attribute 7"
-                            })(elements, driver, ids) +
-                            CheckClearButton()(elements, driver, ids)),
+                    requiredNames:
+                        new List<string>{
+                            "aria-label attribute 2",
+                            "p referenced by aria-labelledby3",
+                            "label wrapping input 4",
+                            "title attribute 5",
+                            "label referenced by for/id attributes 7"},
+                    requiredDescriptions:
+                        new List<string>{
+                            "p referenced by aria-describedby6",
+                            "title attribute 7"},
+                    additionalRequirement:
+                        CheckClearButton()),
                 new TestData("input-tel", "Edit", "telephone", keyboardElements: new List<string> { "input1", "input2" },
-                    additionalRequirement: (elements, driver, ids) => CheckElementNames(
-                            new List<string>
-                            {
-                                "aria-label attribute 2",
-                                "p referenced by aria-labelledby3",
-                                "label wrapping input 4",
-                                "title attribute 5",
-                                "label referenced by for/id attributes 7",
-                            },
-                            new List<string>
-                            {
-                                "p referenced by aria-describedby6",
-                                "title attribute 7"
-                            })(elements, driver, ids) +
-                            //clear button
-                            CheckClearButton()(elements, driver, ids)
-                            ),
+                    requiredNames:
+                        new List<string>{
+                            "aria-label attribute 2",
+                            "p referenced by aria-labelledby3",
+                            "label wrapping input 4",
+                            "title attribute 5",
+                            "label referenced by for/id attributes 7"},
+                    requiredDescriptions:
+                        new List<string>{
+                            "p referenced by aria-describedby6",
+                            "title attribute 7"},
+                    additionalRequirement:
+                        CheckClearButton()),
                 new TestData("input-time", "Edit", keyboardElements: new List<string> { "input1", "input2" },
-                    additionalRequirement: (elements, driver, ids) => {
-                        return CheckCalendar(3, 2)(elements, driver, ids) + "\n" +
-                            CheckElementNames(
-                                new List<string>{
-                                    "aria-label attribute 2",
-                                    "p referenced by aria-labelledby3",
-                                    "label wrapping input 4",
-                                    "title attribute 5",
-                                    "label referenced by for/id attributes 7"},
-                                new List<string>{
-                                    "p referenced by aria-describedby6",
-                                    "title attribute 7" })
-                                (elements, driver, ids);
-                    }),
+                    requiredNames:
+                        new List<string>{
+                            "aria-label attribute 2",
+                            "p referenced by aria-labelledby3",
+                            "label wrapping input 4",
+                            "title attribute 5",
+                            "label referenced by for/id attributes 7"},
+                    requiredDescriptions:
+                        new List<string>{
+                            "p referenced by aria-describedby6",
+                            "title attribute 7" },
+                    additionalRequirement:
+                        CheckCalendar(3, 2)),
                 new TestData("input-url", "Edit", "url",
                         keyboardElements: new List<string> { "input1", "input2" },
                         additionalRequirement: (elements, driver, ids) =>
                             CheckValidation()(elements, driver, ids) +
                             CheckClearButton()(elements, driver, ids)),
                 new TestData("input-week", "Edit", keyboardElements: new List<string> { "input1", "input2" },
-                    additionalRequirement: (elements, driver, ids) => {
-                        return CheckCalendar(2)(elements, driver, ids) +
-                            CheckElementNames(
-                                new List<string>{
-                                    "aria-label attribute 2",
-                                    "p referenced by aria-labelledby3",
-                                    "label wrapping input 4",
-                                    "title attribute 5",
-                                    "label referenced by for/id attributes 7"},
-                                new List<string>{
-                                    "p referenced by aria-describedby6",
-                                    "title attribute 7" })
-                                (elements, driver, ids);
-                    }),
+                    requiredNames:
+                        new List<string>{
+                            "aria-label attribute 2",
+                            "p referenced by aria-labelledby3",
+                            "label wrapping input 4",
+                            "title attribute 5",
+                            "label referenced by for/id attributes 7"},
+                    requiredDescriptions:
+                        new List<string>{
+                            "p referenced by aria-describedby6",
+                            "title attribute 7" },
+                    additionalRequirement:
+                        CheckCalendar(2)),
                 new TestData("main", "Group", "main", "Main", "main",
-                    additionalRequirement: CheckElementNames(
-                    new List<string>{
-                        "title attribute 1",
-                        "aria-label attribute 2",
-                        "h1 referenced by aria-labelledby3",
-                        "title attribute 4",
-                        "aria-label attribute 6"
-                    },
-                    new List<string>{
-                        "h1 referenced by aria-describedby5",
-                        "title attribute 6"
-                    })),
+                    requiredNames:
+                        new List<string>{
+                            "title attribute 1",
+                            "aria-label attribute 2",
+                            "h1 referenced by aria-labelledby3",
+                            "title attribute 4",
+                            "aria-label attribute 6"
+                        },
+                    requiredDescriptions:
+                        new List<string>{
+                            "h1 referenced by aria-describedby5",
+                            "title attribute 6"}),
                 new TestData("mark", "Text", "mark",
-                    additionalRequirement: CheckElementNames(
-                    new List<string>{
-                        "aria-label attribute2",
-                        "Element referenced by aria-labelledby attribute3",
-                        "title attribute 4",
-                        "aria-label attribute 6"
-                    },
-                    new List<string>{
-                        "Element referenced by aria-describedby attribute5",
-                        "title attribute 6"
-                    })),
+                    requiredNames:
+                        new List<string>{
+                            "aria-label attribute2",
+                            "Element referenced by aria-labelledby attribute3",
+                            "title attribute 4",
+                            "aria-label attribute 6"
+                        },
+                    requiredDescriptions:
+                        new List<string>{
+                            "Element referenced by aria-describedby attribute5",
+                            "title attribute 6"}),
                 new TestData("meter", "Progressbar", "meter",
+                    requiredNames:
+                        new List<string>{
+                            "aria-label attribute 2",
+                            "p referenced by aria-labelledby3",
+                            "label wrapping meter 4",
+                            "title attribute 5",
+                            "label referenced by for/id attributes 7"},
+                    requiredDescriptions:
+                        new List<string>{
+                            "p referenced by aria-describedby6",
+                            "title attribute 7" },
                     additionalRequirement:
                         ((elements, driver, ids) => {
                             var result = "";
@@ -811,22 +812,6 @@ namespace Microsoft.Edge.A11y
                             if(!elements.All(element => element.GetProperties().Any(p => p.Contains("IsReadOnly")))){
                                 result += "Not all elements were read only";
                             }
-
-                            //naming
-                            result += CheckElementNames(
-                                new List<string>
-                                {
-                                    "aria-label attribute 2",
-                                    "p referenced by aria-labelledby3",
-                                    "label wrapping meter 4",
-                                    "title attribute 5",
-                                    "label referenced by for/id attributes 7",
-                                },
-                                new List<string>
-                                {
-                                    "p referenced by aria-describedby6",
-                                    "title attribute 7"
-                                })(elements, driver, ids);
 
                             //rangevalue
                             foreach (var element in elements)
@@ -880,17 +865,28 @@ namespace Microsoft.Edge.A11y
                 new TestData("menupopup", null),
                 new TestData("menutoolbar", null),
                 new TestData("nav", "Group", "navigation", "Navigation", "navigation",
-                    additionalRequirement: CheckElementNames(
-                    new List<string>{
-                        "aria-label attribute 2",
-                        "h1 referenced by aria-labelledby3",
-                        "title attribute 4",
-                        "aria-label attribute 6"},
-                    new List<string>{
-                        "h1 referenced by aria-describedby5",
-                        "title attribute 6"
-                    })),
+                    requiredNames:
+                        new List<string>{
+                            "aria-label attribute 2",
+                            "h1 referenced by aria-labelledby3",
+                            "title attribute 4",
+                            "aria-label attribute 6"},
+                    requiredDescriptions:
+                        new List<string>{
+                            "h1 referenced by aria-describedby5",
+                            "title attribute 6"}),
                 new TestData("output", "Group", "output",
+                    requiredNames:
+                        new List<string>{
+                            "aria-label attribute 2",
+                            "p referenced by aria-labelledby3",
+                            "label wrapping output 410",
+                            "title attribute 5",
+                            "label referenced by for/id attributes 7" },
+                    requiredDescriptions:
+                        new List<string>{
+                            "p referenced by aria-describedby6",
+                            "title attribute 7" },
                     additionalRequirement: ((elements, driver, ids) => {
                         var result = string.Empty;
 
@@ -902,37 +898,22 @@ namespace Microsoft.Edge.A11y
                         {
                             result += "\nExpected 1 element with ControllerFor set. Found " + controllerForLengths.Count(cfl => cfl > 0);
                         }
-                        result += CheckElementNames(
-                            new List<string>{
-                                "aria-label attribute 2",
-                                "p referenced by aria-labelledby3",
-                                "label wrapping output 410",
-                                "title attribute 5",
-                                "label referenced by for/id attributes 7"
-                            },
-                            new List<string>{
-                                "p referenced by aria-describedby6",
-                                "title attribute 7"
-                            })(elements, driver, ids);
-
                         return result;
                     })),
                 new TestData("progress", "Progressbar",
-                    additionalRequirement: (elements, driver, ids) => {
-                    var result = string.Empty;
-
-                    result += CheckElementNames(
+                    requiredNames:
                         new List<string>{
                             "aria-label attribute 2",
                             "p referenced by aria-labelledby3",
                             "label wrapping output 4",
                             "title attribute 5",
-                            "label referenced by for/id attributes 7"
-                        },
+                            "label referenced by for/id attributes 7" },
+                    requiredDescriptions:
                         new List<string>{
                             "p referenced by aria-describedby6",
-                            "title attribute 7"
-                        })(elements, driver, ids);
+                            "title attribute 7" },
+                    additionalRequirement: (elements, driver, ids) => {
+                    var result = string.Empty;
 
                     //rangevalue
                     foreach (var element in elements)
@@ -965,26 +946,26 @@ namespace Microsoft.Edge.A11y
                     return result;
                     }),
                 new TestData("section", "Group", "section", "Custom", "region",
-                    additionalRequirement: CheckElementNames(
-                    new List<string>{
-                        "aria-label attribute 3",
-                        "h1 referenced by aria-labelledby4",
-                        "title attribute 5",
-                        "aria-label attribute 7"},
-                    new List<string>{
-                        "h1 referenced by aria-describedby6",
-                        "title attribute 7"
-                    })),
+                    requiredNames:
+                        new List<string>{
+                            "aria-label attribute 3",
+                            "h1 referenced by aria-labelledby4",
+                            "title attribute 5",
+                            "aria-label attribute 7"},
+                    requiredDescriptions:
+                        new List<string>{
+                            "h1 referenced by aria-describedby6",
+                            "title attribute 7" }),
                 new TestData("summary", null),
                 new TestData("time", "Text", "time",
-                    additionalRequirement:
-                    CheckElementNames(
+                    requiredNames:
                         new List<string>{
                             "aria-label attribute2",
                             "Element referenced by aria-labelledby attribute 3",
                             "title attribute 4",
                             "aria-label attribute 6"
                         },
+                    requiredDescriptions:
                         new List<string>{
                             "2015-10-01",
                             "2015-10-02",
@@ -992,7 +973,7 @@ namespace Microsoft.Edge.A11y
                             "2015-10-04",
                             "Element referenced by aria-describedby attribute",
                             "title attribute 6",
-                        })),
+                        }),
                 new TestData("track", "track",
                     additionalRequirement: ((elements, driver, ids) =>
                     {
@@ -1101,23 +1082,14 @@ namespace Microsoft.Edge.A11y
                         return ARPASS;
                     }),
                 new TestData("placeholder-att", "Edit",
-                    additionalRequirement: ((elements, driver, ids) =>
-                    {
-                        if (elements.Count() != 6)
-                        {
-                            return ARFAIL;
-                        }
-
-                        var elementNames = elements.Select(element => element.CurrentName).ToList();
-                        return new List<Func<List<string>, bool>>{
-                            names => names.Contains("placeholder text 1"),
-                            names => names.Contains("Label text 2:"),
-                            names => names.Contains("Label text 3:"),
-                            names => names.Contains("placeholder text 4"),
-                            names => names.Contains("placeholder text 5"),
-                            names => names.Contains("aria-placeholder text 6"),
-                        }.All(f => f(elementNames)) ? ARPASS : ARFAIL;
-                    }))
+                    requiredNames:
+                        new List<string> {
+                            "placeholder text 1",
+                            "Label text 2:",
+                            "Label text 3:",
+                            "placeholder text 4",
+                            "placeholder text 5",
+                            "aria-placeholder text 6" })
             };
         }
 
@@ -1768,62 +1740,6 @@ namespace Microsoft.Edge.A11y
                                 : "";
                     }
                 }
-                return result;
-            };
-        }
-
-        /// <summary>
-        /// Func factory for checking that elements have the proper Names and FullDescriptions
-        /// </summary>
-        /// <param name="requiredNames">All the names we expect to find</param>
-        /// <param name="requiredDescriptions">All the descriptions we expect
-        /// to find</param>
-        /// <returns>A func that can be used to check the names and descriptions
-        /// of elements</returns>
-        public static Func<List<IUIAutomationElement>, DriverManager, List<string>, string> CheckElementNames(List<string> requiredNames, List<string> requiredDescriptions)
-        {
-            return (elements, driver, ids) =>
-            {
-                var names = elements.ConvertAll(element => element.CurrentName).Where(e => !string.IsNullOrEmpty(e)).ToList();
-                var descriptions = elements.ConvertAll(element => ((IUIAutomationElement6)element).CurrentFullDescription).Where(e => !string.IsNullOrEmpty(e)).ToList();
-                var result = "";
-
-                //Check names
-                var expectedNotFound = requiredNames.Where(rn => !names.Contains(rn)).ToList();//get a list of all required names not found
-                var foundNotExpected = names.Where(n => !requiredNames.Contains(n)).ToList();//get a list of all found names that weren't required
-                result +=
-                    expectedNotFound.Any() ? "\n" +
-                        expectedNotFound.Aggregate((a, b) => a + ", " + b) +
-                        (expectedNotFound.Count() > 1 ?
-                            " were expected as names but not found. " :
-                            " was expected as a name but not found. ")
-                        : "";
-                result +=
-                    foundNotExpected.Any() ? "\n" +
-                        foundNotExpected.Aggregate((a, b) => a + ", " + b) +
-                        (foundNotExpected.Count() > 1 ?
-                            " were found as names but not expected. " :
-                            " was found as a name but not expected. ")
-                        : "";
-
-                //Check descriptions
-                expectedNotFound = requiredDescriptions.Where(rd => !descriptions.Contains(rd)).ToList();
-                foundNotExpected = descriptions.Where(d => !requiredDescriptions.Contains(d)).ToList();
-                result +=
-                    expectedNotFound.Any() ? "\n" +
-                        expectedNotFound.Aggregate((a, b) => a + ", " + b) +
-                        (expectedNotFound.Count() > 1 ?
-                            " were expected as descriptions but not found. " :
-                            " was expected as a description but not found. ")
-                        : "";
-                result +=
-                    foundNotExpected.Any() ? "\n" +
-                        foundNotExpected.Aggregate((a, b) => a + ", " + b) +
-                        (foundNotExpected.Count() > 1 ?
-                            " were found as descriptions but not expected. " :
-                            " was found as a description but not expected. ")
-                        : "";
-
                 return result;
             };
         }

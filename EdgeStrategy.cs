@@ -100,6 +100,15 @@ namespace Microsoft.Edge.A11y
                 }
             }
 
+            //If necessary, naming and descriptions
+            //This is done "out of order" since the keyboard checks below invalidate the tree
+            if(testData._requiredNames != null || testData._requiredDescriptions != null)
+            {
+                result += CheckElementNames(testElements,
+                    testData._requiredNames ?? new List<string>(),
+                    testData._requiredDescriptions ?? new List<string>());
+            }
+
             //If necessary, check keboard accessibility
             var tabbable = EdgeA11yTools.TabbableIds(_driverManager);
             if (testData._KeyboardElements != null && testData._KeyboardElements.Count > 0)
@@ -112,7 +121,6 @@ namespace Microsoft.Edge.A11y
                     }
                 }
             }
-
 
             try
             {
@@ -138,6 +146,51 @@ namespace Microsoft.Edge.A11y
             }
 
             return Pass(testData._TestName, note);
+        }
+
+        public static string CheckElementNames(List<IUIAutomationElement> elements, List<string> requiredNames, List<string> requiredDescriptions)
+        {
+            var names = elements.ConvertAll(element => element.CurrentName).Where(e => !string.IsNullOrEmpty(e)).ToList();
+            var descriptions = elements.ConvertAll(element => ((IUIAutomationElement6)element).CurrentFullDescription).Where(e => !string.IsNullOrEmpty(e)).ToList();
+            var result = "";
+
+            //Check names
+            var expectedNotFound = requiredNames.Where(rn => !names.Contains(rn)).ToList();//get a list of all required names not found
+            var foundNotExpected = names.Where(n => !requiredNames.Contains(n)).ToList();//get a list of all found names that weren't required
+            result +=
+                expectedNotFound.Any() ? "\n" +
+                    expectedNotFound.Aggregate((a, b) => a + ", " + b) +
+                    (expectedNotFound.Count() > 1 ?
+                        " were expected as names but not found. " :
+                        " was expected as a name but not found. ")
+                    : "";
+            result +=
+                foundNotExpected.Any() ? "\n" +
+                    foundNotExpected.Aggregate((a, b) => a + ", " + b) +
+                    (foundNotExpected.Count() > 1 ?
+                        " were found as names but not expected. " :
+                        " was found as a name but not expected. ")
+                    : "";
+
+            //Check descriptions
+            expectedNotFound = requiredDescriptions.Where(rd => !descriptions.Contains(rd)).ToList();
+            foundNotExpected = descriptions.Where(d => !requiredDescriptions.Contains(d)).ToList();
+            result +=
+                expectedNotFound.Any() ? "\n" +
+                    expectedNotFound.Aggregate((a, b) => a + ", " + b) +
+                    (expectedNotFound.Count() > 1 ?
+                        " were expected as descriptions but not found. " :
+                        " was expected as a description but not found. ")
+                    : "";
+            result +=
+                foundNotExpected.Any() ? "\n" +
+                    foundNotExpected.Aggregate((a, b) => a + ", " + b) +
+                    (foundNotExpected.Count() > 1 ?
+                        " were found as descriptions but not expected. " :
+                        " was found as a description but not expected. ")
+                    : "";
+
+            return result;
         }
     }
 }
