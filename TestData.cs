@@ -72,7 +72,14 @@ namespace Microsoft.Edge.A11y
         /// tested (instead of matching _ControlType).
         /// </summary>
         public Func<IUIAutomationElement, bool> _SearchStrategy;
+        /// <summary>
+        /// A list of expected values which will be compared to the accessible names of
+        /// the found elements.
+        /// </summary>
         public List<string> _requiredNames;
+        /// <summary>
+        /// Same as above, but for accessible descriptions.
+        /// </summary>
         public List<string> _requiredDescriptions;
         /// <summary>
         /// A func that allows extending the tests for specific elements. If an empty string is
@@ -194,12 +201,12 @@ namespace Microsoft.Edge.A11y
                         var automationElementConverter = new ElementConverter();
 
                         HashSet<string> foundControlTypes;
-                        elements = EdgeA11yTools.SearchChildren(browserElement, "", (current) => {
+                        var subdomElements = EdgeA11yTools.SearchChildren(browserElement, "", (current) => {
                             var convertedRole = automationElementConverter.GetElementNameFromCode(current.CurrentControlType);
                             return convertedRole == "Button" || convertedRole == "Text";
                         }, out foundControlTypes);
 
-                        result += elements.Count() == 2 ? "" : "Unable to find subdom elements";
+                        result += subdomElements.Count() == 2 ? "" : "Unable to find subdom elements";
 
                         var featureDetectionScript = @"canvas = document.getElementById('myCanvas');
                                                         isSupported = !!(canvas.getContext && canvas.getContext('2d'));
@@ -986,16 +993,16 @@ namespace Microsoft.Edge.A11y
                     {
                         return CheckChildNames(
                             new List<string> {
-                                    "Play",
-                                    "Time elapsed",
-                                    "Seek",
-                                    "Time remaining",
-                                    "Zoom in",
-                                    "Show audio",
-                                    "Show captioning",
-                                    "Mute",
-                                    "Volume",
-                                    "Full screen" })(elements, driver, ids) +
+                                "Play",
+                                "Time elapsed",
+                                "Seek",
+                                "Time remaining",
+                                "Zoom in",
+                                "Show audio",
+                                "Show captioning",
+                                "Mute",
+                                "Volume",
+                                "Full screen" })(elements, driver, ids) +
                        CheckVideoKeyboardInteractions(elements, driver, ids);
                     })),
                     new TestData("hidden-att", "Button", null,
@@ -1062,7 +1069,7 @@ namespace Microsoft.Edge.A11y
                     additionalRequirement: (elements, driver, ids) =>
                     {
                         var result = "";
-                        driver.SendSubmit("input1");
+                        driver.SendSpecialKeys("input1", "Enter");
                         Thread.Sleep(TimeSpan.FromMilliseconds(500));
                         foreach(var element in elements){//there can only be one
                             if(element.CurrentControllerFor == null || element.CurrentControllerFor.Length == 0){

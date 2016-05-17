@@ -130,7 +130,6 @@ namespace Microsoft.Edge.A11y
         /// <summary>
         /// Find a list of the elements on the page that can be found by 
         /// tabbing through the UI.
-        /// 
         /// </summary>
         /// <param name="driverManager">The WebDriver wrapper</param>
         /// <returns>A list of the ids of all tabbable elements</returns>
@@ -180,16 +179,6 @@ namespace Microsoft.Edge.A11y
         public static void SendTabs(this DriverManager driver, string element, int count)
         {
             driver.SendSpecialKeys(element, String.Concat(Enumerable.Repeat("Tab", count)));
-        }
-
-        /// <summary>
-        /// Send an Enter key to an element for submitting a form
-        /// </summary>
-        /// <param name="driver">The driver being extended</param>
-        /// <param name="element">The element to submit</param>
-        public static void SendSubmit(this DriverManager driver, string element)
-        {
-            driver.SendSpecialKeys(element, "Enter");
         }
 
         /// <summary>
