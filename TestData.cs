@@ -38,8 +38,6 @@ namespace Microsoft.Edge.A11y
     /// </summary>
     class TestData
     {
-        public const string ARFAIL = "Failed additional requirement";
-        public const string ARPASS = "";
         public const double epsilon = .001;
 
         /// <summary>
@@ -201,7 +199,7 @@ namespace Microsoft.Edge.A11y
                             return convertedRole == "Button" || convertedRole == "Text";
                         }, out foundControlTypes);
 
-                        result += elements.Count() == 2 ? ARPASS : "Unable to find subdom elements";
+                        result += elements.Count() == 2 ? "" : "Unable to find subdom elements";
 
                         var featureDetectionScript = @"canvas = document.getElementById('myCanvas');
                                                         isSupported = !!(canvas.getContext && canvas.getContext('2d'));
@@ -979,7 +977,7 @@ namespace Microsoft.Edge.A11y
                     {
                         driver.ExecuteScript(Javascript.Track, timeout);
 
-                        return (bool)driver.ExecuteScript("return Modernizr.track && Modernizr.texttrackapi", timeout) ? ARPASS :
+                        return (bool)driver.ExecuteScript("return Modernizr.track && Modernizr.texttrackapi", timeout) ? "" :
                             "Element was not found to be supported by Modernizr";
                     }),
                     searchStrategy: (element => true)),
@@ -1063,23 +1061,24 @@ namespace Microsoft.Edge.A11y
                 new TestData("required-att", "Edit",
                     additionalRequirement: (elements, driver, ids) =>
                     {
+                        var result = "";
                         driver.SendSubmit("input1");
                         Thread.Sleep(TimeSpan.FromMilliseconds(500));
                         foreach(var element in elements){//there can only be one
                             if(element.CurrentControllerFor == null || element.CurrentControllerFor.Length == 0){
-                                return "\nElement did not have controller for set";
+                                result += "\nElement did not have controller for set";
                             }
 
                             if(element.CurrentIsRequiredForForm != 1){
-                                return "\nElement did not have IsRequiredForForm set to true";
+                                result += "\nElement did not have IsRequiredForForm set to true";
                             }
 
                             if(element.CurrentHelpText == null || element.CurrentHelpText.Length == 0){
-                                return "\nElement did not have HelpText";
+                                result += "\nElement did not have HelpText";
                             }
                         }
 
-                        return ARPASS;
+                        return result;
                     }),
                 new TestData("placeholder-att", "Edit",
                     requiredNames:
@@ -1127,7 +1126,7 @@ namespace Microsoft.Edge.A11y
         private static string CheckVideoKeyboardInteractions(List<IUIAutomationElement> elements, DriverManager driver, List<string> ids)
         {
             string videoId = "video1";
-            string result = ARPASS;
+            string result = "";
 
             Func<bool> VideoPlaying = () => (bool)driver.ExecuteScript("return !document.getElementById('" + videoId + "').paused", 0);
             Func<object> PauseVideo = () => driver.ExecuteScript("document.getElementById('" + videoId + "').pause()", 0);
@@ -1255,7 +1254,7 @@ namespace Microsoft.Edge.A11y
         private static string CheckAudioKeyboardInteractions(List<IUIAutomationElement> elements, DriverManager driver, List<string> ids)
         {
             string audioId = "audio1";
-            string result = ARPASS;
+            string result = "";
             Func<bool> AudioPlaying = () =>
             {
                 Thread.Sleep(500);

@@ -129,7 +129,7 @@ namespace Microsoft.Edge.A11y
                 {
                     testElements = EdgeA11yTools.SearchChildren(browserElement, testData._ControlType, testData._SearchStrategy, out foundControlTypes);
                     var additionalRequirementResult = testData._AdditionalRequirement(testElements, _driverManager, tabbable).Trim();
-                    if (additionalRequirementResult != TestData.ARPASS)
+                    if (additionalRequirementResult != "")
                     {
                         result += "\n" + additionalRequirementResult;
                     }
