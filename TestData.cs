@@ -275,7 +275,9 @@ namespace Microsoft.Edge.A11y
 
                             //there will be only one, since element is the pane in this case
                             foreach(var element in elements) {
-                                var five = (IUIAutomationElement5)element;
+                                var five = (IUIAutomationElement5)
+                                    walker.GetFirstChildElement(
+                                        walker.GetFirstChildElement(elements[0]));//only have the pane element, take its grandchild
                                 List<int> patternIds;
                                 var names = five.GetPatterns(out patternIds);
 
