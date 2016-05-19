@@ -1085,7 +1085,13 @@ namespace Microsoft.Edge.A11y
                             "Label text 3:",
                             "placeholder text 4",
                             "placeholder text 5",
-                            "aria-placeholder text 6" })
+                            "aria-placeholder text 6" },
+                    requiredDescriptions:
+                        new List<string> {
+                            "placeholder text 2",
+                            "placeholder text 3",
+                            "title text 4",
+                            })
             };
         }
 
