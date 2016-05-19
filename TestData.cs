@@ -1142,9 +1142,9 @@ namespace Microsoft.Edge.A11y
             Func<double> GetVideoElapsed = () => driver.ExecuteScript("return document.getElementById('" + videoId + "').currentTime", 0).ParseMystery();
             Func<double, bool> VideoElapsed = expected => Math.Abs(GetVideoElapsed() - expected) < epsilon;
             Func<bool> IsVideoFullScreen = () => driver.ExecuteScript("return document.webkitFullscreenElement", 0) != null;
-            Func<bool> IsPageLoaded = () => (bool)driver.ExecuteScript("return document.getElementById('" + videoId + "').readyState == 4", 0);
+            Func<bool> IsVideoLoaded = () => (bool)driver.ExecuteScript("return document.getElementById('" + videoId + "').readyState == 4", 0);
 
-            if (!WaitForCondition(IsPageLoaded, attempts: 40))
+            if (!WaitForCondition(IsVideoLoaded, attempts: 40))
             {
                 result += "\nVideo did not load after 20 seconds";
                 return result;
@@ -1262,48 +1262,33 @@ namespace Microsoft.Edge.A11y
         {
             string audioId = "audio1";
             string result = "";
-            Func<bool> AudioPlaying = () =>
+            Func<bool> AudioPlaying = () => (bool)driver.ExecuteScript("return !document.getElementById('" + audioId + "').paused", 0);
+            Func<object> PauseAudio = () => driver.ExecuteScript("!document.getElementById('" + audioId + "').pause()", 0);
+            Func<object> PlayAudio = () => driver.ExecuteScript("!document.getElementById('" + audioId + "').play()", 0);
+            Func<double> GetAudioVolume = () => driver.ExecuteScript("return document.getElementById('" + audioId + "').volume", 0).ParseMystery();
+            Func<double, bool> AudioVolume = expected => Math.Abs(GetAudioVolume() - expected) < epsilon;
+            Func<bool> AudioMuted = () => (bool)driver.ExecuteScript("return document.getElementById('" + audioId + "').muted", 0);
+            Func<double> GetAudioElapsed = () =>  driver.ExecuteScript("return document.getElementById('" + audioId + "').currentTime", 0).ParseMystery();
+            Func<double, bool> AudioElapsed = expected => Math.Abs(GetAudioElapsed() - expected) < epsilon;
+            Func<bool> IsAudioLoaded = () => (bool)driver.ExecuteScript("return document.getElementById('" + audioId + "').readyState == 4", 0);
+
+            if (!WaitForCondition(IsAudioLoaded, attempts: 40))
             {
-                Thread.Sleep(500);
-                return (bool)driver.ExecuteScript("return !document.getElementById('" + audioId + "').paused", 0);
-            };
-            Func<object> PauseAudio = () =>
-            {
-                Thread.Sleep(500);
-                return driver.ExecuteScript("!document.getElementById('" + audioId + "').pause()", 0);
-            };
-            Func<object> PlayAudio = () =>
-            {
-                Thread.Sleep(500);
-                return driver.ExecuteScript("!document.getElementById('" + audioId + "').play()", 0);
-            };
-            Func<double> AudioVolume = () =>
-            {
-                Thread.Sleep(500);
-                return driver.ExecuteScript("return document.getElementById('" + audioId + "').volume", 0).ParseMystery();
-            };
-            Func<bool> AudioMuted = () =>
-            {
-                Thread.Sleep(500);
-                return (bool)driver.ExecuteScript("return document.getElementById('" + audioId + "').muted", 0);
-            };
-            Func<double> AudioElapsed = () =>
-            {
-                Thread.Sleep(500);
-                return driver.ExecuteScript("return document.getElementById('" + audioId + "').currentTime", 0).ParseMystery();
-            };
+                result += "\nAudio did not load after 20 seconds";
+                return result;
+            }
 
             //Case 1: Play/Pause
             driver.SendTabs(audioId, 1); //Tab to play button
             driver.SendSpecialKeys(audioId, "Enter");
-            if (!AudioPlaying())
+            if (!WaitForCondition(AudioPlaying))
             {
                 result += "\tAudio did not play with enter\n";
                 PlayAudio();
             }
 
             driver.SendSpecialKeys(audioId, "Space");
-            if (AudioPlaying())
+            if (!WaitForCondition(AudioPlaying, true))
             {
                 result += "\tAudio did not pause with space\n";
                 PauseAudio();
@@ -1315,14 +1300,14 @@ namespace Microsoft.Edge.A11y
                 result += "\tAudio was playing when it shouldn't have been\n";
             }
             driver.SendTabs(audioId, 3);
-            var initial = AudioElapsed();
+            var initial = GetAudioElapsed();
             driver.SendSpecialKeys(audioId, "Arrow_right");
-            if (initial == AudioElapsed())
+            if (!WaitForCondition(AudioElapsed, initial + 10))
             {
                 result += "\tAudio did not skip forward with arrow right\n";
             }
             driver.SendSpecialKeys(audioId, "Arrow_left");
-            if (initial != AudioElapsed())
+            if (!WaitForCondition(AudioElapsed, initial))
             {
                 result += "\tAudio did not skip back with arrow left\n";
             }
@@ -1330,26 +1315,26 @@ namespace Microsoft.Edge.A11y
             //Case 3: Volume and mute
             Javascript.ClearFocus(driver, 0);
             driver.SendTabs(audioId, 5);
-            initial = AudioVolume();
+            initial = GetAudioVolume();
             driver.SendSpecialKeys(audioId, "Arrow_down");
-            if (initial == AudioVolume())
+            if (!WaitForCondition(AudioVolume, initial - .05))
             {
                 result += "\tVolume did not decrease with arrow down\n";
             }
 
             driver.SendSpecialKeys(audioId, "Arrow_up");
-            if (initial != AudioVolume())
+            if (!WaitForCondition(AudioVolume, initial))
             {
                 result += "\tVolume did not increase with arrow up\n";
             }
 
             driver.SendSpecialKeys(audioId, "Enter");
-            if (!AudioMuted())
+            if (!WaitForCondition(AudioMuted))
             {
                 result += "\tAudio was not muted by enter on the volume control\n";
             }
             driver.SendSpecialKeys(audioId, "Enter");
-            if (AudioMuted())
+            if (!WaitForCondition(AudioMuted, true))
             {
                 result += "\tAudio was not unmuted by enter on the volume control\n";
             }
