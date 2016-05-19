@@ -234,7 +234,7 @@ namespace Microsoft.Edge.A11y
                             var initial = datalistValue(id);
                             driver.SendSpecialKeys(id, "Arrow_down");
 
-                            var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().ConvertAll(element => elements.IndexOf(element));
+                            var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().Select(element => elements.IndexOf(element));
                             if(controllerForElements.All(element => previousControllerForElements.Contains(element))){
                                 result += "Element controller for not set for id: " + id;
                             }
@@ -432,7 +432,7 @@ namespace Microsoft.Edge.A11y
 
                             //open dialog to check controllerfor
                             driver.SendSpecialKeys(id, "Enter");
-                            var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().ConvertAll(element => elements.IndexOf(element));
+                            var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().Select(element => elements.IndexOf(element));
                             if(controllerForElements.All(element => previousControllerForElements.Contains(element))){
                                 result += "\nElement controller for not set for id: " + id;
                             }
@@ -885,7 +885,7 @@ namespace Microsoft.Edge.A11y
                         if (!elements.All(element => ((IUIAutomationElement5)element).CurrentLiveSetting == LiveSetting.Polite)){
                             result += "\nElement did not have LiveSetting = Polite";
                         }
-                        var controllerForLengths = elements.ConvertAll(element => element.CurrentControllerFor != null ? element.CurrentControllerFor.Length : 0);
+                        var controllerForLengths = elements.Select(element => element.CurrentControllerFor != null ? element.CurrentControllerFor.Length : 0);
                         if (controllerForLengths.Count(cfl => cfl > 0) != 1)
                         {
                             result += "\nExpected 1 element with ControllerFor set. Found " + controllerForLengths.Count(cfl => cfl > 0);
@@ -1375,7 +1375,7 @@ namespace Microsoft.Edge.A11y
                     driver.SendSpecialKeys(id, "EscapeEnterWait");
 
                     //Check ControllerFor
-                    var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().ConvertAll(element => elements.IndexOf(element));
+                    var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().Select(element => elements.IndexOf(element));
                     if (controllerForElements.All(element => previousControllerForElements.Contains(element)))
                     {
                         result += "\nElement controller for not set for id: " + id;
@@ -1522,7 +1522,7 @@ namespace Microsoft.Edge.A11y
                     driver.SendSpecialKeys(id, "EnterWait");
 
                     //Check ControllerFor
-                    var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().ConvertAll(element => elements.IndexOf(element));
+                    var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().Select(element => elements.IndexOf(element));
                     if (controllerForElements.All(element => previousControllerForElements.Contains(element)))
                     {
                         result += "\nElement controller for not set for id: " + id;
