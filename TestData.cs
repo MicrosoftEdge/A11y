@@ -12,11 +12,6 @@ namespace Microsoft.Edge.A11y
     public class StructureChangedHandler : IUIAutomationStructureChangedEventHandler
     {
         /// <summary>
-        /// The element whose structure will be changed
-        /// </summary>
-        public string ElementName { get; set; }
-
-        /// <summary>
         /// This is called when the event fires
         /// </summary>
         /// <param name="sender">The element in question</param>
@@ -25,10 +20,7 @@ namespace Microsoft.Edge.A11y
         {
             if (changeType == StructureChangeType.StructureChangeType_ChildAdded)
             {
-                if (ElementName.Equals(sender.CurrentName, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    TestData.Ewh.Set();
-                }
+                TestData.Ewh.Set();
             }
         }
     }
@@ -91,11 +83,6 @@ namespace Microsoft.Edge.A11y
         /// Manual reset event waiter used to wait for elements to be added to UIA tree
         /// </summary>
         public static readonly EventWaitHandle Ewh = new EventWaitHandle(false, EventResetMode.ManualReset);
-
-        /// <summary>
-        /// List of elements to wait for to be added to UIA tree before signaling event waiter
-        /// </summary>
-        public static readonly string[] WaitForElements = { "volume" };
 
         /// <summary>
         /// Simple Ctor
@@ -1144,21 +1131,23 @@ namespace Microsoft.Edge.A11y
             Func<double> GetVideoElapsed = () => driver.ExecuteScript("return document.getElementById('" + videoId + "').currentTime", 0).ParseMystery();
             Func<double, bool> VideoElapsed = expected => Math.Abs(GetVideoElapsed() - expected) < epsilon;
             Func<bool> IsVideoFullScreen = () => driver.ExecuteScript("return document.webkitFullscreenElement", 0) != null;
+            Func<bool> IsPageLoaded = () => (bool)driver.ExecuteScript("return document.getElementById('" + videoId + "').readyState == 4", 0);
 
-            var handler = new StructureChangedHandler();
-            WaitForElement(handler, elements[0], "volume");
+            if (!WaitForCondition(IsPageLoaded, attempts: 40))
+            {
+                result += "\nVideo did not load after 20 seconds";
+                return result;
+            }
 
             //Case 1: tab to play button and play/pause
             driver.SendSpecialKeys(videoId, "TabSpace");
-
-            WaitForElement(handler, elements[0], "play");
             if (!WaitForCondition(VideoPlaying))
             {
                 result += "\tVideo was not playing after spacebar on play button\n";
                 PlayVideo();
             }
             driver.SendSpecialKeys(videoId, "Enter");
-            if (WaitForCondition(VideoPlaying))
+            if (!WaitForCondition(VideoPlaying, true))
             {
                 result += "\tVideo was not paused after enter on play button\n";
                 PauseVideo();
@@ -1172,9 +1161,9 @@ namespace Microsoft.Edge.A11y
             {
                 result += "\tEnter did not mute the video\n";
             }
-            WaitForElement(handler, elements[0], "mute");
+
             driver.SendSpecialKeys(videoId, "Enter");//unmute
-            if (WaitForCondition(VideoMuted))
+            if (!WaitForCondition(VideoMuted, true))
             {
                 result += "\tEnter did not unmute the video\n";
             }
@@ -1194,7 +1183,7 @@ namespace Microsoft.Edge.A11y
             //TODO test manually
 
             //Case 4: Progress and seek
-            if (WaitForCondition(VideoPlaying))
+            if (VideoPlaying())
             { //this should not be playing
                 result += "\tVideo was playing when it shouldn't have been\n";
             }
@@ -1243,7 +1232,7 @@ namespace Microsoft.Edge.A11y
                 result += "\tVideo did not enter FullScreen mode\n";
             }
             driver.SendSpecialKeys(videoId, "Escape");
-            if (WaitForCondition(IsVideoFullScreen))
+            if (!WaitForCondition(IsVideoFullScreen, true))
             {
                 result += "\tVideo did not exit FullScreen mode\n";
             }
@@ -1292,8 +1281,6 @@ namespace Microsoft.Edge.A11y
                 Thread.Sleep(500);
                 return driver.ExecuteScript("return document.getElementById('" + audioId + "').currentTime", 0).ParseMystery();
             };
-
-            WaitForElement(elements[0], "volume");
 
             //Case 1: Play/Pause
             driver.SendTabs(audioId, 1); //Tab to play button
@@ -1350,7 +1337,6 @@ namespace Microsoft.Edge.A11y
             {
                 result += "\tAudio was not muted by enter on the volume control\n";
             }
-            WaitForElement(elements[0], "mute");
             driver.SendSpecialKeys(audioId, "Enter");
             if (AudioMuted())
             {
@@ -1665,8 +1651,12 @@ namespace Microsoft.Edge.A11y
                     var previouslyInvalid = new HashSet<int>();
                     foreach (var id in ids)
                     {
+                        Ewh.Reset();
+
                         driver.SendKeys(id, "invalid");
-                        driver.SendSpecialKeys(id, "EnterWait");
+                        driver.SendSpecialKeys(id, "Enter");
+
+                        Ewh.WaitOne(3000);
 
                         //Everything that is invalid on the page
                         //We search by both with an OR condition because it gives a better chance to
@@ -1779,54 +1769,16 @@ namespace Microsoft.Edge.A11y
         }
 
         /// <summary>
-        /// Wait for a given element's structure to change before continuing
-        /// </summary>
-        /// <param name="element">The element to change</param>
-        /// <param name="elementName">The child element to be added</param>
-        /// <param name="timeout">How long to wait</param>
-        /// <returns></returns>
-        public static bool WaitForElement(IUIAutomationElement element, string elementName, TimeSpan? timeout = null)
-        {
-            var handler = new StructureChangedHandler();
-            handler.ElementName = elementName;
-            new CUIAutomation8().AddStructureChangedEventHandler(element, TreeScope.TreeScope_Descendants, null, handler);
-            if (timeout == null)
-            {
-                timeout = TimeSpan.FromMilliseconds(500);
-            }
-            return Ewh.WaitOne(timeout.Value);
-        }
-
-        /// <summary>
-        /// Wait for a given element's structure to change before continuing
-        /// </summary>
-        /// <param name="handler">If the caller already has a stucture changed handler, it can be passed in</param>
-        /// <param name="element">The element to change</param>
-        /// <param name="elementName">The child element to be added</param>
-        /// <param name="timeout">How long to wait</param>
-        /// <returns></returns>
-        public static bool WaitForElement(StructureChangedHandler handler, IUIAutomationElement element, string elementName, TimeSpan? timeout = null)
-        {
-            handler.ElementName = elementName;
-            new CUIAutomation8().AddStructureChangedEventHandler(element, TreeScope.TreeScope_Descendants, null, handler);
-            if (timeout == null)
-            {
-                timeout = TimeSpan.FromMilliseconds(500);
-            }
-            return Ewh.WaitOne(timeout.Value);
-        }
-
-        /// <summary>
         /// Wait for a condition that tests a double value
         /// </summary>
         /// <param name="conditionCheck">The condition checker</param>
         /// <param name="value">The double value to look for</param>
         /// <returns></returns>
-        public static bool WaitForCondition(Func<double, bool> conditionCheck, double value)
+        public static bool WaitForCondition(Func<double, bool> conditionCheck, double value, int attempts = 10)
         {
-            for (var i = 0; i < 100; i++)
+            for (var i = 0; i < attempts; i++)
             {
-                Thread.Sleep(50);
+                Thread.Sleep(500);
                 if (conditionCheck(value))
                 {
                     return true;
@@ -1840,15 +1792,17 @@ namespace Microsoft.Edge.A11y
         /// </summary>
         /// <param name="conditionCheck">The condition checker</param>
         /// <returns></returns>
-        public static bool WaitForCondition(Func<bool> conditionCheck)
+        public static bool WaitForCondition(Func<bool> conditionCheck, bool reverse = false, int attempts = 10)
         {
-            var condition = false;
-            for (var i = 0; i < 10 && !condition; i++)
+            for (var i = 0; i < attempts; i++)
             {
                 Thread.Sleep(500);
-                condition = conditionCheck();
+                if (reverse ? !conditionCheck() : conditionCheck())
+                {
+                    return true;
+                }
             }
-            return condition;
+            return false;
         }
     }
 }

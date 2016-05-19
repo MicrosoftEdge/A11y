@@ -66,7 +66,7 @@ namespace Microsoft.Edge.A11y
                     }
                     if (className != null && className == "TabWindowClass")
                     {
-                        return walker.GetFirstChildElement(walker.GetFirstChildElement(element));
+                        return element;
                     }
                 }
                 return null;

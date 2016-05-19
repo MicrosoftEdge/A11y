@@ -47,6 +47,8 @@ namespace Microsoft.Edge.A11y
                     "Unable to find the element using the alternate search strategy");
             }
 
+            new CUIAutomation8().AddStructureChangedEventHandler(browserElement, TreeScope.TreeScope_Subtree, null, new StructureChangedHandler());
+
             string result = "";
             //This is used if the test passes but there is something to report
             string note = null;
