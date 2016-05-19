@@ -1008,7 +1008,9 @@ namespace Microsoft.Edge.A11y
                         }
 
                         //Make sure the text isn't showing up on the page
-                        var five = (IUIAutomationElement5)walker.GetFirstChildElement(elements[0]);//only have the pane element
+                        var five = (IUIAutomationElement5)
+                            walker.GetFirstChildElement(
+                                walker.GetFirstChildElement(elements[0]));//only have the pane element, take its grandchild
 
                         List<int> patternIds;
                         var names = five.GetPatterns(out patternIds);
