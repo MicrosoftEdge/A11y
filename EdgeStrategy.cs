@@ -150,6 +150,13 @@ namespace Microsoft.Edge.A11y
             return Pass(testData._TestName, note);
         }
 
+        /// <summary>
+        /// Check all the elements for correct naming and descriptions
+        /// </summary>
+        /// <param name="elements"></param>
+        /// <param name="requiredNames"></param>
+        /// <param name="requiredDescriptions"></param>
+        /// <returns></returns>
         public static string CheckElementNames(List<IUIAutomationElement> elements, List<string> requiredNames, List<string> requiredDescriptions)
         {
             var names = elements.ConvertAll(element => element.CurrentName).Where(e => !string.IsNullOrEmpty(e)).ToList();
