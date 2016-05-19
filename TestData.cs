@@ -2,17 +2,35 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace Microsoft.Edge.A11y
 {
+    /// <summary>
+    /// This is used to wait for structure changed events
+    /// </summary>
+    public class StructureChangedHandler : IUIAutomationStructureChangedEventHandler
+    {
+        /// <summary>
+        /// This is called when the event fires
+        /// </summary>
+        /// <param name="sender">The element in question</param>
+        /// <param name="changeType">The type of change</param>
+        void IUIAutomationStructureChangedEventHandler.HandleStructureChangedEvent(IUIAutomationElement sender, StructureChangeType changeType, int[] runtimeId)
+        {
+            if (changeType == StructureChangeType.StructureChangeType_ChildAdded)
+            {
+                TestData.Ewh.Set();
+            }
+        }
+    }
+
     /// <summary>
     /// This is where the logic of the tests is stored
     /// </summary>
     class TestData
     {
-        public const string ARFAIL = "Failed additional requirement";
-        public const string ARPASS = "";
-
+        public const double epsilon = .001;
 
         /// <summary>
         /// The name of the test, which corresponds to the url of the page to test
@@ -42,11 +60,6 @@ namespace Microsoft.Edge.A11y
         /// </summary>
         public List<string> _KeyboardElements;
         /// <summary>
-        /// A func that allows extending the tests for specific elements. If an empty string is
-        /// returned, the element passes. Otherwise, an explanation of its failure is returned.
-        /// </summary>
-        public Func<List<IUIAutomationElement>, DriverManager, List<string>, string> _AdditionalRequirement;
-        /// <summary>
         /// If not null, this func will be used to test elements to see if they should be
         /// tested (instead of matching _ControlType).
         /// </summary>
@@ -55,9 +68,28 @@ namespace Microsoft.Edge.A11y
         /// If not null, this will be appended to the repro path to create a full URL
         /// </summary>
         public string _RelativePath;
+        /// <summary>
+        /// A list of expected values which will be compared to the accessible names of
+        /// the found elements.
+        /// </summary>
+        public List<string> _requiredNames;
+        /// <summary>
+        /// Same as above, but for accessible descriptions.
+        /// </summary>
+        public List<string> _requiredDescriptions;
+        /// <summary>
+        /// A func that allows extending the tests for specific elements. If an empty string is
+        /// returned, the element passes. Otherwise, an explanation of its failure is returned.
+        /// </summary>
+        public Func<List<IUIAutomationElement>, DriverManager, List<string>, string> _AdditionalRequirement;
 
         /// <summary>
-        /// Simple ctor
+        /// Manual reset event waiter used to wait for elements to be added to UIA tree
+        /// </summary>
+        public static readonly EventWaitHandle Ewh = new EventWaitHandle(false, EventResetMode.ManualReset);
+
+        /// <summary>
+        /// Simple Ctor
         /// </summary>
         /// <param name="testName"></param>
         /// <param name="controlType"></param>
@@ -65,6 +97,9 @@ namespace Microsoft.Edge.A11y
         /// <param name="landmarkType"></param>
         /// <param name="localizedLandmarkType"></param>
         /// <param name="keyboardElements"></param>
+        /// <param name="searchStrategy"></param>
+        /// <param name="requiredNames"></param>
+        /// <param name="requiredDescriptions"></param>
         /// <param name="additionalRequirement"></param>
         public TestData(string testName,
             string controlType,
@@ -72,9 +107,11 @@ namespace Microsoft.Edge.A11y
             string landmarkType = null,
             string localizedLandmarkType = null,
             List<string> keyboardElements = null,
-            Func<List<IUIAutomationElement>, DriverManager, List<string>, string> additionalRequirement = null,
             Func<IUIAutomationElement, bool> searchStrategy = null,
-            string relativePath = null)
+            string relativePath = null,
+            List<string> requiredNames = null,
+            List<string> requiredDescriptions = null,
+            Func<List<IUIAutomationElement>, DriverManager, List<string>, string> additionalRequirement = null)
         {
             _TestName = testName;
             _ControlType = controlType;
@@ -82,9 +119,11 @@ namespace Microsoft.Edge.A11y
             _LandmarkType = landmarkType;
             _LocalizedLandmarkType = localizedLandmarkType;
             _KeyboardElements = keyboardElements;
-            _AdditionalRequirement = additionalRequirement;
             _SearchStrategy = searchStrategy;
             _RelativePath = relativePath;
+            _requiredNames = requiredNames;
+            _requiredDescriptions = requiredDescriptions;
+            _AdditionalRequirement = additionalRequirement;
         }
 
         //All the tests to run

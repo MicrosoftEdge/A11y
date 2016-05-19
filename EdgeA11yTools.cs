@@ -66,7 +66,7 @@ namespace Microsoft.Edge.A11y
                     }
                     if (className != null && className == "TabWindowClass")
                     {
-                        return walker.GetFirstChildElement(walker.GetFirstChildElement(element));
+                        return element;
                     }
                 }
                 return null;
@@ -86,9 +86,9 @@ namespace Microsoft.Edge.A11y
         /// <param name="foundControlTypes">A list of all control types found on the page, for error reporting</param>
         /// <returns>The elements found which match the tag given</returns>
         public static List<IUIAutomationElement> SearchChildren(
-            IUIAutomationElement browserElement, 
-            string controlType, 
-            Func<IUIAutomationElement, bool> searchStrategy, 
+            IUIAutomationElement browserElement,
+            string controlType,
+            Func<IUIAutomationElement, bool> searchStrategy,
             out HashSet<string> foundControlTypes)
         {
             var uia = new CUIAutomation8();
@@ -130,7 +130,6 @@ namespace Microsoft.Edge.A11y
         /// <summary>
         /// Find a list of the elements on the page that can be found by 
         /// tabbing through the UI.
-        /// 
         /// </summary>
         /// <param name="driverManager">The WebDriver wrapper</param>
         /// <returns>A list of the ids of all tabbable elements</returns>
@@ -180,16 +179,6 @@ namespace Microsoft.Edge.A11y
         public static void SendTabs(this DriverManager driver, string element, int count)
         {
             driver.SendSpecialKeys(element, String.Concat(Enumerable.Repeat("Tab", count)));
-        }
-
-        /// <summary>
-        /// Send an Enter key to an element for submitting a form
-        /// </summary>
-        /// <param name="driver">The driver being extended</param>
-        /// <param name="element">The element to submit</param>
-        public static void SendSubmit(this DriverManager driver, string element)
-        {
-            driver.SendSpecialKeys(element, "Enter");
         }
 
         /// <summary>
@@ -272,11 +261,20 @@ namespace Microsoft.Edge.A11y
         /// <param name="keysToSend"></param>
         public static void SendSpecialKeys(this DriverManager driver, string elementId, string keysToSend)
         {
-            foreach (var key in specialKeys.Value)
+            var keystrings = keysToSend.Split(new string[] { "Wait" }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var keystring in keystrings)
             {
-                keysToSend = keysToSend.Replace(key.Key, key.Value);
+                var changedKeystring = keystring;
+                foreach (var key in specialKeys.Value)
+                {
+                    changedKeystring = changedKeystring.Replace(key.Key, key.Value);
+                }
+                driver.SendKeys(elementId, changedKeystring);
+                if (keystrings.ToList().IndexOf(keystring) < keystrings.Count() - 1)
+                {
+                    System.Threading.Thread.Sleep(1000);
+                }
             }
-            driver.SendKeys(elementId, keysToSend);
         }
 
         /// <summary>
@@ -325,17 +323,48 @@ namespace Microsoft.Edge.A11y
         /// <returns>A list of all the children's names</returns>
         public static List<string> GetChildNames(this IUIAutomationElement element, Func<IUIAutomationElement, bool> searchStrategy = null)
         {
-            var toreturn = new List<string>();
+            var toReturn = new List<string>();
             var walker = new CUIAutomation8().RawViewWalker;
             for (var child = walker.GetFirstChildElement(element); child != null; child = walker.GetNextSiblingElement(child))
             {
                 if (searchStrategy == null || searchStrategy(child))
                 {
-                    toreturn.Add(child.CurrentName);
+                    toReturn.Add(child.CurrentName);
                 }
             }
 
-            return toreturn;
+            return toReturn;
+        }
+
+        /// <summary>
+        /// Find all descendents of a given element, optionally searching with the given strategy
+        /// </summary>
+        /// <param name="element">The element whose descendents we need to find</param>
+        /// <param name="searchStrategy">The strategy we should use to evaluate children</param>
+        /// <returns>All elements that pass the searchStrategy</returns>
+        public static List<IUIAutomationElement> GetAllDescendents(this IUIAutomationElement element, Func<IUIAutomationElement, bool> searchStrategy = null)
+        {
+            var toReturn = new List<IUIAutomationElement>();
+            var walker = new CUIAutomation8().RawViewWalker;
+
+            var toSearch = new Queue<IUIAutomationElement>();//BFS
+            toSearch.Enqueue(element);
+
+            while (toSearch.Any())//beware infinite recursion. If this becomes a problem add a limit
+            {
+                var current = toSearch.Dequeue();
+                for (var child = walker.GetFirstChildElement(current); child != null; child = walker.GetNextSiblingElement(child))
+                {
+                    toSearch.Enqueue(child);
+                }
+
+                if (searchStrategy == null || searchStrategy(current))
+                {
+                    toReturn.Add(current);
+                }
+            }
+
+            return toReturn;
         }
 
         /// <summary>

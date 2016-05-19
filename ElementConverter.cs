@@ -18,7 +18,14 @@ namespace Microsoft.Edge.A11y
         /// <returns></returns>
         public string GetElementNameFromCode(int key)
         {
-            return UI8Mapping[key];
+            if (UI8Mapping.ContainsKey(key))
+            {
+                return UI8Mapping[key];
+            }
+            else
+            {
+                return null;
+            }
         }
 
         /// <summary>
@@ -28,7 +35,7 @@ namespace Microsoft.Edge.A11y
         /// <returns></returns>
         public int GetElementCodeFromName(string name)
         {
-            return UI8Mapping.First(n => n.Value.Equals(name, StringComparison.InvariantCultureIgnoreCase)).Key;
+            return UI8Mapping.First(n => n.Value.Equals(name, StringComparison.CurrentCultureIgnoreCase)).Key;
         }
 
         /// <summary>
@@ -130,7 +137,6 @@ namespace Microsoft.Edge.A11y
             UI8Mapping.Add(50039, "Semanticzoom");
             UI8Mapping.Add(50040, "Appbar");
 
-            //Landmark types
             UI8Mapping.Add(80000, "Custom");
             UI8Mapping.Add(80001, "Form");
             UI8Mapping.Add(80002, "Main");
