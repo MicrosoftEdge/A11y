@@ -1645,14 +1645,14 @@ namespace Microsoft.Edge.A11y
                     var result = "";
                     //The indices of the elements that have been found to be invalid before
                     var previouslyInvalid = new HashSet<int>();
-                    foreach (var id in ids)
+                    foreach (var id in ids.Take(1))
                     {
                         Ewh.Reset();
 
                         driver.SendKeys(id, "invalid");
                         driver.SendSpecialKeys(id, "Enter");
 
-                        Ewh.WaitOne(3000);
+                        Ewh.WaitOne(10000);
 
                         //Everything that is invalid on the page
                         //We search by both with an OR condition because it gives a better chance to
@@ -1690,6 +1690,7 @@ namespace Microsoft.Edge.A11y
 
                         previouslyInvalid.Add(newInvalid);
                     }
+
 
                     return result;
                 };
