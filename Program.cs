@@ -88,7 +88,7 @@ namespace Microsoft.Edge.A11y
 
             //Write the results
             var writer = File.AppendText(filePath);
-            var resultline = score + "," + time + "," + (build as string).Replace('.', ',') + "," + results.Select(r => r.Result.ToString()).Aggregate((s1, s2) => s1 + "," + s2);
+            var resultline = (build as string).Replace('.', ',') + "," + score + "," + time + "," + results.Select(r => r.Result.ToString()).Aggregate((s1, s2) => s1 + "," + s2);
             writer.WriteLine(resultline);
 
             writer.Flush();
