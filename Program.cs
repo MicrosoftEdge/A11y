@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Microsoft.Win32;
 
 namespace Microsoft.Edge.A11y
 {
@@ -67,13 +68,27 @@ namespace Microsoft.Edge.A11y
             //If this is the first time, write the header line with the test names
             if (!File.Exists(filePath))
             {
-                var headerLine = "score," + results.Select(r => r.Name).Aggregate((s1, s2) => s1 + "," + s2) + "\n";
+                var headerLine = "buildNumber,buildIteration,buildArchitecture,buildBranch,buildDate,time,score," + results.Select(r => r.Name).Aggregate((s1, s2) => s1 + "," + s2) + "\n";
                 File.WriteAllText(filePath, headerLine);
             }
 
+            var build = Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "BuildLabEx", null);
+            if (build == null || build as string == null)
+            {
+                throw new Exception("Unable to get build string");
+            }
+            //var buildSplit = (build as string).Split('.');
+            //var buildNumber = buildSplit[0];
+            //var buildIteration = buildSplit[1];
+            //var buildArchitecture = buildSplit[2];
+            //var buildBranch = buildSplit[3];
+            //var buildDate = buildSplit[4];
+
+            var time = DateTime.Now.ToString("yyyyMMdd-HHmm");
+
             //Write the results
             var writer = File.AppendText(filePath);
-            var resultline = score + "," + results.Select(r => r.Result.ToString()).Aggregate((s1, s2) => s1 + "," + s2);
+            var resultline = score + "," + time + "," + (build as string).Replace('.', ',') + "," + results.Select(r => r.Result.ToString()).Aggregate((s1, s2) => s1 + "," + s2);
             writer.WriteLine(resultline);
 
             writer.Flush();
