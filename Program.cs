@@ -68,7 +68,7 @@ namespace Microsoft.Edge.A11y
             //If this is the first time, write the header line with the test names
             if (!File.Exists(filePath))
             {
-                var headerLine = "buildNumber,buildIteration,buildArchitecture,buildBranch,buildDate,time,score," +
+                var headerLine = "buildNumber,buildIteration,buildArchitecture,buildBranch,buildDate,score,time," +
                     results.Select(r => r.Name + "," + r.Name + "-details").Aggregate((s1, s2) => s1 + "," + s2) + "\n";
                 File.WriteAllText(filePath, headerLine);
             }
