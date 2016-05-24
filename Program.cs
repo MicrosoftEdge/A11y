@@ -68,7 +68,8 @@ namespace Microsoft.Edge.A11y
             //If this is the first time, write the header line with the test names
             if (!File.Exists(filePath))
             {
-                var headerLine = "buildNumber,buildIteration,buildArchitecture,buildBranch,buildDate,time,score," + results.Select(r => r.Name).Aggregate((s1, s2) => s1 + "," + s2) + "\n";
+                var headerLine = "buildNumber,buildIteration,buildArchitecture,buildBranch,buildDate,time,score," +
+                    results.Select(r => r.Name + "," + r.Name + "-details").Aggregate((s1, s2) => s1 + "," + s2) + "\n";
                 File.WriteAllText(filePath, headerLine);
             }
 
@@ -88,7 +89,9 @@ namespace Microsoft.Edge.A11y
 
             //Write the results
             var writer = File.AppendText(filePath);
-            var resultline = (build as string).Replace('.', ',') + "," + score + "," + time + "," + results.Select(r => r.Result.ToString()).Aggregate((s1, s2) => s1 + "," + s2);
+            var resultline = (build as string).Replace('.', ',') + "," + score + "," + time + "," +
+                results.Select(r => r.Result.ToString() + "," + (r.MoreInfo != null ? r.MoreInfo.Replace('\n', '\t') : ""))
+                .Aggregate((s1, s2) => s1 + "," + s2);
             writer.WriteLine(resultline);
 
             writer.Flush();
