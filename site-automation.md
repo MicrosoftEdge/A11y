@@ -1,4 +1,4 @@
-# Automating your own site accessiblity testing
+# Automating your own site accessibility testing
 
 One of the benefits of providing this tool via open source is that you
 can you utilize the test harness to test any assistive technology that
@@ -8,7 +8,7 @@ utilizes UIA.
 
 Setting the root Domain
 ------------------------
-1. Open up `Program.cs`
+1. Open up `Program.cs` in your IDE of choice
 2. Change the value within `new EdgeStrategy("http://www.bing.com")` to whatever Url you want
    your root URL to be.
    
