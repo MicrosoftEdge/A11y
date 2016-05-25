@@ -62,3 +62,12 @@ If you'd like to submit code changes, the best thing to do is to file an issue f
 we can talk about whether the change would fit with the direction and purpose of the
 project. Even if your changes don't fit with the general purpose of A11y, we'd love to
 see you fork the project to do new things with it.
+
+## Legal
+
+You will need to complete a [Contributor License Agreement (CLA)](https://cla.microsoft.com/) before your pull request can be accepted. 
+This agreement testifies that you are granting us permission to use the source code you are submitting, and that 
+this work is being submitted under appropriate license that we can use it. 
+The process is very simple as it just hooks into your Github account. Once we have received the signed CLA, we'll review the request. 
+You will only need to do this once.
+
