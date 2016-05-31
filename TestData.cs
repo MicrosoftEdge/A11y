@@ -183,16 +183,18 @@ namespace Microsoft.Edge.A11y
                 new TestData("canvas", "Image",
                     additionalRequirement: ((elements, driver, ids) => {
                         var result = string.Empty;
-
-                        var browserElement = EdgeA11yTools.FindBrowserDocument(0);
                         var automationElementConverter = new ElementConverter();
+                        var subdomElements = new List<IUIAutomationElement>();
 
-                        HashSet<string> foundControlTypes;
-                        var subdomElements = EdgeA11yTools.SearchChildren(browserElement, "", (current) => {
-                            var convertedRole = automationElementConverter.GetElementNameFromCode(current.CurrentControlType);
-                            return convertedRole == "Button" || convertedRole == "Text";
-                        }, out foundControlTypes);
-
+                        foreach (var e in elements)
+                        {
+                            subdomElements.AddRange(e.GetAllDescendents((d) =>
+                            {
+                                var convertedRole =
+                                    automationElementConverter.GetElementNameFromCode(d.CurrentControlType);
+                                return (convertedRole == "Button" || convertedRole == "Text");
+                            }));
+                        }
                         result += subdomElements.Count() == 2 ? "" : "Unable to find subdom elements";
 
                         var featureDetectionScript = @"canvas = document.getElementById('myCanvas');
@@ -775,7 +777,10 @@ namespace Microsoft.Edge.A11y
                         new List<string>{
                             "h1 referenced by aria-describedby5",
                             "title attribute 6"}),
-                new TestData("mark", "Text", "mark",
+                new TestData("mark", "Text",
+                    searchStrategy: element =>
+                        element.CurrentControlType == converter.GetElementCodeFromName("Text")
+                        && element.CurrentLocalizedControlType == "mark",
                     requiredNames:
                         new List<string>{
                             "aria-label attribute2",
@@ -951,7 +956,10 @@ namespace Microsoft.Edge.A11y
                             "h1 referenced by aria-describedby6",
                             "title attribute 7" }),
                 new TestData("summary", null),
-                new TestData("time", "Text", "time",
+                new TestData("time", "Text", 
+                    searchStrategy: element =>
+                        element.CurrentControlType == converter.GetElementCodeFromName("Text")
+                        && element.CurrentLocalizedControlType == "time",
                     requiredNames:
                         new List<string>{
                             "aria-label attribute2",
