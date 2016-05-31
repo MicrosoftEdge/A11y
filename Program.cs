@@ -68,7 +68,8 @@ namespace Microsoft.Edge.A11y
             //If this is the first time, write the header line with the test names
             if (!File.Exists(filePath))
             {
-                var headerLine = "score," + results.Select(r => r.Name + "," + r.Name + "details").Aggregate((s1, s2) => s1 + "," + s2) + "\n";
+                var headerLine = "buildNumber,buildIteration,buildArchitecture,buildBranch,buildDate,score,time," +
+                    results.Select(r => r.Name + "," + r.Name + "-details").Aggregate((s1, s2) => s1 + "," + s2) + "\n";
                 File.WriteAllText(filePath, headerLine);
             }
 
@@ -77,12 +78,6 @@ namespace Microsoft.Edge.A11y
             {
                 throw new Exception("Unable to get build string");
             }
-            //var buildSplit = (build as string).Split('.');
-            //var buildNumber = buildSplit[0];
-            //var buildIteration = buildSplit[1];
-            //var buildArchitecture = buildSplit[2];
-            //var buildBranch = buildSplit[3];
-            //var buildDate = buildSplit[4];
 
             var time = DateTime.Now.ToString("yyyyMMdd-HHmm");
 
