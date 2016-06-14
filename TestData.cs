@@ -195,7 +195,7 @@ namespace Microsoft.Edge.A11y
                                 return (convertedRole == "Button" || convertedRole == "Text");
                             }));
                         }
-                        result += subdomElements.Count() == 2 ? "" : "Unable to find subdom elements";
+                        result += subdomElements.Count() == 4 ? "" : "Unable to find subdom elements";
 
                         var featureDetectionScript = @"canvas = document.getElementById('myCanvas');
                                                         isSupported = !!(canvas.getContext && canvas.getContext('2d'));
@@ -1551,11 +1551,11 @@ namespace Microsoft.Edge.A11y
                     Func<string> DateValue = () => (string)driver.ExecuteScript("return document.getElementById('" + id + "').value", 0);
                     Func<string> ActiveElement = () => (string)driver.ExecuteScript("return document.activeElement.id", 0);
 
-                    driver.SendSpecialKeys(id, "EnterEnterTabEnterEnter");
+                    driver.SendSpecialKeys(id, "TabEnterEnterTabEnterEnter");
                     var today = DateValue();
 
-                    //Open the menu
-                    driver.SendSpecialKeys(id, "EnterWait");
+                    //Open the date menu
+                    driver.SendSpecialKeys(id, "ShiftTabEnterWait");
 
                     //Check ControllerFor
                     var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().Select(element => elements.IndexOf(element));
@@ -1564,15 +1564,20 @@ namespace Microsoft.Edge.A11y
                         result += "\nElement controller for not set for id: " + id;
                     }
 
-                    foreach (var count in inputFields)
+                    for (var i = 0; i < inputFields.Count; )
                     {
                         //Change each field in the calendar
-                        for (int i = 0; i < count; i++)
+                        for (var j = 0; j < inputFields[i]; j++)
                         {
                             driver.SendSpecialKeys(id, "Arrow_downTab");
                         }
-
                         driver.SendSpecialKeys(id, "EnterWaitTab");
+                        // send Enter to open menu
+                        if (++i != inputFields.Count)
+                        {
+                            // expand menu
+                            driver.SendSpecialKeys(id, "Enter");
+                        }
                     }
 
                     //Get the altered value, which should be one off the default
@@ -1606,14 +1611,14 @@ namespace Microsoft.Edge.A11y
                         //**Dismiss button**
                         //Open the dialog, change a field, tab to cancel button, activate it with space,
                         //check that tabbing moves to the previous button (on the page not the dialog)
-                        driver.SendSpecialKeys(id, secondPass + "EnterWaitArrow_down" + fieldTabs + "TabSpaceShiftTabShift");
+                        driver.SendSpecialKeys(id, secondPass + "EnterWaitArrow_down" + fieldTabs + "TabWaitSpaceWaitShiftTabShift");
                         if (initial != DateValue())
                         {
                             result += "\nUnable to cancel with dismiss button via space";
                         }
 
                         //do the same as above, but activate the button with enter this time
-                        driver.SendSpecialKeys(id, secondPass + "EnterWaitArrow_down" + fieldTabs + "TabEnterShiftTabShift");
+                        driver.SendSpecialKeys(id, secondPass + "EnterWaitArrow_down" + fieldTabs + "TabWaitEnterWaitShiftTabShift");
                         if (initial != DateValue())
                         {
                             result += "\nUnable to cancel with dismiss button via enter";
@@ -1626,7 +1631,7 @@ namespace Microsoft.Edge.A11y
                         //Open the dialog, change a field, tab to accept button, activate it with space,
                         //send tab (since the dialog should be closed, this will transfer focus to the next
                         //button)
-                        driver.SendSpecialKeys(id, "Escape" + secondPass + "EnterWaitArrow_down" + fieldTabs + "SpaceTab");
+                        driver.SendSpecialKeys(id, "Escape" + secondPass + "TabWaitEnterWaitArrow_downWait" + fieldTabs + "WaitSpaceWaitTab");
                         if (initial == DateValue())
                         {
                             result += "\nUnable to accept with accept button via space";
@@ -1636,7 +1641,7 @@ namespace Microsoft.Edge.A11y
 
                         //Open the dialog, tab to hue, change hue, tab to accept button, activate it with enter
                         //We don't have to worry about why the dialog closed here (button or global enter)
-                        driver.SendSpecialKeys(id, "Escape" + secondPass + "EnterWaitArrow_down" + fieldTabs + "EnterTab");
+                        driver.SendSpecialKeys(id, "Escape" + secondPass + "WaitEnterWaitArrow_down" + fieldTabs + "EnterTab"); 
                         if (initial == DateValue())
                         {
                             result += "\nUnable to accept with accept button via enter";
