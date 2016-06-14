@@ -1130,6 +1130,37 @@ namespace Microsoft.Edge.A11y
         }
 
         /// <summary>
+        /// Helper method to tab until an element whose name contains the given string
+        /// reports that it has focus
+        /// </summary>
+        /// <param name="parent">The parent of the target element</param>
+        /// <param name="name">A string which the target element's name will contain</param>
+        /// <param name="tabId">The id to send tabs to</param>
+        /// <param name="driver">The WebDriver</param>
+        /// <returns>true if the element was found, false otherwise</returns>
+        private static bool TabToElementByName(IUIAutomationElement parent, string name, string tabId, DriverManager driver)
+        {
+            var tabs = 0;
+            var resets = 0;
+            var element = parent.GetAllDescendents(e => e.CurrentName.Contains(name)).First();
+            while (!(bool)element.GetCurrentPropertyValue(new ElementConverter().GetElementCodeFromName("HasKeyboardFocus")))
+            {
+                driver.SendSpecialKeys(tabId, "Tab");
+                if (++tabs > 20)
+                {
+                    Javascript.ClearFocus(driver, 0);
+                    tabs = 0;
+                    resets++;
+                    if (resets > 5)
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        /// <summary>
         /// Check basic keyboard interactions for the video control
         /// </summary>
         /// <param name="elements"></param>
@@ -1159,7 +1190,8 @@ namespace Microsoft.Edge.A11y
             }
 
             //Case 1: tab to play button and play/pause
-            driver.SendSpecialKeys(videoId, "TabSpace");
+            TabToElementByName(elements[0], "Play", videoId, driver);
+            driver.SendSpecialKeys(videoId, "Space");
             if (!WaitForCondition(VideoPlaying))
             {
                 result += "\tVideo was not playing after spacebar on play button\n";
@@ -1174,7 +1206,7 @@ namespace Microsoft.Edge.A11y
 
             //Case 2: Volume and mute
             Javascript.ClearFocus(driver, 0);
-            driver.SendTabs(videoId, 6);//tab to volume control//TODO make this more resilient to UI changes
+            TabToElementByName(elements[0], "Mute", videoId, driver);
             driver.SendSpecialKeys(videoId, "Enter");//mute
             if (!WaitForCondition(VideoMuted))
             {
@@ -1207,7 +1239,7 @@ namespace Microsoft.Edge.A11y
                 result += "\tVideo was playing when it shouldn't have been\n";
             }
             Javascript.ClearFocus(driver, 0);
-            driver.SendTabs(videoId, 3);//tab to seek
+            TabToElementByName(elements[0], "Seek", videoId, driver);
             initial = GetVideoElapsed();
             driver.SendSpecialKeys(videoId, "Arrow_right"); //skip ahead
             if (!WaitForCondition(VideoElapsed, initial + 10))
@@ -1227,7 +1259,7 @@ namespace Microsoft.Edge.A11y
                 result += "\tVideo was playing when it shouldn't have been\n";
             }
             Javascript.ClearFocus(driver, 0);
-            driver.SendTabs(videoId, 4);//tab to seek
+            TabToElementByName(elements[0], "Seek", videoId, driver);
             initial = GetVideoElapsed();
             driver.SendSpecialKeys(videoId, "Arrow_right"); //skip ahead
             if (!WaitForCondition(VideoElapsed, initial + 10))
@@ -1244,7 +1276,7 @@ namespace Microsoft.Edge.A11y
 
             //Case 6: Full screen
             Javascript.ClearFocus(driver, 0);
-            driver.SendTabs(videoId, 8);//tab to fullscreen
+            TabToElementByName(elements[0], "Full screen", videoId, driver);
             driver.SendSpecialKeys(videoId, "Enter"); //enter fullscreen mode
             if (!WaitForCondition(IsVideoFullScreen))
             {
