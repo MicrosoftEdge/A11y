@@ -18,6 +18,11 @@ namespace Microsoft.Edge.A11y
         public static Action<DriverManager, int> ClearFocus = (driverManager, timeout) => driverManager.ExecuteScript("document.activeElement.blur()", timeout);
 
         /// <summary>
+        /// Scroll the element into view (for screenshot)
+        /// </summary>
+        public static Action<DriverManager, int> ScrollIntoView = (driverManager, timeout) => driverManager.ExecuteScript("document.activeElement.scrollIntoView()", timeout);
+
+        /// <summary>
         /// Remove hidden attribute from all buttons on the page
         /// </summary>
         public static string RemoveHidden = "var ps = document.getElementsByTagName('input'); for(i = 0; i < ps.length; i++){ ps[i].hidden = false}";

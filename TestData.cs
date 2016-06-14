@@ -956,7 +956,7 @@ namespace Microsoft.Edge.A11y
                             "h1 referenced by aria-describedby6",
                             "title attribute 7" }),
                 new TestData("summary", null),
-                new TestData("time", "Text", 
+                new TestData("time", "Text",
                     searchStrategy: element =>
                         element.CurrentControlType == converter.GetElementCodeFromName("Text")
                         && element.CurrentLocalizedControlType == "time",
@@ -1198,7 +1198,7 @@ namespace Microsoft.Edge.A11y
                 PlayVideo();
             }
             driver.SendSpecialKeys(videoId, "Enter");
-            if (!WaitForCondition(VideoPlaying, true))
+            if (!WaitForCondition(VideoPlaying, reverse: true))
             {
                 result += "\tVideo was not paused after enter on play button\n";
                 PauseVideo();
@@ -1214,7 +1214,7 @@ namespace Microsoft.Edge.A11y
             }
 
             driver.SendSpecialKeys(videoId, "Enter");//unmute
-            if (!WaitForCondition(VideoMuted, true))
+            if (!WaitForCondition(VideoMuted, reverse: true))
             {
                 result += "\tEnter did not unmute the video\n";
             }
@@ -1283,7 +1283,7 @@ namespace Microsoft.Edge.A11y
                 result += "\tVideo did not enter FullScreen mode\n";
             }
             driver.SendSpecialKeys(videoId, "Escape");
-            if (!WaitForCondition(IsVideoFullScreen, true))
+            if (!WaitForCondition(IsVideoFullScreen, reverse: true))
             {
                 result += "\tVideo did not exit FullScreen mode\n";
             }
@@ -1308,7 +1308,7 @@ namespace Microsoft.Edge.A11y
             Func<double> GetAudioVolume = () => driver.ExecuteScript("return document.getElementById('" + audioId + "').volume", 0).ParseMystery();
             Func<double, bool> AudioVolume = expected => Math.Abs(GetAudioVolume() - expected) < epsilon;
             Func<bool> AudioMuted = () => (bool)driver.ExecuteScript("return document.getElementById('" + audioId + "').muted", 0);
-            Func<double> GetAudioElapsed = () =>  driver.ExecuteScript("return document.getElementById('" + audioId + "').currentTime", 0).ParseMystery();
+            Func<double> GetAudioElapsed = () => driver.ExecuteScript("return document.getElementById('" + audioId + "').currentTime", 0).ParseMystery();
             Func<double, bool> AudioElapsed = expected => Math.Abs(GetAudioElapsed() - expected) < epsilon;
             Func<bool> IsAudioLoaded = () => (bool)driver.ExecuteScript("return document.getElementById('" + audioId + "').readyState == 4", 0);
 
@@ -1328,7 +1328,7 @@ namespace Microsoft.Edge.A11y
             }
 
             driver.SendSpecialKeys(audioId, "Space");
-            if (!WaitForCondition(AudioPlaying, true))
+            if (!WaitForCondition(AudioPlaying, reverse: true))
             {
                 result += "\tAudio did not pause with space\n";
                 PauseAudio();
@@ -1374,7 +1374,7 @@ namespace Microsoft.Edge.A11y
                 result += "\tAudio was not muted by enter on the volume control\n";
             }
             driver.SendSpecialKeys(audioId, "Enter");
-            if (!WaitForCondition(AudioMuted, true))
+            if (!WaitForCondition(AudioMuted, reverse: true))
             {
                 result += "\tAudio was not unmuted by enter on the volume control\n";
             }
@@ -1564,7 +1564,7 @@ namespace Microsoft.Edge.A11y
                         result += "\nElement controller for not set for id: " + id;
                     }
 
-                    for (var i = 0; i < inputFields.Count; )
+                    for (var i = 0; i < inputFields.Count;)//NB ++i later
                     {
                         //Change each field in the calendar
                         for (var j = 0; j < inputFields[i]; j++)
@@ -1641,7 +1641,7 @@ namespace Microsoft.Edge.A11y
 
                         //Open the dialog, tab to hue, change hue, tab to accept button, activate it with enter
                         //We don't have to worry about why the dialog closed here (button or global enter)
-                        driver.SendSpecialKeys(id, "Escape" + secondPass + "WaitEnterWaitArrow_down" + fieldTabs + "EnterTab"); 
+                        driver.SendSpecialKeys(id, "Escape" + secondPass + "WaitEnterWaitArrow_down" + fieldTabs + "EnterTab");
                         if (initial == DateValue())
                         {
                             result += "\nUnable to accept with accept button via enter";
@@ -1689,51 +1689,51 @@ namespace Microsoft.Edge.A11y
                 {
                     var result = "";
                     //The indices of the elements that have been found to be invalid before
-                    var previouslyInvalid = new HashSet<int>();
                     foreach (var id in ids.Take(1))
                     {
-                        Ewh.Reset();
+                        Javascript.ScrollIntoView(driver, 0);
 
                         driver.SendKeys(id, "invalid");
                         driver.SendSpecialKeys(id, "Enter");
-
-                        Ewh.WaitOne(10000);
 
                         //Everything that is invalid on the page
                         //We search by both with an OR condition because it gives a better chance to
                         //find elements that are partially correct.
                         var invalid = elements.Where(e =>
-                                        e.CurrentIsDataValidForForm == 0).Select(e => elements.IndexOf(e));
+                                        e.CurrentIsDataValidForForm == 0);
 
-                        //Elements that are invalid for the first time
-                        var newInvalid = invalid.DefaultIfEmpty(-1).FirstOrDefault(inv => !previouslyInvalid.Contains(inv));
-                        if (newInvalid == -1)
+                        if (invalid.Count() > 1)
+                        {
+                            throw new Exception("Test assumption failed, multiple elements were invalid");
+                        }
+
+                        if (invalid.Count() < 1)
                         {
                             return "\nElement failed to validate improper input";
                         }
 
-                        if (elements[newInvalid].CurrentIsDataValidForForm != 0)
+                        var invalidElement = invalid.First();
+
+                        if(!WaitForCondition(() => invalidElement.CurrentControllerFor.Length == 1, () => driver.SendSpecialKeys(id, "Enter")))
+                        {
+                            return result + "\n" + id + " did not have 1 ControllerFor " + invalidElement.CurrentControllerFor.Length;
+                        }
+
+                        if (invalidElement.CurrentIsDataValidForForm != 0)
                         {
                             result += "\nElement did not have IsDataValidForForm set to false";
                         }
 
-                        if (elements[newInvalid].CurrentHelpText == null || elements[newInvalid].CurrentHelpText.Length == 0)
+                        if (invalidElement.CurrentHelpText == null || invalidElement.CurrentHelpText.Length == 0)
                         {
                             result += "\nElement did not have HelpText";
                         }
 
-                        if (elements[newInvalid].CurrentControllerFor.Length != 1)
-                        {
-                            return result + "\n" + id + " did not have 1 ControllerFor " + elements[newInvalid].CurrentControllerFor.Length;
-                        }
-
-                        var helpPane = elements[newInvalid].CurrentControllerFor.GetElement(0);
+                        var helpPane = invalidElement.CurrentControllerFor.GetElement(0);
                         if (helpPane.CurrentControlType != new ElementConverter().GetElementCodeFromName("Pane"))
                         {
                             result += "Error message did not have correct ControlType";
                         }
-
-                        previouslyInvalid.Add(newInvalid);
                     }
 
 
@@ -1815,7 +1815,7 @@ namespace Microsoft.Edge.A11y
         /// </summary>
         /// <param name="conditionCheck">The condition checker</param>
         /// <param name="value">The double value to look for</param>
-        /// <returns></returns>
+        /// <returns>true if the condition passes, false otherwise</returns>
         public static bool WaitForCondition(Func<double, bool> conditionCheck, double value, int attempts = 10)
         {
             for (var i = 0; i < attempts; i++)
@@ -1830,11 +1830,13 @@ namespace Microsoft.Edge.A11y
         }
 
         /// <summary>
-        /// Wait for a condition that only returns a boolean value
+        /// Wait for a condition that tests a double value
         /// </summary>
         /// <param name="conditionCheck">The condition checker</param>
-        /// <returns></returns>
-        public static bool WaitForCondition(Func<bool> conditionCheck, bool reverse = false, int attempts = 10)
+        /// <param name="reverse">Whether to reverse the result</param>
+        /// <param name="attempts">How many times to check</param>
+        /// <returns>true if the condition passes, false otherwise</returns>
+        public static bool WaitForCondition(Func<bool> conditionCheck, Action waitAction = null, bool reverse = false, int attempts = 10)
         {
             for (var i = 0; i < attempts; i++)
             {
@@ -1843,6 +1845,7 @@ namespace Microsoft.Edge.A11y
                 {
                     return true;
                 }
+                waitAction();
             }
             return false;
         }
