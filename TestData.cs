@@ -1729,10 +1729,17 @@ namespace Microsoft.Edge.A11y
                             result += "\nElement did not have HelpText";
                         }
 
-                        var helpPane = invalidElement.CurrentControllerFor.GetElement(0);
-                        if (helpPane.CurrentControlType != new ElementConverter().GetElementCodeFromName("Pane"))
+                        try
                         {
-                            result += "Error message did not have correct ControlType";
+                            var helpPane = invalidElement.CurrentControllerFor.GetElement(0);
+                            if (helpPane.CurrentControlType != new ElementConverter().GetElementCodeFromName("Pane"))
+                            {
+                                result += "\nError message did not have correct ControlType";
+                            }
+                        }
+                        catch
+                        {
+                            result += "\nUnable to get controller for";
                         }
                     }
 
