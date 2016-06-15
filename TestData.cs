@@ -1852,7 +1852,7 @@ namespace Microsoft.Edge.A11y
                 {
                     return true;
                 }
-                waitAction();
+                waitAction?.Invoke();
             }
             return false;
         }
