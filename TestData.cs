@@ -1286,12 +1286,16 @@ namespace Microsoft.Edge.A11y
             //Case 6: Full screen
             Javascript.ClearFocus(driver, 0);
             TabToElementByName(elements[0], "Full screen", videoId, driver);
+            driver.Screenshot("before_enter_to_fullscreen");
             driver.SendSpecialKeys(videoId, "Enter"); //enter fullscreen mode
+            driver.Screenshot("after_enter_to_fullscreen");
             if (!WaitForCondition(IsVideoFullScreen))
             {
                 result += "\tVideo did not enter FullScreen mode\n";
             }
+            driver.Screenshot("before_escape_from_fullscreen");
             driver.SendSpecialKeys(videoId, "Escape");
+            driver.Screenshot("after_escape_from_fullscreen");
             if (!WaitForCondition(IsVideoFullScreen, reverse: true))
             {
                 result += "\tVideo did not exit FullScreen mode\n";
