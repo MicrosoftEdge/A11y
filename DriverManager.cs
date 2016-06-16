@@ -99,6 +99,11 @@ namespace Microsoft.Edge.A11y
             _driver.FindElement(By.Id(elementId)).SendKeys(keys);
         }
 
+        public Screenshot GetScreenshot()
+        {
+            return _driver.GetScreenshot();
+        }
+
         /// <summary>
         /// Close the driver
         /// </summary>

@@ -2,6 +2,8 @@
 using OpenQA.Selenium;
 using System;
 using System.Collections.Generic;
+using System.Drawing.Imaging;
+using System.IO;
 using System.Linq;
 
 namespace Microsoft.Edge.A11y
@@ -397,6 +399,16 @@ namespace Microsoft.Edge.A11y
             catch { }
 
             throw new InvalidCastException("Cannot parse to int, double, or string");
+        }
+
+        /// <summary>
+        /// Takes a screenshot and saves in the current directory
+        /// </summary>
+        /// <param name="driver"></param>
+        /// <param name="name"></param>
+        public static void Screenshot(this DriverManager driver, string name)
+        {
+            driver.GetScreenshot().SaveAsFile(Path.Combine(Directory.GetCurrentDirectory(), name + ".png"), ImageFormat.Png);
         }
     }
 }

@@ -1205,15 +1205,24 @@ namespace Microsoft.Edge.A11y
             }
 
             //Case 2: Volume and mute
+            Javascript.ScrollIntoView(driver, 0);
             Javascript.ClearFocus(driver, 0);
             TabToElementByName(elements[0], "Mute", videoId, driver);
+            driver.Screenshot("before_enter_to_mute");
             driver.SendSpecialKeys(videoId, "Enter");//mute
+            driver.Screenshot("after_enter_to_mute");
             if (!WaitForCondition(VideoMuted))
             {
                 result += "\tEnter did not mute the video\n";
             }
 
+            WaitForCondition(() =>
+                elements[0].GetAllDescendents().Any(e => e.CurrentName == "Unmute")
+            );
+
+            driver.Screenshot("before_enter_to_unmute");
             driver.SendSpecialKeys(videoId, "Enter");//unmute
+            driver.Screenshot("after_enter_to_unmute");
             if (!WaitForCondition(VideoMuted, reverse: true))
             {
                 result += "\tEnter did not unmute the video\n";
