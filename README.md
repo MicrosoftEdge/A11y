@@ -71,3 +71,6 @@ this work is being submitted under appropriate license that we can use it.
 The process is very simple as it just hooks into your Github account. Once we have received the signed CLA, we'll review the request. 
 You will only need to do this once.
 
+##Code of Conduct
+This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+
