@@ -195,7 +195,7 @@ namespace Microsoft.Edge.A11y
                                 return (convertedRole == "Button" || convertedRole == "Text");
                             }));
                         }
-                        result += subdomElements.Count() == 4 ? "" : "Unable to find subdom elements";
+                        result += subdomElements.Count() == 3 ? "" : "Unable to find subdom elements";
 
                         var featureDetectionScript = @"canvas = document.getElementById('myCanvas');
                                                         isSupported = !!(canvas.getContext && canvas.getContext('2d'));
