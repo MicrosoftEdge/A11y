@@ -28,8 +28,8 @@ namespace Microsoft.Edge.A11y
         /// <returns></returns>
         public IEnumerable<TestCaseResult> Execute(TestData testData)
         {
-            _driverManager.NavigateToUrl(BuildTestUrl(testData._TestName + _FileSuffix));
-            return testData._ControlType == null ? Skip(testData._TestName) : TestElement(testData);
+            _driverManager.NavigateToUrl(BuildTestUrl(testData.TestName + _FileSuffix));
+            return testData.ControlType == null ? Skip(testData.TestName) : TestElement(testData);
         }
 
         /// <summary>

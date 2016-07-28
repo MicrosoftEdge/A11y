@@ -7,25 +7,6 @@ using System.Threading;
 namespace Microsoft.Edge.A11y
 {
     /// <summary>
-    /// This is used to wait for structure changed events
-    /// </summary>
-    public class StructureChangedHandler : IUIAutomationStructureChangedEventHandler
-    {
-        /// <summary>
-        /// This is called when the event fires
-        /// </summary>
-        /// <param name="sender">The element in question</param>
-        /// <param name="changeType">The type of change</param>
-        void IUIAutomationStructureChangedEventHandler.HandleStructureChangedEvent(IUIAutomationElement sender, StructureChangeType changeType, int[] runtimeId)
-        {
-            if (changeType == StructureChangeType.StructureChangeType_ChildAdded)
-            {
-                TestData.Ewh.Set();
-            }
-        }
-    }
-
-    /// <summary>
     /// This is where the logic of the tests is stored
     /// </summary>
     class TestData
@@ -35,54 +16,128 @@ namespace Microsoft.Edge.A11y
         /// <summary>
         /// The name of the test, which corresponds to the name of the html element
         /// </summary>
-        public string _TestName;
+        private string _TestName;
+        public string TestName
+        {
+            get
+            {
+                return _TestName;
+            }
+        }
+
         /// <summary>
         /// The name of the UIA control type we will use to search for the element
         /// </summary>
-        public string _ControlType;
+        private string _ControlType;
+        public string ControlType
+        {
+            get
+            {
+                return _ControlType;
+            }
+        }
+
         /// <summary>
         /// The name of the UIA localized control type, which will be part of the test
         /// case if it is not null
         /// </summary>
-        public string _LocalizedControlType;
+        private string _LocalizedControlType;
+        public string LocalizedControlType
+        {
+            get
+            {
+                return _LocalizedControlType;
+            }
+        }
+
         /// <summary>
         /// The name of the UIA landmark type, which will be part of the test
         /// case if it is not null
         /// </summary>
-        public string _LandmarkType;
+        private string _LandmarkType;
+        public string LandmarkType
+        {
+            get
+            {
+                return _LandmarkType;
+            }
+        }
+
         /// <summary>
         /// The name of the UIA localized landmark type, which will be part of the test
         /// case if it is not null
         /// </summary>
-        public string _LocalizedLandmarkType;
+        private string _LocalizedLandmarkType;
+        public string LocalizedLandmarkType
+        {
+            get
+            {
+                return _LocalizedLandmarkType;
+            }
+        }
+
         /// <summary>
         /// A list of ids for all the elements that should be keyboard accessible (via tab)
         /// </summary>
-        public List<string> _KeyboardElements;
+        private List<string> _KeyboardElements;
+        public List<string> KeyboardElements
+        {
+            get
+            {
+                return _KeyboardElements;
+            }
+        }
+
         /// <summary>
         /// If not null, this func will be used to test elements to see if they should be
         /// tested (instead of matching _ControlType).
         /// </summary>
-        public Func<IUIAutomationElement, bool> _SearchStrategy;
+        private Func<IUIAutomationElement, bool> _SearchStrategy;
+        public Func<IUIAutomationElement, bool> SearchStrategy
+        {
+            get
+            {
+                return _SearchStrategy;
+            }
+        }
+
         /// <summary>
         /// A list of expected values which will be compared to the accessible names of
         /// the found elements.
         /// </summary>
-        public List<string> _requiredNames;
+        private List<string> _requiredNames;
+        public List<string> RequiredNames
+        {
+            get
+            {
+                return _requiredNames;
+            }
+        }
+
         /// <summary>
         /// Same as above, but for accessible descriptions.
         /// </summary>
-        public List<string> _requiredDescriptions;
+        private List<string> _RequiredDescriptions;
+        public List<string> RequiredDescriptions
+        {
+            get
+            {
+                return _RequiredDescriptions;
+            }
+        }
+
         /// <summary>
         /// A func that allows extending the tests for specific elements. If an empty string is
         /// returned, the element passes. Otherwise, an explanation of its failure is returned.
         /// </summary>
-        public Func<List<IUIAutomationElement>, DriverManager, List<string>, string> _AdditionalRequirement;
-
-        /// <summary>
-        /// Manual reset event waiter used to wait for elements to be added to UIA tree
-        /// </summary>
-        public static readonly EventWaitHandle Ewh = new EventWaitHandle(false, EventResetMode.ManualReset);
+        private Func<List<IUIAutomationElement>, DriverManager, List<string>, string> _AdditionalRequirement;
+        public  Func<List<IUIAutomationElement>, DriverManager, List<string>, string> AdditionalRequirement
+        {
+            get
+            {
+                return _AdditionalRequirement;
+            }
+        }
 
         /// <summary>
         /// Simple Ctor
@@ -116,7 +171,7 @@ namespace Microsoft.Edge.A11y
             _KeyboardElements = keyboardElements;
             _SearchStrategy = searchStrategy;
             _requiredNames = requiredNames;
-            _requiredDescriptions = requiredDescriptions;
+            _RequiredDescriptions = requiredDescriptions;
             _AdditionalRequirement = additionalRequirement;
         }
 
@@ -1727,7 +1782,7 @@ namespace Microsoft.Edge.A11y
 
                         var invalidElement = invalid.First();
 
-                        if(!WaitForCondition(() => invalidElement.CurrentControllerFor.Length == 1, () => driver.SendSpecialKeys(id, "Enter")))
+                        if (!WaitForCondition(() => invalidElement.CurrentControllerFor.Length == 1, () => driver.SendSpecialKeys(id, "Enter")))
                         {
                             return result + "\n" + id + " did not have 1 ControllerFor " + invalidElement.CurrentControllerFor.Length;
                         }
@@ -1836,7 +1891,7 @@ namespace Microsoft.Edge.A11y
         /// <param name="conditionCheck">The condition checker</param>
         /// <param name="value">The double value to look for</param>
         /// <returns>true if the condition passes, false otherwise</returns>
-        public static bool WaitForCondition(Func<double, bool> conditionCheck, double value, int attempts = 10)
+        public static bool WaitForCondition(Func<double, bool> conditionCheck, double value, int attempts = 20)
         {
             for (var i = 0; i < attempts; i++)
             {
@@ -1856,7 +1911,7 @@ namespace Microsoft.Edge.A11y
         /// <param name="reverse">Whether to reverse the result</param>
         /// <param name="attempts">How many times to check</param>
         /// <returns>true if the condition passes, false otherwise</returns>
-        public static bool WaitForCondition(Func<bool> conditionCheck, Action waitAction = null, bool reverse = false, int attempts = 10)
+        public static bool WaitForCondition(Func<bool> conditionCheck, Action waitAction = null, bool reverse = false, int attempts = 20)
         {
             for (var i = 0; i < attempts; i++)
             {

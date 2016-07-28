@@ -34,20 +34,18 @@ namespace Microsoft.Edge.A11y
             var browserElement = EdgeA11yTools.FindBrowserDocument(0);
             if (browserElement == null)
             {
-                return Fail(testData._TestName, "Unable to find the browser");
+                return Fail(testData.TestName, "Unable to find the browser");
             }
 
             //Find elements using ControlType or the alternate search strategy
             HashSet<string> foundControlTypes;
-            var testElements = EdgeA11yTools.SearchChildren(browserElement, testData._ControlType, testData._SearchStrategy, out foundControlTypes);
+            var testElements = EdgeA11yTools.SearchChildren(browserElement, testData.ControlType, testData.SearchStrategy, out foundControlTypes);
             if (testElements.Count == 0)
             {
-                return Fail(testData._TestName, testData._SearchStrategy == null ?
+                return Fail(testData.TestName, testData.SearchStrategy == null ?
                     "Unable to find the element, found these instead: " + foundControlTypes.Aggregate((a, b) => a + ", " + b):
                     "Unable to find the element using the alternate search strategy");
             }
-
-            new CUIAutomation8().AddStructureChangedEventHandler(browserElement, TreeScope.TreeScope_Subtree, null, new StructureChangedHandler());
 
             string result = "";
             //This is used if the test passes but there is something to report
@@ -55,14 +53,14 @@ namespace Microsoft.Edge.A11y
             var elementConverter = new ElementConverter();
 
             //If necessary, check localized control type
-            if (testData._LocalizedControlType != null)
+            if (testData.LocalizedControlType != null)
             {
                 foreach (var element in testElements)
                 {
-                    if (!element.CurrentLocalizedControlType.Equals(testData._LocalizedControlType, StringComparison.OrdinalIgnoreCase))
+                    if (!element.CurrentLocalizedControlType.Equals(testData.LocalizedControlType, StringComparison.OrdinalIgnoreCase))
                     {
                         var error = "\nElement did not have the correct localized control type. Expected:" +
-                            testData._LocalizedControlType + " Actual:" + element.CurrentLocalizedControlType;
+                            testData.LocalizedControlType + " Actual:" + element.CurrentLocalizedControlType;
                         if (!result.Contains(error))
                         {
                             result += error;
@@ -72,7 +70,7 @@ namespace Microsoft.Edge.A11y
             }
 
             //If necessary, check landmark and localized landmark types
-            if (testData._LandmarkType != null)
+            if (testData.LandmarkType != null)
             {
                 foreach (var element in testElements)
                 {
@@ -80,20 +78,20 @@ namespace Microsoft.Edge.A11y
                     var convertedLandmark = elementConverter.GetElementNameFromCode(five.CurrentLandmarkType);
                     var localizedLandmark = five.CurrentLocalizedLandmarkType;
 
-                    if (convertedLandmark != testData._LandmarkType)
+                    if (convertedLandmark != testData.LandmarkType)
                     {
                         var error = "\nElement did not have the correct landmark type. Expected:" +
-                            testData._LandmarkType + " Actual:" + convertedLandmark + "\n";
+                            testData.LandmarkType + " Actual:" + convertedLandmark + "\n";
                         if (!result.Contains(error))
                         {
                             result += error;
                         }
                     }
 
-                    if (localizedLandmark != testData._LocalizedLandmarkType)
+                    if (localizedLandmark != testData.LocalizedLandmarkType)
                     {
                         var error = "\nElement did not have the correct localized landmark type. Expected:" +
-                            testData._LocalizedLandmarkType + " Actual:" + localizedLandmark + "\n";
+                            testData.LocalizedLandmarkType + " Actual:" + localizedLandmark + "\n";
                         if (!result.Contains(error))
                         {
                             result += error;
@@ -104,18 +102,18 @@ namespace Microsoft.Edge.A11y
 
             //If necessary, naming and descriptions
             //This is done "out of order" since the keyboard checks below invalidate the tree
-            if(testData._requiredNames != null || testData._requiredDescriptions != null)
+            if(testData.RequiredNames != null || testData.RequiredDescriptions != null)
             {
                 result += CheckElementNames(testElements,
-                    testData._requiredNames ?? new List<string>(),
-                    testData._requiredDescriptions ?? new List<string>());
+                    testData.RequiredNames ?? new List<string>(),
+                    testData.RequiredDescriptions ?? new List<string>());
             }
 
             //If necessary, check keboard accessibility
             var tabbable = EdgeA11yTools.TabbableIds(_driverManager);
-            if (testData._KeyboardElements != null && testData._KeyboardElements.Count > 0)
+            if (testData.KeyboardElements != null && testData.KeyboardElements.Count > 0)
             {
-                foreach (var e in testData._KeyboardElements)
+                foreach (var e in testData.KeyboardElements)
                 {
                     if (!tabbable.Contains(e))
                     {
@@ -127,10 +125,10 @@ namespace Microsoft.Edge.A11y
             try
             {
                 //If necessary, check any additional requirements
-                if (testData._AdditionalRequirement != null)
+                if (testData.AdditionalRequirement != null)
                 {
-                    testElements = EdgeA11yTools.SearchChildren(browserElement, testData._ControlType, testData._SearchStrategy, out foundControlTypes);
-                    var additionalRequirementResult = testData._AdditionalRequirement(testElements, _driverManager, tabbable).Trim();
+                    testElements = EdgeA11yTools.SearchChildren(browserElement, testData.ControlType, testData.SearchStrategy, out foundControlTypes);
+                    var additionalRequirementResult = testData.AdditionalRequirement(testElements, _driverManager, tabbable).Trim();
                     if (additionalRequirementResult != "")
                     {
                         result += "\n" + additionalRequirementResult;
@@ -144,10 +142,10 @@ namespace Microsoft.Edge.A11y
 
             if (result != "")
             {
-                return Half(testData._TestName, result.Trim());
+                return Half(testData.TestName, result.Trim());
             }
 
-            return Pass(testData._TestName, note);
+            return Pass(testData.TestName, note);
         }
 
         /// <summary>
