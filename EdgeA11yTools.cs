@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Text;
+using static Microsoft.Edge.A11y.ElementConverter;
 
 namespace Microsoft.Edge.A11y
 {
@@ -89,30 +91,29 @@ namespace Microsoft.Edge.A11y
         /// <returns>The elements found which match the tag given</returns>
         public static List<IUIAutomationElement> SearchChildren(
             IUIAutomationElement browserElement,
-            string controlType,
+            UIAControlType controlType,
             Func<IUIAutomationElement, bool> searchStrategy,
-            out HashSet<string> foundControlTypes)
+            out HashSet<UIAControlType> foundControlTypes)
         {
             var uia = new CUIAutomation8();
 
             var walker = uia.RawViewWalker;
             var tosearch = new List<Tuple<IUIAutomationElement, int>>();
             var toreturn = new List<IUIAutomationElement>();
-            foundControlTypes = new HashSet<string>();
+            foundControlTypes = new HashSet<UIAControlType>();
 
             //We use a 0 here to signify the depth in the BFS search tree. The root element will have depth of 0.
             tosearch.Add(new Tuple<IUIAutomationElement, int>(browserElement, 0));
-            var automationElementConverter = new ElementConverter();
 
             while (tosearch.Any(e => e.Item2 < RECURSIONDEPTH))
             {
                 var current = tosearch.First().Item1;
                 var currentdepth = tosearch.First().Item2;
 
-                var convertedRole = automationElementConverter.GetElementNameFromCode(current.CurrentControlType);
+                var convertedRole = GetControlTypeFromCode(current.CurrentControlType);
                 foundControlTypes.Add(convertedRole);
 
-                if (searchStrategy == null ? convertedRole.Equals(controlType, StringComparison.OrdinalIgnoreCase) : searchStrategy(current))
+                if (searchStrategy == null ? convertedRole == controlType : searchStrategy(current))
                 {
                     toreturn.Add(current);
                 }
@@ -180,77 +181,14 @@ namespace Microsoft.Edge.A11y
         /// <param name="count">The number of times to send tab</param>
         public static void SendTabs(this DriverManager driver, string element, int count)
         {
-            driver.SendSpecialKeys(element, String.Concat(Enumerable.Repeat("Tab", count)));
+            var tabs = new List<WebDriverKey>();
+            for(var i = 0; i< count; i++)
+            {
+                tabs.Add(WebDriverKey.Tab);
+            }
+            driver.SendSpecialKeys(element, tabs);
         }
 
-        /// <summary>
-        /// This allows the SendSpecialKeys function to take friendly names instead of
-        /// character codes
-        /// </summary>
-        public static Lazy<Dictionary<string, string>> specialKeys = new Lazy<Dictionary<string, string>>(() =>
-        {
-            var keys = new Dictionary<string, string>();
-
-            keys.Add("Null", '\uE000'.ToString());
-            keys.Add("Cancel", '\uE001'.ToString());
-            keys.Add("Help", '\uE002'.ToString());
-            keys.Add("Back_space", '\uE003'.ToString());
-            keys.Add("Tab", '\uE004'.ToString());
-            keys.Add("Clear", '\uE005'.ToString());
-            keys.Add("Return", '\uE006'.ToString());
-            keys.Add("Enter", '\uE007'.ToString());
-            keys.Add("Shift", '\uE008'.ToString());
-            keys.Add("Control", '\uE009'.ToString());
-            keys.Add("Alt", '\uE00A'.ToString());
-            keys.Add("Pause", '\uE00B'.ToString());
-            keys.Add("Escape", '\uE00C'.ToString());
-            keys.Add("Space", '\uE00D'.ToString());
-            keys.Add("Page_up", '\uE00E'.ToString());
-            keys.Add("Page_down", '\uE00F'.ToString());
-            keys.Add("End", '\uE010'.ToString());
-            keys.Add("Home", '\uE011'.ToString());
-            keys.Add("Arrow_left", '\uE012'.ToString());
-            keys.Add("Arrow_up", '\uE013'.ToString());
-            keys.Add("Arrow_right", '\uE014'.ToString());
-            keys.Add("Arrow_down", '\uE015'.ToString());
-            keys.Add("Insert", '\uE016'.ToString());
-            keys.Add("Delete", '\uE017'.ToString());
-            keys.Add("Semicolon", '\uE018'.ToString());
-            keys.Add("Equals", '\uE019'.ToString());
-            keys.Add("Numpad0", '\uE01A'.ToString());
-            keys.Add("Numpad1", '\uE01B'.ToString());
-            keys.Add("Numpad2", '\uE01C'.ToString());
-            keys.Add("Numpad3", '\uE01D'.ToString());
-            keys.Add("Numpad4", '\uE01E'.ToString());
-            keys.Add("Numpad5", '\uE01F'.ToString());
-            keys.Add("Numpad6", '\uE020'.ToString());
-            keys.Add("Numpad7", '\uE021'.ToString());
-            keys.Add("Numpad8", '\uE022'.ToString());
-            keys.Add("Numpad9", '\uE023'.ToString());
-            keys.Add("Multiply", '\uE024'.ToString());
-            keys.Add("Add", '\uE025'.ToString());
-            keys.Add("Separator", '\uE026'.ToString());
-            keys.Add("Subtract", '\uE027'.ToString());
-            keys.Add("Decimal", '\uE028'.ToString());
-            keys.Add("Divide", '\uE029'.ToString());
-            keys.Add("F1", '\uE031'.ToString());
-            keys.Add("F2", '\uE032'.ToString());
-            keys.Add("F3", '\uE033'.ToString());
-            keys.Add("F4", '\uE034'.ToString());
-            keys.Add("F5", '\uE035'.ToString());
-            keys.Add("F6", '\uE036'.ToString());
-            keys.Add("F7", '\uE037'.ToString());
-            keys.Add("F8", '\uE038'.ToString());
-            keys.Add("F9", '\uE039'.ToString());
-            keys.Add("F10", '\uE03A'.ToString());
-            keys.Add("F11", '\uE03B'.ToString());
-            keys.Add("F12", '\uE03C'.ToString());
-            keys.Add("Meta", '\uE03D'.ToString());
-            keys.Add("Command", '\uE03D'.ToString());
-            keys.Add("Zenkaku_hankaku", '\uE040'.ToString());
-
-            return keys;
-        });
 
         /// <summary>
         /// A wrapper which converts strings with friendly-named special keys to be
@@ -261,22 +199,28 @@ namespace Microsoft.Edge.A11y
         /// <param name="driver"></param>
         /// <param name="elementId"></param>
         /// <param name="keysToSend"></param>
-        public static void SendSpecialKeys(this DriverManager driver, string elementId, string keysToSend)
+        public static void SendSpecialKeys(this DriverManager driver, string elementId, List<WebDriverKey> keys)
         {
-            var keystrings = keysToSend.Split(new string[] { "Wait" }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (var keystring in keystrings)
+            var stringToSend = new StringBuilder();
+            foreach (var key in keys)
             {
-                var changedKeystring = keystring;
-                foreach (var key in specialKeys.Value)
-                {
-                    changedKeystring = changedKeystring.Replace(key.Key, key.Value);
-                }
-                driver.SendKeys(elementId, changedKeystring);
-                if (keystrings.ToList().IndexOf(keystring) < keystrings.Count() - 1)
+                if(key == WebDriverKey.Wait)
                 {
                     System.Threading.Thread.Sleep(1000);
+                    driver.SendKeys(elementId, stringToSend.ToString());
+                    stringToSend = new StringBuilder();
+                }
+                else
+                {
+                    stringToSend.Append(GetWebDriverKeyString(key));
                 }
             }
+            driver.SendKeys(elementId, stringToSend.ToString());
+        }
+
+        public static void SendSpecialKeys(this DriverManager driver, string elementId, WebDriverKey key)
+        {
+            driver.SendSpecialKeys(elementId, new List<WebDriverKey> { key });
         }
 
         /// <summary>

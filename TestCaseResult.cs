@@ -1,4 +1,6 @@
-﻿namespace Microsoft.Edge.A11y
+﻿using System.Text;
+
+namespace Microsoft.Edge.A11y
 {
     public enum ResultType
     {
@@ -23,6 +25,22 @@
         public string ToCSVString()
         {
             return Name + "," + Result + (MoreInfo != null ? "," + MoreInfo : "");
+        }
+    }
+
+
+    public class TestCaseResultExt : TestCaseResult
+    {
+        public TestCaseResultExt()
+        {
+            Result = ResultType.Pass;
+        }
+
+        public void AddInfo(string info)
+        {
+            var stringBuilder = new StringBuilder(MoreInfo);
+            stringBuilder.Append(info);
+            MoreInfo = stringBuilder.ToString();
         }
     }
 }
