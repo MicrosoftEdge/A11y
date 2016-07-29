@@ -31,6 +31,16 @@ namespace Microsoft.Edge.A11y
 
     public class TestCaseResultExt : TestCaseResult
     {
+        StringBuilder _MoreInfo = new StringBuilder();
+
+        new public string MoreInfo
+        {
+            get
+            {
+                return _MoreInfo.ToString();
+            }
+        }
+
         public TestCaseResultExt()
         {
             Result = ResultType.Pass;
@@ -38,9 +48,7 @@ namespace Microsoft.Edge.A11y
 
         public void AddInfo(string info)
         {
-            var stringBuilder = new StringBuilder(MoreInfo);
-            stringBuilder.Append(info);
-            MoreInfo = stringBuilder.ToString();
+            _MoreInfo.Append(info);
         }
     }
 }
