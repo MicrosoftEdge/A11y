@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using static Microsoft.Edge.A11y.ElementConverter;
 
 namespace Microsoft.Edge.A11y
 {
@@ -11,7 +13,8 @@ namespace Microsoft.Edge.A11y
     /// </summary>
     internal class EdgeStrategy : TestStrategy
     {
-        public EdgeStrategy(string repositoryPath = "https://cdn.rawgit.com/DHBrett/AT-browser-tests/gh-pages/test-files/", string fileSuffix = ""){
+        public EdgeStrategy(string repositoryPath = "https://cdn.rawgit.com/DHBrett/AT-browser-tests/gh-pages/test-files/", string fileSuffix = "")
+        {
             _driverManager = new DriverManager(TimeSpan.FromSeconds(10));
             System.Threading.Thread.Sleep(TimeSpan.FromSeconds(2));//Wait for the browser to load before we start searching
             _RepositoryPath = repositoryPath;
@@ -38,19 +41,16 @@ namespace Microsoft.Edge.A11y
             }
 
             //Find elements using ControlType or the alternate search strategy
-            HashSet<string> foundControlTypes;
+            HashSet<UIAControlType> foundControlTypes;
             var testElements = EdgeA11yTools.SearchChildren(browserElement, testData.ControlType, testData.SearchStrategy, out foundControlTypes);
             if (testElements.Count == 0)
             {
                 return Fail(testData.TestName, testData.SearchStrategy == null ?
-                    "Unable to find the element, found these instead: " + foundControlTypes.Aggregate((a, b) => a + ", " + b):
+                    "Unable to find the element, found these instead: " + foundControlTypes.Select(ct => ct.ToString()).Aggregate((a, b) => a + ", " + b) :
                     "Unable to find the element using the alternate search strategy");
             }
 
-            string result = "";
-            //This is used if the test passes but there is something to report
-            string note = null;
-            var elementConverter = new ElementConverter();
+            var moreInfo = new StringBuilder();
 
             //If necessary, check localized control type
             if (testData.LocalizedControlType != null)
@@ -61,52 +61,43 @@ namespace Microsoft.Edge.A11y
                     {
                         var error = "\nElement did not have the correct localized control type. Expected:" +
                             testData.LocalizedControlType + " Actual:" + element.CurrentLocalizedControlType;
-                        if (!result.Contains(error))
-                        {
-                            result += error;
-                        }
+                        moreInfo.Append(error);
                     }
                 }
             }
 
             //If necessary, check landmark and localized landmark types
-            if (testData.LandmarkType != null)
+            if (testData.LandmarkType != UIALandmarkType.Unknown)
             {
                 foreach (var element in testElements)
                 {
                     var five = element as IUIAutomationElement5;
-                    var convertedLandmark = elementConverter.GetElementNameFromCode(five.CurrentLandmarkType);
+                    var convertedLandmark = GetLandmarkTypeFromCode(five.CurrentLandmarkType);
                     var localizedLandmark = five.CurrentLocalizedLandmarkType;
 
                     if (convertedLandmark != testData.LandmarkType)
                     {
                         var error = "\nElement did not have the correct landmark type. Expected:" +
                             testData.LandmarkType + " Actual:" + convertedLandmark + "\n";
-                        if (!result.Contains(error))
-                        {
-                            result += error;
-                        }
+                        moreInfo.Append(error);
                     }
 
                     if (localizedLandmark != testData.LocalizedLandmarkType)
                     {
                         var error = "\nElement did not have the correct localized landmark type. Expected:" +
                             testData.LocalizedLandmarkType + " Actual:" + localizedLandmark + "\n";
-                        if (!result.Contains(error))
-                        {
-                            result += error;
-                        }
+                        moreInfo.Append(error);
                     }
                 }
             }
 
             //If necessary, naming and descriptions
             //This is done "out of order" since the keyboard checks below invalidate the tree
-            if(testData.RequiredNames != null || testData.RequiredDescriptions != null)
+            if (testData.RequiredNames != null || testData.RequiredDescriptions != null)
             {
-                result += CheckElementNames(testElements,
+                moreInfo.Append(CheckElementNames(testElements,
                     testData.RequiredNames ?? new List<string>(),
-                    testData.RequiredDescriptions ?? new List<string>());
+                    testData.RequiredDescriptions ?? new List<string>()));
             }
 
             //If necessary, check keboard accessibility
@@ -117,7 +108,7 @@ namespace Microsoft.Edge.A11y
                 {
                     if (!tabbable.Contains(e))
                     {
-                        result += "\nCould not access element with id: '" + e + "' by tab";
+                        moreInfo.Append("\nCould not access element with id: '" + e + "' by tab");
                     }
                 }
             }
@@ -128,24 +119,25 @@ namespace Microsoft.Edge.A11y
                 if (testData.AdditionalRequirement != null)
                 {
                     testElements = EdgeA11yTools.SearchChildren(browserElement, testData.ControlType, testData.SearchStrategy, out foundControlTypes);
-                    var additionalRequirementResult = testData.AdditionalRequirement(testElements, _driverManager, tabbable).Trim();
-                    if (additionalRequirementResult != "")
+                    var additionalRequirementResult = testData.AdditionalRequirement(testElements, _driverManager, tabbable);
+                    if (additionalRequirementResult.Result != ResultType.Pass)
                     {
-                        result += "\n" + additionalRequirementResult;
+                        moreInfo.AppendLine(additionalRequirementResult.MoreInfo);
                     }
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                result += "\nCaught exception during test execution, ERROR: " + ex.Message + "\nCallStack:\n" + ex.StackTrace;
+                moreInfo.Append("\nCaught exception during test execution, ERROR: " + ex.Message + "\nCallStack:\n" + ex.StackTrace);
             }
 
-            if (result != "")
+            var moreInfoString = moreInfo.ToString();
+            if (moreInfoString != "")
             {
-                return Half(testData.TestName, result.Trim());
+                return Half(testData.TestName, moreInfoString.Trim());
             }
 
-            return Pass(testData.TestName, note);
+            return Pass(testData.TestName);
         }
 
         /// <summary>

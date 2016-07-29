@@ -29,7 +29,7 @@ namespace Microsoft.Edge.A11y
         public IEnumerable<TestCaseResult> Execute(TestData testData)
         {
             _driverManager.NavigateToUrl(BuildTestUrl(testData.TestName + _FileSuffix));
-            return testData.ControlType == null ? Skip(testData.TestName) : TestElement(testData);
+            return TestElement(testData);
         }
 
         /// <summary>
@@ -49,13 +49,12 @@ namespace Microsoft.Edge.A11y
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        protected List<TestCaseResult> Pass(string name, string note)
+        protected List<TestCaseResult> Pass(string name)
         {
             return new List<TestCaseResult> {
                         new TestCaseResult{
                             Result = ResultType.Pass,
                             Name = name + "-1",
-                            MoreInfo = note
                         }, 
                         new TestCaseResult{
                             Result = ResultType.Pass,

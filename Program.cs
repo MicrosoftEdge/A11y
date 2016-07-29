@@ -15,7 +15,6 @@ namespace Microsoft.Edge.A11y
             TestStrategy a11yStrategy = new EdgeStrategy(fileSuffix: ".html");
 
             var results = TestData.alltests.Value.Where(td =>
-                td.ControlType != null && //Control type == null means skip the test
                 (testName == null || td.TestName == testName)) //Either no test name was provided or the test names match
                 .ToList().ConvertAll(td => a11yStrategy.Execute(td)) //Execute each of the tests
                 .Where(r => r.Any()) //Only keep the ones that were executed
