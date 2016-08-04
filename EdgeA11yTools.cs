@@ -92,7 +92,6 @@ namespace Microsoft.Edge.A11y
         public static List<IUIAutomationElement> SearchChildren(
             IUIAutomationElement browserElement,
             UIAControlType controlType,
-            Func<IUIAutomationElement, bool> searchStrategy,
             out HashSet<UIAControlType> foundControlTypes)
         {
             var uia = new CUIAutomation8();
@@ -113,7 +112,7 @@ namespace Microsoft.Edge.A11y
                 var convertedRole = GetControlTypeFromCode(current.CurrentControlType);
                 foundControlTypes.Add(convertedRole);
 
-                if (searchStrategy == null ? convertedRole == controlType : searchStrategy(current))
+                if (convertedRole == controlType)
                 {
                     toreturn.Add(current);
                 }
@@ -229,13 +228,13 @@ namespace Microsoft.Edge.A11y
         /// <param name="element">The element being extended</param>
         /// <param name="ids">The ids of the patterns</param>
         /// <returns>A list of all the patterns supported</returns>
-        public static List<string> GetPatterns(this IUIAutomationElement element, out List<int> ids)
+        public static List<UIAPattern> GetPatterns(this IUIAutomationElement element, out List<int> ids)
         {
             int[] inIds;
             string[] names;
             new CUIAutomation8().PollForPotentialSupportedPatterns(element, out inIds, out names);
             ids = inIds.ToList();
-            return names.ToList();
+            return names.ToList().ConvertAll(n => (UIAPattern)Enum.Parse(typeof(UIAPattern), n));
         }
 
         /// <summary>
@@ -243,7 +242,7 @@ namespace Microsoft.Edge.A11y
         /// </summary>
         /// <param name="element">The element being extended</param>
         /// <returns>A list of all the patterns supported</returns>
-        public static List<string> GetPatterns(this IUIAutomationElement element)
+        public static List<UIAPattern> GetPatterns(this IUIAutomationElement element)
         {
             var ids = new List<int>();
             return GetPatterns(element, out ids);

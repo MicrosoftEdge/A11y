@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace Microsoft.Edge.A11y
@@ -10,6 +9,7 @@ namespace Microsoft.Edge.A11y
     public static class ElementConverter
     {
         private static Dictionary<int, UIAControlType> _ControlTypeMapping;
+        private static Dictionary<int, UIAPattern> _PatternMapping;
         private static Dictionary<int, UIAProperty> _PropertyMapping;
         private static Dictionary<int, UIALandmarkType> _LandmarkTypeMapping;
         private static Dictionary<WebDriverKey, string> _WebDriverKeyMapping;
@@ -61,6 +61,48 @@ namespace Microsoft.Edge.A11y
             ControlTypeMapping.Add(50040, UIAControlType.Appbar);
 
             _ControlTypeMapping = ControlTypeMapping;
+        }
+
+        private static void InitPatternMapping()
+        {
+            var PatternMapping = new Dictionary<int, UIAPattern>();
+
+            PatternMapping.Add(10023, UIAPattern.AnnotationPattern);
+            PatternMapping.Add(10033, UIAPattern.CustomNavigationPattern);
+            PatternMapping.Add(10011, UIAPattern.DockPattern);
+            PatternMapping.Add(10030, UIAPattern.DragPattern);
+            PatternMapping.Add(10031, UIAPattern.DropTargetPattern);
+            PatternMapping.Add(10005, UIAPattern.ExpandCollapsePattern);
+            PatternMapping.Add(10007, UIAPattern.GridItemPattern);
+            PatternMapping.Add(10006, UIAPattern.GridPattern);
+            PatternMapping.Add(10000, UIAPattern.InvokePattern);
+            PatternMapping.Add(10019, UIAPattern.ItemContainerPattern);
+            PatternMapping.Add(10018, UIAPattern.LegacyIAccessiblePattern);
+            PatternMapping.Add(10008, UIAPattern.MultipleViewPattern);
+            PatternMapping.Add(10022, UIAPattern.ObjectModelPattern);
+            PatternMapping.Add(10003, UIAPattern.RangeValuePattern);
+            PatternMapping.Add(10017, UIAPattern.ScrollItemPattern);
+            PatternMapping.Add(10004, UIAPattern.ScrollPattern);
+            PatternMapping.Add(10010, UIAPattern.SelectionItemPattern);
+            PatternMapping.Add(10001, UIAPattern.SelectionPattern);
+            PatternMapping.Add(10026, UIAPattern.SpreadsheetPattern);
+            PatternMapping.Add(10027, UIAPattern.SpreadsheetItemPattern);
+            PatternMapping.Add(10025, UIAPattern.StylesPattern);
+            PatternMapping.Add(10021, UIAPattern.SynchronizedInputPattern);
+            PatternMapping.Add(10013, UIAPattern.TableItemPattern);
+            PatternMapping.Add(10012, UIAPattern.TablePattern);
+            PatternMapping.Add(10029, UIAPattern.TextChildPattern);
+            PatternMapping.Add(10032, UIAPattern.TextEditPattern);
+            PatternMapping.Add(10014, UIAPattern.TextPattern);
+            PatternMapping.Add(10024, UIAPattern.TextPattern);
+            PatternMapping.Add(10015, UIAPattern.TogglePattern);
+            PatternMapping.Add(10016, UIAPattern.TransformPattern);
+            PatternMapping.Add(10028, UIAPattern.TransformPattern);
+            PatternMapping.Add(10002, UIAPattern.ValuePattern);
+            PatternMapping.Add(10020, UIAPattern.VirtualizedItemPattern);
+            PatternMapping.Add(10009, UIAPattern.WindowPattern);
+
+            _PatternMapping = PatternMapping;
         }
 
         private static void InitPropertyMapping()
@@ -275,6 +317,20 @@ namespace Microsoft.Edge.A11y
         }
 
         /// <summary>
+        /// Convert a code into an pattern name
+        /// </summary>
+        /// <param name="code"></param>
+        /// <returns></returns>
+        public static UIAPattern GetPatternFromCode(int code)
+        {
+            if (_PatternMapping== null)
+            {
+                InitPatternMapping();
+            }
+            return _PatternMapping.ContainsKey(code) ? _PatternMapping[code] : UIAPattern.Unknown;
+        }
+
+        /// <summary>
         /// Convert a code into a property
         /// </summary>
         /// <param name="code"></param>
@@ -370,6 +426,43 @@ namespace Microsoft.Edge.A11y
             Separator,
             Semanticzoom,
             Appbar,
+        }
+
+        public enum UIAPattern
+        {
+            Unknown,
+            AnnotationPattern,
+            CustomNavigationPattern,
+            DockPattern,
+            DragPattern,
+            DropTargetPattern,
+            ExpandCollapsePattern,
+            GridItemPattern,
+            GridPattern,
+            InvokePattern,
+            ItemContainerPattern,
+            LegacyIAccessiblePattern,
+            MultipleViewPattern,
+            ObjectModelPattern,
+            RangeValuePattern,
+            ScrollItemPattern,
+            ScrollPattern,
+            SelectionItemPattern,
+            SelectionPattern,
+            SpreadsheetItemPattern,
+            SpreadsheetPattern,
+            StylesPattern,
+            SynchronizedInputPattern,
+            TableItemPattern,
+            TablePattern,
+            TextChildPattern,
+            TextEditPattern,
+            TextPattern,
+            TogglePattern,
+            TransformPattern,
+            ValuePattern,
+            VirtualizedItemPattern,
+            WindowPattern
         }
 
         public enum UIAProperty

@@ -10,12 +10,11 @@ namespace Microsoft.Edge.A11y
     {
         static void Main(string[] args)
         {
-            var testName = args.FirstOrDefault();
+            var alltests = JSONParser.SampleJsonTest();
 
-            TestStrategy a11yStrategy = new EdgeStrategy(fileSuffix: ".html");
+            TestStrategy a11yStrategy = new EdgeStrategy(repositoryPath: @"C:\Users\dbrett\git\a11y\", fileSuffix: ".html");
 
-            var results = TestData.alltests.Value.Where(td =>
-                (testName == null || td.TestName == testName)) //Either no test name was provided or the test names match
+            var results = alltests
                 .ToList().ConvertAll(td => a11yStrategy.Execute(td)) //Execute each of the tests
                 .Where(r => r.Any()) //Only keep the ones that were executed
                 .ToList().ConvertAll(r => //Convert results from internal form (Pass/Pass, Pass/Fail, Fail/Fail) to external (Pass, Half, Fail)

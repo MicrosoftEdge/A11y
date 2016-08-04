@@ -42,12 +42,11 @@ namespace Microsoft.Edge.A11y
 
             //Find elements using ControlType or the alternate search strategy
             HashSet<UIAControlType> foundControlTypes;
-            var testElements = EdgeA11yTools.SearchChildren(browserElement, testData.ControlType, testData.SearchStrategy, out foundControlTypes);
+            var testElements = EdgeA11yTools.SearchChildren(browserElement, testData.ControlType, out foundControlTypes);
             if (testElements.Count == 0)
             {
-                return Fail(testData.TestName, testData.SearchStrategy == null ?
-                    "Unable to find the element, found these instead: " + foundControlTypes.Select(ct => ct.ToString()).Aggregate((a, b) => a + ", " + b) :
-                    "Unable to find the element using the alternate search strategy");
+                return Fail(testData.TestName,
+                    "Unable to find the element, found these instead: " + foundControlTypes.Select(ct => ct.ToString()).Aggregate((a, b) => a + ", " + b));
             }
 
             var moreInfo = new StringBuilder();
@@ -91,44 +90,13 @@ namespace Microsoft.Edge.A11y
                 }
             }
 
-            //If necessary, naming and descriptions
-            //This is done "out of order" since the keyboard checks below invalidate the tree
-            if (testData.RequiredNames != null || testData.RequiredDescriptions != null)
+            foreach(var pattern in testData.RequiredPatterns)
             {
-                moreInfo.Append(CheckElementNames(testElements,
-                    testData.RequiredNames ?? new List<string>(),
-                    testData.RequiredDescriptions ?? new List<string>()));
-            }
-
-            //If necessary, check keboard accessibility
-            var tabbable = EdgeA11yTools.TabbableIds(_driverManager);
-            if (testData.KeyboardElements != null && testData.KeyboardElements.Count > 0)
-            {
-                foreach (var e in testData.KeyboardElements)
+                if(!testElements.All(t => t.GetPatterns().Contains(pattern)))
                 {
-                    if (!tabbable.Contains(e))
-                    {
-                        moreInfo.Append("\nCould not access element with id: '" + e + "' by tab");
-                    }
+                    moreInfo.Append("\nElement did not match pattern: ");
+                    moreInfo.Append(pattern.ToString());
                 }
-            }
-
-            try
-            {
-                //If necessary, check any additional requirements
-                if (testData.AdditionalRequirement != null)
-                {
-                    testElements = EdgeA11yTools.SearchChildren(browserElement, testData.ControlType, testData.SearchStrategy, out foundControlTypes);
-                    var additionalRequirementResult = testData.AdditionalRequirement(testElements, _driverManager, tabbable);
-                    if (additionalRequirementResult.Result != ResultType.Pass)
-                    {
-                        moreInfo.AppendLine(additionalRequirementResult.MoreInfo);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                moreInfo.Append("\nCaught exception during test execution, ERROR: " + ex.Message + "\nCallStack:\n" + ex.StackTrace);
             }
 
             var moreInfoString = moreInfo.ToString();
