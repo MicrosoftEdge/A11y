@@ -87,6 +87,15 @@ namespace Microsoft.Edge.A11y
             }
         }
 
+        private List<TestData> _Children;
+        public List<TestData> Children
+        {
+            get
+            {
+                return _Children;
+            }
+        }
+
         /// <summary>
         /// Simple Ctor
         /// </summary>
@@ -100,7 +109,8 @@ namespace Microsoft.Edge.A11y
             string localizedControlType = null,
             UIALandmarkType landmarkType = UIALandmarkType.Unknown,
             string localizedLandmarkType = null,
-            List<UIAPattern> requiredPatterns = null)
+            List<UIAPattern> requiredPatterns = null,
+            List<TestData> children = null)
         {
             _TestName = testName;
             _ControlType = controlType;
@@ -108,6 +118,7 @@ namespace Microsoft.Edge.A11y
             _LandmarkType = landmarkType;
             _LocalizedLandmarkType = localizedLandmarkType;
             _RequiredPatterns = requiredPatterns;
+            _Children = children ?? new List<TestData>();
         }
 
         /// <summary>
