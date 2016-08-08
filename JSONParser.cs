@@ -3,17 +3,17 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using static Microsoft.Edge.A11y.ElementConverter;
 using System.Linq;
+using System.IO;
 
 namespace Microsoft.Edge.A11y
 {
     static class JSONParser
     {
-        static string sample = "{ \"id\": \"checkbox\", \"UIA\": { \"elements\": [{ \"ControlType\": \"Checkbox\", \"LocalizedControlType\": \"check box\", \"name\": \"Placeholder content\", \"patterns\": [{ \"name\": \"TogglePattern\", \"properties\": [{ \"name\": \"ToggleState\", \"value\": \"Off\" }] }] }] } }";
-
         public static IEnumerable<TestData> SampleJsonTest()
         {
             try
             {
+                var sample = File.ReadAllText("sample.json");
                 dynamic converted = JsonConvert.DeserializeObject(sample);
                 var UIA = converted.UIA;
                 var toreturn = new List<TestData>();
@@ -29,9 +29,28 @@ namespace Microsoft.Edge.A11y
             }
         }
 
-        private static TestData ParseElement(dynamic element, string name)
+        private static TestData ParseElement(dynamic element, string name, bool recursive = false)
         {
-            var controlType = Enum.Parse(typeof(UIAControlType), element.ControlType.ToString());
+            UIAControlType controlType = UIAControlType.Unknown;
+            try
+            {
+                controlType = Enum.Parse(typeof(UIAControlType), element.ControlType.ToString());
+            }
+            catch { }
+
+            if (recursive)
+            {
+                try
+                {
+                    name = element.name;
+                }
+                catch { }
+            }
+
+            if(controlType == UIAControlType.Unknown && !recursive)
+            {
+                throw new Exception("Element did not have control type");
+            }
 
             string localizedControlType = null;
             try
@@ -57,7 +76,7 @@ namespace Microsoft.Edge.A11y
                 children = new List<TestData>();
                 foreach (var child in element.children)
                 {
-                    children.Add(ParseElement(child, name));
+                    children.Add(ParseElement(child, name, true));
                 }
             }
             catch { }

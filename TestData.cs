@@ -18,12 +18,12 @@ namespace Microsoft.Edge.A11y
         /// <summary>
         /// The name of the test, which corresponds to the name of the html element
         /// </summary>
-        private string _TestName;
-        public string TestName
+        private string _Name;
+        public string Name
         {
             get
             {
-                return _TestName;
+                return _Name;
             }
         }
 
@@ -78,6 +78,9 @@ namespace Microsoft.Edge.A11y
             }
         }
 
+        /// <summary>
+        /// The patterns an element is required to implement
+        /// </summary>
         private List<UIAPattern> _RequiredPatterns;
         public List<UIAPattern> RequiredPatterns
         {
@@ -87,6 +90,9 @@ namespace Microsoft.Edge.A11y
             }
         }
 
+        /// <summary>
+        /// The child elements an element is required to have
+        /// </summary>
         private List<TestData> _Children;
         public List<TestData> Children
         {
@@ -99,12 +105,12 @@ namespace Microsoft.Edge.A11y
         /// <summary>
         /// Simple Ctor
         /// </summary>
-        /// <param name="testName"></param>
+        /// <param name="name"></param>
         /// <param name="controlType"></param>
         /// <param name="localizedControlType"></param>
         /// <param name="landmarkType"></param>
         /// <param name="localizedLandmarkType"></param>
-        public TestData(string testName,
+        public TestData(string name,
             UIAControlType controlType,
             string localizedControlType = null,
             UIALandmarkType landmarkType = UIALandmarkType.Unknown,
@@ -112,7 +118,7 @@ namespace Microsoft.Edge.A11y
             List<UIAPattern> requiredPatterns = null,
             List<TestData> children = null)
         {
-            _TestName = testName;
+            _Name = name;
             _ControlType = controlType;
             _LocalizedControlType = localizedControlType;
             _LandmarkType = landmarkType;
@@ -143,37 +149,6 @@ namespace Microsoft.Edge.A11y
                 T pattern = (T)((IUIAutomationElement5)element).GetCurrentPattern(patternIds[patternNames.IndexOf(patternName)]);
                 return pattern;
             }
-        }
-
-        /// <summary>
-        /// Helper method to tab until an element whose name contains the given string
-        /// reports that it has focus
-        /// </summary>
-        /// <param name="parent">The parent of the target element</param>
-        /// <param name="name">A string which the target element's name will contain</param>
-        /// <param name="tabId">The id to send tabs to</param>
-        /// <param name="driver">The WebDriver</param>
-        /// <returns>true if the element was found, false otherwise</returns>
-        private static bool TabToElementByName(IUIAutomationElement parent, string name, string tabId, DriverManager driver)
-        {
-            var tabs = 0;
-            var resets = 0;
-            var element = parent.GetAllDescendents(e => e.CurrentName.Contains(name)).First();
-            while (!(bool)element.GetCurrentPropertyValue(GetPropertyCode(UIAProperty.HasKeyboardFocus)))
-            {
-                driver.SendSpecialKeys(tabId, WebDriverKey.Tab);
-                if (++tabs > 20)
-                {
-                    Javascript.ClearFocus(driver, 0);
-                    tabs = 0;
-                    resets++;
-                    if (resets > 5)
-                    {
-                        return false;
-                    }
-                }
-            }
-            return true;
         }
 
         /// <summary>

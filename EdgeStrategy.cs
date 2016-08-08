@@ -37,75 +37,89 @@ namespace Microsoft.Edge.A11y
             var browserElement = EdgeA11yTools.FindBrowserDocument(0);
             if (browserElement == null)
             {
-                return Fail(testData.TestName, "Unable to find the browser");
+                return Fail(testData.Name, "Unable to find the browser");
             }
 
             //Find elements using ControlType or the alternate search strategy
             HashSet<UIAControlType> foundControlTypes;
-            var testElements = EdgeA11yTools.SearchChildren(browserElement, testData.ControlType, out foundControlTypes);
-            if (testElements.Count == 0)
+            var element = EdgeA11yTools.SearchChildren(browserElement, testData.ControlType, out foundControlTypes);
+            if (element == null)
             {
-                return Fail(testData.TestName,
+                return Fail(testData.Name,
                     "Unable to find the element, found these instead: " + foundControlTypes.Select(ct => ct.ToString()).Aggregate((a, b) => a + ", " + b));
             }
 
             var moreInfo = new StringBuilder();
 
+            TestElement(testData, element, moreInfo);
+
+            var moreInfoString = moreInfo.ToString();
+            if (moreInfoString != "")
+            {
+                return Half(testData.Name, moreInfoString.Trim());
+            }
+
+            return Pass(testData.Name);
+        }
+
+        private static void TestElement(TestData testData, IUIAutomationElement element, StringBuilder moreInfo)
+        {
             //If necessary, check localized control type
             if (testData.LocalizedControlType != null)
             {
-                foreach (var element in testElements)
+                if (!element.CurrentLocalizedControlType.Equals(testData.LocalizedControlType, StringComparison.OrdinalIgnoreCase))
                 {
-                    if (!element.CurrentLocalizedControlType.Equals(testData.LocalizedControlType, StringComparison.OrdinalIgnoreCase))
-                    {
-                        var error = "\nElement did not have the correct localized control type. Expected:" +
-                            testData.LocalizedControlType + " Actual:" + element.CurrentLocalizedControlType;
-                        moreInfo.Append(error);
-                    }
+                    var error = "\nElement did not have the correct localized control type. Expected:" +
+                        testData.LocalizedControlType + " Actual:" + element.CurrentLocalizedControlType;
+                    moreInfo.Append(error);
                 }
             }
 
             //If necessary, check landmark and localized landmark types
             if (testData.LandmarkType != UIALandmarkType.Unknown)
             {
-                foreach (var element in testElements)
+                var five = element as IUIAutomationElement5;
+                var convertedLandmark = GetLandmarkTypeFromCode(five.CurrentLandmarkType);
+                var localizedLandmark = five.CurrentLocalizedLandmarkType;
+
+                if (convertedLandmark != testData.LandmarkType)
                 {
-                    var five = element as IUIAutomationElement5;
-                    var convertedLandmark = GetLandmarkTypeFromCode(five.CurrentLandmarkType);
-                    var localizedLandmark = five.CurrentLocalizedLandmarkType;
+                    var error = "\nElement did not have the correct landmark type. Expected:" +
+                        testData.LandmarkType + " Actual:" + convertedLandmark + "\n";
+                    moreInfo.Append(error);
+                }
 
-                    if (convertedLandmark != testData.LandmarkType)
-                    {
-                        var error = "\nElement did not have the correct landmark type. Expected:" +
-                            testData.LandmarkType + " Actual:" + convertedLandmark + "\n";
-                        moreInfo.Append(error);
-                    }
-
-                    if (localizedLandmark != testData.LocalizedLandmarkType)
-                    {
-                        var error = "\nElement did not have the correct localized landmark type. Expected:" +
-                            testData.LocalizedLandmarkType + " Actual:" + localizedLandmark + "\n";
-                        moreInfo.Append(error);
-                    }
+                if (localizedLandmark != testData.LocalizedLandmarkType)
+                {
+                    var error = "\nElement did not have the correct localized landmark type. Expected:" +
+                        testData.LocalizedLandmarkType + " Actual:" + localizedLandmark + "\n";
+                    moreInfo.Append(error);
                 }
             }
 
-            foreach(var pattern in testData.RequiredPatterns)
+            foreach (var pattern in testData.RequiredPatterns)
             {
-                if(!testElements.All(t => t.GetPatterns().Contains(pattern)))
+                if (!element.GetPatterns().Contains(pattern))
                 {
                     moreInfo.Append("\nElement did not match pattern: ");
                     moreInfo.Append(pattern.ToString());
                 }
             }
 
-            var moreInfoString = moreInfo.ToString();
-            if (moreInfoString != "")
+            var elementChildren = element.Children();
+            foreach(var testChild in testData.Children)
             {
-                return Half(testData.TestName, moreInfoString.Trim());
+                var elementChild = elementChildren.FirstOrDefault(c => c.CurrentName == testChild.Name);
+                if(elementChild == default(IUIAutomationElement))
+                {
+                    moreInfo.Append("\nElement did not have child with name ");
+                    moreInfo.Append(testChild.Name);
+                }
+                else
+                {
+                    TestElement(testChild, elementChild, moreInfo);
+                }
             }
-
-            return Pass(testData.TestName);
         }
 
         /// <summary>
