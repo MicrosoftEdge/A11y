@@ -6,28 +6,35 @@
     using System.Linq;
     using Win32;
 
-    class Program
+    /// <summary>
+    /// The main entry point for A11y
+    /// </summary>
+    public class Program
     {
-        static void Main(string[] args)
+        /// <summary>
+        /// The main method
+        /// </summary>
+        /// <param name="args">The command line arguments to the program</param>
+        public static void Main(string[] args)
         {
             var testName = args.FirstOrDefault();
 
             TestStrategy a11yStrategy = new EdgeStrategy(fileSuffix: ".html");
 
             var results = TestData.alltests.Value.Where(td =>
-                (testName == null || td.TestName == testName)) //Either no test name was provided or the test names match
-                .ToList().ConvertAll(td => a11yStrategy.Execute(td)) //Execute each of the tests
-                .Where(r => r.Any()) //Only keep the ones that were executed
-                .ToList().ConvertAll(r => //Convert results from internal form (Pass/Pass, Pass/Fail, Fail/Fail) to external (Pass, Half, Fail)
+                (testName == null || td.TestName == testName)) // Either no test name was provided or the test names match
+                .ToList().ConvertAll(td => a11yStrategy.Execute(td)) // Execute each of the tests
+                .Where(r => r.Any()) // Only keep the ones that were executed
+                .ToList().ConvertAll(r => // Convert results from internal form (Pass/Pass, Pass/Fail, Fail/Fail) to external (Pass, Half, Fail)
                 {
                     var first = r.ElementAt(0);
                     var second = r.ElementAt(1);
                     second.Result = second.Result == ResultType.Fail && first.Result == ResultType.Pass ? ResultType.Half : second.Result;
-                    second.Name = second.Name.Replace("-2", "");
+                    second.Name = second.Name.Replace("-2", string.Empty);
                     return second;
                 });
 
-            //output results to the console: failures, then halves, then passes
+            // output results to the console: failures, then halves, then passes
             results.OrderBy(r => r.Result == ResultType.Pass).ThenBy(r => r.Result == ResultType.Half).ToList().ForEach(r => Console.WriteLine(r));
 
             if (results.Any())
@@ -59,12 +66,17 @@
             a11yStrategy.Close();
         }
 
+        /// <summary>
+        /// Prints all results to a csv file
+        /// </summary>
+        /// <param name="results">The results to save</param>
+        /// <param name="score">The overall score</param>
         public static void ResultsToCSV(List<TestCaseResult> results, double score)
         {
-            //Get the file
+            // Get the file
             var filePath = Path.Combine(DriverManager.ProjectRootFolder, "scores.csv");
 
-            //If this is the first time, write the header line with the test names
+            // If this is the first time, write the header line with the test names
             if (!File.Exists(filePath))
             {
                 var headerLine = "buildNumber,buildIteration,buildArchitecture,buildBranch,buildDate,score,time," +
@@ -80,10 +92,10 @@
 
             var time = DateTime.Now.ToString("yyyyMMdd-HHmm");
 
-            //Write the results
+            // Write the results
             var writer = File.AppendText(filePath);
             var resultline = (build as string).Replace('.', ',') + "," + score + "," + time + "," +
-                results.Select(r => r.Result.ToString() + "," + (r.MoreInfo != null ? r.MoreInfo.Replace('\n', '\t') : ""))
+                results.Select(r => r.Result.ToString() + "," + (r.MoreInfo != null ? r.MoreInfo.Replace('\n', '\t') : string.Empty))
                 .Aggregate((s1, s2) => s1 + "," + s2);
             writer.WriteLine(resultline);
 
