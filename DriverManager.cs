@@ -1,14 +1,13 @@
-﻿using OpenQA.Selenium;
-using OpenQA.Selenium.Edge;
-using OpenQA.Selenium.Remote;
-using OpenQA.Selenium.Support.UI;
-using System;
-using System.IO;
-using System.Linq;
-using System.Threading;
-
-namespace Microsoft.Edge.A11y
+﻿namespace Microsoft.Edge.A11y
 {
+    using OpenQA.Selenium;
+    using OpenQA.Selenium.Edge;
+    using OpenQA.Selenium.Remote;
+    using OpenQA.Selenium.Support.UI;
+    using System;
+    using System.IO;
+    using System.Threading;
+
     /// <summary>
     /// This is another wrapper around WebDriver. The reason this is used is to maintain
     /// compatibility with Edge internal testing tools.

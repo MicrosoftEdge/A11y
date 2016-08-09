@@ -1,10 +1,8 @@
-﻿using Interop.UIAutomationCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace Microsoft.Edge.A11y
+﻿namespace Microsoft.Edge.A11y
 {
+    using System.Collections.Generic;
+    using System.Linq;
+
     /// <summary>
     /// A strategy for testing Edge Accessibility as scored at 
     /// http://html5accessibility.com/
@@ -55,7 +53,7 @@ namespace Microsoft.Edge.A11y
                         new TestCaseResult{
                             Result = ResultType.Pass,
                             Name = name + "-1",
-                        }, 
+                        },
                         new TestCaseResult{
                             Result = ResultType.Pass,
                             Name = name + "-2"
@@ -75,7 +73,7 @@ namespace Microsoft.Edge.A11y
                             Result = ResultType.Fail,
                             Name = name + "-1",
                             MoreInfo = cause
-                        }, 
+                        },
                         new TestCaseResult{
                             Result = ResultType.Fail,
                             Name = name + "-2",
@@ -95,7 +93,7 @@ namespace Microsoft.Edge.A11y
                         new TestCaseResult{
                             Result = ResultType.Pass,
                             Name = name + "-1"
-                        }, 
+                        },
                         new TestCaseResult{
                             Result = ResultType.Fail,
                             Name = name + "-2",

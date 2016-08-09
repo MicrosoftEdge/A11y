@@ -1,7 +1,7 @@
-﻿using System;
-
-namespace Microsoft.Edge.A11y
+﻿namespace Microsoft.Edge.A11y
 {
+    using System;
+
     /// <summary>
     /// Used to store JavaScript that is passed to the page for testing
     /// </summary>

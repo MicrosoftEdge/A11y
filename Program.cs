@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using Microsoft.Win32;
-
-namespace Microsoft.Edge.A11y
+﻿namespace Microsoft.Edge.A11y
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using Win32;
+
     class Program
     {
         static void Main(string[] args)

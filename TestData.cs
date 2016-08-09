@@ -1,12 +1,12 @@
-﻿using Interop.UIAutomationCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using static Microsoft.Edge.A11y.ElementConverter;
-
-namespace Microsoft.Edge.A11y
+﻿namespace Microsoft.Edge.A11y
 {
+    using Interop.UIAutomationCore;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Threading;
+    using static ElementConverter;
+
     /// <summary>
     /// This is where the logic of the tests is stored
     /// </summary>

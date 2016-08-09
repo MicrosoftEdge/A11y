@@ -1,12 +1,12 @@
-﻿using Interop.UIAutomationCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using static Microsoft.Edge.A11y.ElementConverter;
-
-namespace Microsoft.Edge.A11y
+﻿namespace Microsoft.Edge.A11y
 {
+    using Interop.UIAutomationCore;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using static ElementConverter;
+
     /// <summary>
     /// A strategy for testing Edge Accessibility as scored at 
     /// http://html5accessibility.com/

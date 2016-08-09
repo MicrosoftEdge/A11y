@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace Microsoft.Edge.A11y
+﻿namespace Microsoft.Edge.A11y
 {
+    using System.Collections.Generic;
+    using System.Linq;
+
     /// <summary>
     /// A tool to convert element names into codes and back again
     /// </summary>

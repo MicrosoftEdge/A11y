@@ -1,7 +1,7 @@
-﻿using System.Text;
-
-namespace Microsoft.Edge.A11y
+﻿namespace Microsoft.Edge.A11y
 {
+    using System.Text;
+
     public enum ResultType
     {
         Fail = 0,

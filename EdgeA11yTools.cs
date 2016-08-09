@@ -1,15 +1,15 @@
-﻿using Interop.UIAutomationCore;
-using OpenQA.Selenium;
-using System;
-using System.Collections.Generic;
-using System.Drawing.Imaging;
-using System.IO;
-using System.Linq;
-using System.Text;
-using static Microsoft.Edge.A11y.ElementConverter;
-
-namespace Microsoft.Edge.A11y
+﻿namespace Microsoft.Edge.A11y
 {
+    using Interop.UIAutomationCore;
+    using OpenQA.Selenium;
+    using System;
+    using System.Collections.Generic;
+    using System.Drawing.Imaging;
+    using System.IO;
+    using System.Linq;
+    using System.Text;
+    using static ElementConverter;
+
     /// <summary>
     /// A set of helper methods which wrap accessibility APIs
     /// </summary>
@@ -182,7 +182,7 @@ namespace Microsoft.Edge.A11y
         public static void SendTabs(this DriverManager driver, string element, int count)
         {
             var tabs = new List<WebDriverKey>();
-            for(var i = 0; i< count; i++)
+            for (var i = 0; i < count; i++)
             {
                 tabs.Add(WebDriverKey.Tab);
             }
@@ -204,7 +204,7 @@ namespace Microsoft.Edge.A11y
             var stringToSend = new StringBuilder();
             foreach (var key in keys)
             {
-                if(key == WebDriverKey.Wait)
+                if (key == WebDriverKey.Wait)
                 {
                     System.Threading.Thread.Sleep(1000);
                     driver.SendKeys(elementId, stringToSend.ToString());
