@@ -1,9 +1,12 @@
 <StyleCopSettings Version="105">
   <GlobalSettings>
     <CollectionProperty Name="RecognizedWords">
+      <Value>controltype</Value>
       <Value>csv</Value>
       <Value>executable</Value>
       <Value>executables</Value>
+      <Value>recurse</Value>
+      <Value>tabbable</Value>
     </CollectionProperty>
   </GlobalSettings>
   <Analyzers>

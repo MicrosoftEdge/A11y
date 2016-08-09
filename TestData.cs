@@ -246,7 +246,7 @@
 
                         foreach (var e in elements)
                         {
-                            subdomElements.AddRange(e.GetAllDescendents((d) =>
+                            subdomElements.AddRange(e.GetAllDescendants((d) =>
                             {
                                 var convertedRole =
                                     GetControlTypeFromCode(d.CurrentControlType);
@@ -529,7 +529,7 @@
                                     throw new Exception("\nMore than one ControllerFor present, test assumption failed");
                                 }
                                 var thisDialog = thisElement.CurrentControllerFor.GetElement(0);
-                                var descendents = thisDialog.GetAllDescendents();
+                                var descendents = thisDialog.GetAllDescendants();
 
                                 //sliders
                                 var sliders = descendents.Where(d => GetControlTypeFromCode(d.CurrentControlType) == UIAControlType.Slider);
@@ -1371,7 +1371,7 @@
         {
             var tabs = 0;
             var resets = 0;
-            var element = parent.GetAllDescendents(e => e.CurrentName.Contains(name)).First();
+            var element = parent.GetAllDescendants(e => e.CurrentName.Contains(name)).First();
             while (!(bool)element.GetCurrentPropertyValue(GetPropertyCode(UIAProperty.HasKeyboardFocus)))
             {
                 driver.SendSpecialKeys(tabId, WebDriverKey.Tab);
@@ -1449,7 +1449,7 @@
             }
 
             WaitForCondition(() =>
-                elements[0].GetAllDescendents().Any(e => e.CurrentName == "Unmute")
+                elements[0].GetAllDescendants().Any(e => e.CurrentName == "Unmute")
             );
 
             driver.Screenshot("before_enter_to_unmute");
@@ -2298,7 +2298,7 @@
                     //Enter something, tab to the clear button, clear with space
                     driver.SendKeys(id, "x");
                     driver.SendSpecialKeys(id, WebDriverKey.Wait);
-                    if (!elements.Any(e => e.GetAllDescendents().Any(d => d.CurrentName.ToLowerInvariant().Contains("clear value"))))
+                    if (!elements.Any(e => e.GetAllDescendants().Any(d => d.CurrentName.ToLowerInvariant().Contains("clear value"))))
                     {
                         result.Result = ResultType.Half;
                         result.AddInfo("\nUnable to find a clear button as a child of any element");
