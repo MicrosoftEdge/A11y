@@ -5,6 +5,8 @@
       <Value>csv</Value>
       <Value>executable</Value>
       <Value>executables</Value>
+      <Value>func</Value>
+      <Value>modernizr</Value>
       <Value>recurse</Value>
       <Value>tabbable</Value>
     </CollectionProperty>

@@ -64,6 +64,7 @@
     <Compile Include="EdgeA11yTools.cs" />
     <Compile Include="ElementConverter.cs" />
     <Compile Include="DriverManager.cs" />
+    <Compile Include="Extensions.cs" />
     <Compile Include="Javascript.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="TestCaseResult.cs" />
@@ -74,6 +75,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="Settings.StyleCop" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Interop.UIAutomationCore.dll">
