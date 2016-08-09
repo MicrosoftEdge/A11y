@@ -20,10 +20,10 @@
         /// <param name="fileSuffix">A suffix to add to each element name when creating the path</param>
         public EdgeStrategy(string repositoryPath = "https://cdn.rawgit.com/DHBrett/AT-browser-tests/gh-pages/test-files/", string fileSuffix = "")
         {
-            this._driverManager = new DriverManager(TimeSpan.FromSeconds(10));
+            this.DriverManager = new DriverManager(TimeSpan.FromSeconds(10));
             System.Threading.Thread.Sleep(TimeSpan.FromSeconds(2)); // Wait for the browser to load before we start searching
-            this._RepositoryPath = repositoryPath;
-            this._FileSuffix = fileSuffix;
+            this.RepositoryPath = repositoryPath;
+            this.FileSuffix = fileSuffix;
         }
 
         /// <summary>
@@ -107,7 +107,7 @@
             }
 
             // If necessary, check keboard accessibility
-            var tabbable = EdgeA11yTools.TabbableIds(_driverManager);
+            var tabbable = EdgeA11yTools.TabbableIds(DriverManager);
             if (testData.KeyboardElements != null && testData.KeyboardElements.Count > 0)
             {
                 foreach (var e in testData.KeyboardElements)
@@ -125,7 +125,7 @@
                 if (testData.AdditionalRequirement != null)
                 {
                     testElements = EdgeA11yTools.SearchChildren(browserElement, testData.ControlType, testData.SearchStrategy, out foundControlTypes);
-                    var additionalRequirementResult = testData.AdditionalRequirement(testElements, _driverManager, tabbable);
+                    var additionalRequirementResult = testData.AdditionalRequirement(testElements, DriverManager, tabbable);
                     if (additionalRequirementResult.Result != ResultType.Pass)
                     {
                         moreInfo.AppendLine(additionalRequirementResult.MoreInfo);
