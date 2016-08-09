@@ -58,7 +58,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="EdgeStrategy.cs" />
+    <Compile Include="EdgeStrategy.cs">
+      <ExcludeFromStyleCop>False</ExcludeFromStyleCop>
+    </Compile>
     <Compile Include="EdgeA11yTools.cs" />
     <Compile Include="ElementConverter.cs" />
     <Compile Include="DriverManager.cs" />
@@ -67,6 +69,7 @@
     <Compile Include="TestCaseResult.cs" />
     <Compile Include="TestData.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TestCaseResultExt.cs" />
     <Compile Include="TestStrategy.cs" />
   </ItemGroup>
   <ItemGroup>

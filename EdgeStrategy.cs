@@ -1,11 +1,11 @@
 ﻿namespace Microsoft.Edge.A11y
 {
-    using Interop.UIAutomationCore;
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Text;
     using static ElementConverter;
+    using Interop.UIAutomationCore;
 
     /// <summary>
     /// A strategy for testing Edge Accessibility as scored at 
@@ -13,46 +13,50 @@
     /// </summary>
     internal class EdgeStrategy : TestStrategy
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="EdgeStrategy"/> class
+        /// </summary>
+        /// <param name="repositoryPath">The base path for all the elements</param>
+        /// <param name="fileSuffix">A suffix to add to each element name when creating the path</param>
         public EdgeStrategy(string repositoryPath = "https://cdn.rawgit.com/DHBrett/AT-browser-tests/gh-pages/test-files/", string fileSuffix = "")
         {
-            _driverManager = new DriverManager(TimeSpan.FromSeconds(10));
-            System.Threading.Thread.Sleep(TimeSpan.FromSeconds(2));//Wait for the browser to load before we start searching
-            _RepositoryPath = repositoryPath;
-            _FileSuffix = fileSuffix;
+            this._driverManager = new DriverManager(TimeSpan.FromSeconds(10));
+            System.Threading.Thread.Sleep(TimeSpan.FromSeconds(2)); // Wait for the browser to load before we start searching
+            this._RepositoryPath = repositoryPath;
+            this._FileSuffix = fileSuffix;
         }
 
         /// <summary>
         /// This handles most of the work of the test cases.
-        ///
-        /// N.B. all the test case results are returned in pairs, since we need to be
-        /// able to give half scores for certain results.
         /// </summary>
         /// <param name="testData">An object which stores information about the
         /// expected results</param>
-        /// <param name="driverManager"></param>
-        /// <returns></returns>
+        /// <returns>A list of results for a given element</returns>
         internal override IEnumerable<TestCaseResult> TestElement(TestData testData)
         {
-            //Find the browser
+            // Find the browser
             var browserElement = EdgeA11yTools.FindBrowserDocument(0);
             if (browserElement == null)
             {
-                return Fail(testData.TestName, "Unable to find the browser");
+                return this.Fail(testData.TestName, "Unable to find the browser");
             }
 
-            //Find elements using ControlType or the alternate search strategy
+            // Find elements using ControlType or the alternate search strategy
             HashSet<UIAControlType> foundControlTypes;
             var testElements = EdgeA11yTools.SearchChildren(browserElement, testData.ControlType, testData.SearchStrategy, out foundControlTypes);
             if (testElements.Count == 0)
             {
-                return Fail(testData.TestName, testData.SearchStrategy == null ?
-                    "Unable to find the element, found these instead: " + foundControlTypes.Select(ct => ct.ToString()).Aggregate((a, b) => a + ", " + b) :
-                    "Unable to find the element using the alternate search strategy");
+                if (testData.SearchStrategy == null)
+                {
+                    return this.Fail(testData.TestName, "Unable to find the element, found these instead: " + foundControlTypes.Select(ct => ct.ToString()).Aggregate((a, b) => a + ", " + b));
+                }
+
+                return this.Fail(testData.TestName, "Unable to find the element using the alternate search strategy");
             }
 
             var moreInfo = new StringBuilder();
 
-            //If necessary, check localized control type
+            // If necessary, check localized control type
             if (testData.LocalizedControlType != null)
             {
                 foreach (var element in testElements)
@@ -66,7 +70,7 @@
                 }
             }
 
-            //If necessary, check landmark and localized landmark types
+            // If necessary, check landmark and localized landmark types
             if (testData.LandmarkType != UIALandmarkType.Unknown)
             {
                 foreach (var element in testElements)
@@ -91,16 +95,18 @@
                 }
             }
 
-            //If necessary, naming and descriptions
-            //This is done "out of order" since the keyboard checks below invalidate the tree
+            // If necessary, naming and descriptions
+            // This is done "out of order" since the keyboard checks below invalidate the tree
             if (testData.RequiredNames != null || testData.RequiredDescriptions != null)
             {
-                moreInfo.Append(CheckElementNames(testElements,
+                CheckElementNames(
+                    moreInfo,
+                    testElements,
                     testData.RequiredNames ?? new List<string>(),
-                    testData.RequiredDescriptions ?? new List<string>()));
+                    testData.RequiredDescriptions ?? new List<string>());
             }
 
-            //If necessary, check keboard accessibility
+            // If necessary, check keboard accessibility
             var tabbable = EdgeA11yTools.TabbableIds(_driverManager);
             if (testData.KeyboardElements != null && testData.KeyboardElements.Count > 0)
             {
@@ -115,7 +121,7 @@
 
             try
             {
-                //If necessary, check any additional requirements
+                // If necessary, check any additional requirements
                 if (testData.AdditionalRequirement != null)
                 {
                     testElements = EdgeA11yTools.SearchChildren(browserElement, testData.ControlType, testData.SearchStrategy, out foundControlTypes);
@@ -132,64 +138,64 @@
             }
 
             var moreInfoString = moreInfo.ToString();
-            if (moreInfoString != "")
+            if (moreInfoString != string.Empty)
             {
-                return Half(testData.TestName, moreInfoString.Trim());
+                return this.Half(testData.TestName, moreInfoString.Trim());
             }
 
-            return Pass(testData.TestName);
+            return this.Pass(testData.TestName);
         }
 
         /// <summary>
         /// Check all the elements for correct naming and descriptions
         /// </summary>
-        /// <param name="elements"></param>
-        /// <param name="requiredNames"></param>
-        /// <param name="requiredDescriptions"></param>
-        /// <returns></returns>
-        public static string CheckElementNames(List<IUIAutomationElement> elements, List<string> requiredNames, List<string> requiredDescriptions)
+        /// <param name="moreInfo">The StringBuilder which holds more info for the test</param>
+        /// <param name="elements">The UIA elements to check</param>
+        /// <param name="requiredNames">The names to search for</param>
+        /// <param name="requiredDescriptions">The descriptions to search for</param>
+        private static void CheckElementNames(StringBuilder moreInfo, List<IUIAutomationElement> elements, List<string> requiredNames, List<string> requiredDescriptions)
         {
             var names = elements.ConvertAll(element => element.CurrentName).Where(e => !string.IsNullOrEmpty(e)).ToList();
             var descriptions = elements.ConvertAll(element => ((IUIAutomationElement6)element).CurrentFullDescription).Where(e => !string.IsNullOrEmpty(e)).ToList();
-            var result = "";
 
-            //Check names
-            var expectedNotFound = requiredNames.Where(rn => !names.Contains(rn)).ToList();//get a list of all required names not found
-            var foundNotExpected = names.Where(n => !requiredNames.Contains(n)).ToList();//get a list of all found names that weren't required
-            result +=
+            // Check names - get a list of all required names not found
+            var expectedNotFound = requiredNames.Where(rn => !names.Contains(rn)).ToList();
+
+            // get a list of all found names that weren't required
+            var foundNotExpected = names.Where(n => !requiredNames.Contains(n)).ToList();
+
+            moreInfo.Append(
                 expectedNotFound.Any() ? "\n" +
                     expectedNotFound.Aggregate((a, b) => a + ", " + b) +
                     (expectedNotFound.Count() > 1 ?
                         " were expected as names but not found. " :
                         " was expected as a name but not found. ")
-                    : "";
-            result +=
+                    : string.Empty);
+            moreInfo.Append(
                 foundNotExpected.Any() ? "\n" +
                     foundNotExpected.Aggregate((a, b) => a + ", " + b) +
                     (foundNotExpected.Count() > 1 ?
                         " were found as names but not expected. " :
                         " was found as a name but not expected. ")
-                    : "";
+                    : string.Empty);
 
-            //Check descriptions
+            // Check descriptions
             expectedNotFound = requiredDescriptions.Where(rd => !descriptions.Contains(rd)).ToList();
             foundNotExpected = descriptions.Where(d => !requiredDescriptions.Contains(d)).ToList();
-            result +=
+            moreInfo.Append(
                 expectedNotFound.Any() ? "\n" +
                     expectedNotFound.Aggregate((a, b) => a + ", " + b) +
                     (expectedNotFound.Count() > 1 ?
                         " were expected as descriptions but not found. " :
                         " was expected as a description but not found. ")
-                    : "";
-            result +=
+                    : string.Empty);
+            moreInfo.Append(
                 foundNotExpected.Any() ? "\n" +
                     foundNotExpected.Aggregate((a, b) => a + ", " + b) +
                     (foundNotExpected.Count() > 1 ?
                         " were found as descriptions but not expected. " :
                         " was found as a description but not expected. ")
-                    : "";
-
-            return result;
+                    : string.Empty);
         }
     }
 }
