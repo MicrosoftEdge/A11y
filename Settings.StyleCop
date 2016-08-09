@@ -1,6 +1,7 @@
 <StyleCopSettings Version="105">
   <GlobalSettings>
     <CollectionProperty Name="RecognizedWords">
+      <Value>csv</Value>
       <Value>executable</Value>
       <Value>executables</Value>
     </CollectionProperty>
