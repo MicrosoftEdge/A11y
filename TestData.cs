@@ -211,9 +211,9 @@
                             new List<string>
                             {
                                 "Play",
-                                "Time elapsed",
+                                "Time elapsed/Skip back",
                                 "Seek",
-                                "Time remaining",
+                                "Time remaining/Skip ahead",
                                 "Mute",
                                 "Volume"
                             })(elements, driver, ids, result);
@@ -1522,12 +1522,12 @@
                                 new List<string>
                                 {
                                     "Play",
-                                    "Time elapsed",
+                                    "Time elapsed/Skip back",
                                     "Seek",
-                                    "Time remaining",
+                                    "Time remaining/Skip ahead",
                                     "Zoom in",
-                                    "Show audio",
-                                    "Show captioning",
+                                    "Show audio selection menu",
+                                    "Show captioning selection menu",
                                     "Mute",
                                     "Volume",
                                     "Full screen"
@@ -2737,7 +2737,7 @@
                     // get a list of all found names that weren't required
                     var foundNotExpected = names.Where(n => !requiredNames.Contains(n)).ToList();
 
-                    if (names.Count() != requiredNames.Count)
+                    if (expectedNotFound.Count > 0)
                     {
                         result.Result = ResultType.Half;
                         result.AddInfo(
