@@ -6,9 +6,12 @@
       <Value>executable</Value>
       <Value>executables</Value>
       <Value>func</Value>
+      <Value>hankaku</Value>
       <Value>modernizr</Value>
+      <Value>numpad</Value>
       <Value>recurse</Value>
       <Value>tabbable</Value>
+      <Value>zenkaku</Value>
     </CollectionProperty>
   </GlobalSettings>
   <Analyzers>

@@ -8,555 +8,1472 @@
     /// </summary>
     public static class ElementConverter
     {
-        private static Dictionary<int, UIAControlType> _ControlTypeMapping;
-        private static Dictionary<int, UIAProperty> _PropertyMapping;
-        private static Dictionary<int, UIALandmarkType> _LandmarkTypeMapping;
-        private static Dictionary<WebDriverKey, string> _WebDriverKeyMapping;
+        /// <summary>
+        /// The stored control type mapping
+        /// </summary>
+        private static Dictionary<int, UIAControlType> controlTypeMapping;
 
-        private static void InitControlTypeMapping()
+        /// <summary>
+        /// The stored property mapping
+        /// </summary>
+        private static Dictionary<int, UIAProperty> propertyMapping;
+
+        /// <summary>
+        /// The stored landmark mapping
+        /// </summary>
+        private static Dictionary<int, UIALandmarkType> landmarkTypeMapping;
+
+        /// <summary>
+        /// The stored key mapping
+        /// </summary>
+        private static Dictionary<WebDriverKey, string> webDriverKeyMapping;
+
+        /// <summary>
+        /// The different control types that elements in UIA can have, as well as unknown
+        /// </summary>
+        public enum UIAControlType
         {
-            var ControlTypeMapping = new Dictionary<int, UIAControlType>();
-            ControlTypeMapping.Add(-1, UIAControlType.Unknown);
-            ControlTypeMapping.Add(50000, UIAControlType.Button);
-            ControlTypeMapping.Add(50001, UIAControlType.Calendar);
-            ControlTypeMapping.Add(50002, UIAControlType.Checkbox);
-            ControlTypeMapping.Add(50003, UIAControlType.Combobox);
-            ControlTypeMapping.Add(50004, UIAControlType.Edit);
-            ControlTypeMapping.Add(50005, UIAControlType.Hyperlink);
-            ControlTypeMapping.Add(50006, UIAControlType.Image);
-            ControlTypeMapping.Add(50007, UIAControlType.Listitem);
-            ControlTypeMapping.Add(50008, UIAControlType.List);
-            ControlTypeMapping.Add(50009, UIAControlType.Menu);
-            ControlTypeMapping.Add(50010, UIAControlType.Menubar);
-            ControlTypeMapping.Add(50011, UIAControlType.Menuitem);
-            ControlTypeMapping.Add(50012, UIAControlType.Progressbar);
-            ControlTypeMapping.Add(50013, UIAControlType.Radiobutton);
-            ControlTypeMapping.Add(50014, UIAControlType.Scrollbar);
-            ControlTypeMapping.Add(50015, UIAControlType.Slider);
-            ControlTypeMapping.Add(50016, UIAControlType.Spinner);
-            ControlTypeMapping.Add(50017, UIAControlType.Statusbar);
-            ControlTypeMapping.Add(50018, UIAControlType.Tab);
-            ControlTypeMapping.Add(50019, UIAControlType.Tabitem);
-            ControlTypeMapping.Add(50020, UIAControlType.Text);
-            ControlTypeMapping.Add(50021, UIAControlType.Toolbar);
-            ControlTypeMapping.Add(50022, UIAControlType.Tooltip);
-            ControlTypeMapping.Add(50023, UIAControlType.Tree);
-            ControlTypeMapping.Add(50024, UIAControlType.Treeitem);
-            ControlTypeMapping.Add(50025, UIAControlType.Custom);
-            ControlTypeMapping.Add(50026, UIAControlType.Group);
-            ControlTypeMapping.Add(50027, UIAControlType.Thumb);
-            ControlTypeMapping.Add(50028, UIAControlType.Datagrid);
-            ControlTypeMapping.Add(50029, UIAControlType.Dataitem);
-            ControlTypeMapping.Add(50030, UIAControlType.Document);
-            ControlTypeMapping.Add(50031, UIAControlType.Splitbutton);
-            ControlTypeMapping.Add(50032, UIAControlType.Window);
-            ControlTypeMapping.Add(50033, UIAControlType.Pane);
-            ControlTypeMapping.Add(50034, UIAControlType.Header);
-            ControlTypeMapping.Add(50035, UIAControlType.Headeritem);
-            ControlTypeMapping.Add(50036, UIAControlType.Table);
-            ControlTypeMapping.Add(50037, UIAControlType.Titlebar);
-            ControlTypeMapping.Add(50038, UIAControlType.Separator);
-            ControlTypeMapping.Add(50039, UIAControlType.Semanticzoom);
-            ControlTypeMapping.Add(50040, UIAControlType.Appbar);
+            /// <summary>
+            /// Unknown control type
+            /// </summary>
+            Unknown,
 
-            _ControlTypeMapping = ControlTypeMapping;
+            /// <summary>
+            /// Button control type
+            /// </summary>
+            Button,
+
+            /// <summary>
+            /// Calendar control type
+            /// </summary>
+            Calendar,
+
+            /// <summary>
+            /// Checkbox control type
+            /// </summary>
+            Checkbox,
+
+            /// <summary>
+            /// Combo box control type
+            /// </summary>
+            Combobox,
+
+            /// <summary>
+            /// Edit control type
+            /// </summary>
+            Edit,
+
+            /// <summary>
+            /// Hyperlink control type
+            /// </summary>
+            Hyperlink,
+
+            /// <summary>
+            /// Image control type
+            /// </summary>
+            Image,
+
+            /// <summary>
+            /// List item control type
+            /// </summary>
+            Listitem,
+
+            /// <summary>
+            /// List control type
+            /// </summary>
+            List,
+
+            /// <summary>
+            /// Menu control type
+            /// </summary>
+            Menu,
+
+            /// <summary>
+            /// Menu bar control type
+            /// </summary>
+            Menubar,
+
+            /// <summary>
+            /// Menu item control type
+            /// </summary>
+            Menuitem,
+
+            /// <summary>
+            /// Progress bar control type
+            /// </summary>
+            Progressbar,
+
+            /// <summary>
+            /// Radio button control type
+            /// </summary>
+            Radiobutton,
+
+            /// <summary>
+            /// Scrollbar control type
+            /// </summary>
+            Scrollbar,
+
+            /// <summary>
+            /// Slider control type
+            /// </summary>
+            Slider,
+
+            /// <summary>
+            /// Spinner control type
+            /// </summary>
+            Spinner,
+
+            /// <summary>
+            /// Status bar control type
+            /// </summary>
+            Statusbar,
+
+            /// <summary>
+            /// Tab control type
+            /// </summary>
+            Tab,
+
+            /// <summary>
+            /// Tab item control type
+            /// </summary>
+            Tabitem,
+
+            /// <summary>
+            /// Text control type
+            /// </summary>
+            Text,
+
+            /// <summary>
+            /// Toolbar control type
+            /// </summary>
+            Toolbar,
+
+            /// <summary>
+            /// Tooltip control type
+            /// </summary>
+            Tooltip,
+
+            /// <summary>
+            /// Tree control type
+            /// </summary>
+            Tree,
+
+            /// <summary>
+            /// Tree item control type
+            /// </summary>
+            Treeitem,
+
+            /// <summary>
+            /// Custom control type
+            /// </summary>
+            Custom,
+
+            /// <summary>
+            /// Group control type
+            /// </summary>
+            Group,
+
+            /// <summary>
+            /// Thumb control type
+            /// </summary>
+            Thumb,
+
+            /// <summary>
+            /// Data grid control type
+            /// </summary>
+            Datagrid,
+
+            /// <summary>
+            /// Data item control type
+            /// </summary>
+            Dataitem,
+
+            /// <summary>
+            /// Document control type
+            /// </summary>
+            Document,
+
+            /// <summary>
+            /// Split button control type
+            /// </summary>
+            Splitbutton,
+
+            /// <summary>
+            /// Window control type
+            /// </summary>
+            Window,
+
+            /// <summary>
+            /// Pane control type
+            /// </summary>
+            Pane,
+
+            /// <summary>
+            /// Header control type
+            /// </summary>
+            Header,
+
+            /// <summary>
+            /// Header item control type
+            /// </summary>
+            Headeritem,
+
+            /// <summary>
+            /// Table control type
+            /// </summary>
+            Table,
+
+            /// <summary>
+            /// Title bar control type
+            /// </summary>
+            Titlebar,
+
+            /// <summary>
+            /// Separator control type
+            /// </summary>
+            Separator,
+
+            /// <summary>
+            /// Semantic zoom control type
+            /// </summary>
+            Semanticzoom,
+
+            /// <summary>
+            /// App bar control type
+            /// </summary>
+            Appbar,
         }
 
-        private static void InitPropertyMapping()
+        /// <summary>
+        /// The different property names that exist in UIA, as well as unknown
+        /// </summary>
+        public enum UIAProperty
         {
-            var PropertyMapping = new Dictionary<int, UIAProperty>();
-            PropertyMapping.Add(-1, UIAProperty.Unknown);
-            PropertyMapping.Add(30000, UIAProperty.RuntimeId);
-            PropertyMapping.Add(30001, UIAProperty.BoundingRectangle);
-            PropertyMapping.Add(30002, UIAProperty.ProcessId);
-            PropertyMapping.Add(30003, UIAProperty.ControlType);
-            PropertyMapping.Add(30004, UIAProperty.LocalizedControlType);
-            PropertyMapping.Add(30005, UIAProperty.Name);
-            PropertyMapping.Add(30006, UIAProperty.AcceleratorKey);
-            PropertyMapping.Add(30007, UIAProperty.AccessKey);
-            PropertyMapping.Add(30008, UIAProperty.HasKeyboardFocus);
-            PropertyMapping.Add(30009, UIAProperty.IsKeyboardFocusable);
-            PropertyMapping.Add(30010, UIAProperty.IsEnabled);
-            PropertyMapping.Add(30011, UIAProperty.AutomationId);
-            PropertyMapping.Add(30012, UIAProperty.ClassName);
-            PropertyMapping.Add(30013, UIAProperty.HelpText);
-            PropertyMapping.Add(30014, UIAProperty.ClickablePoint);
-            PropertyMapping.Add(30015, UIAProperty.Culture);
-            PropertyMapping.Add(30016, UIAProperty.IsControlElement);
-            PropertyMapping.Add(30017, UIAProperty.IsContentElement);
-            PropertyMapping.Add(30018, UIAProperty.LabeledBy);
-            PropertyMapping.Add(30019, UIAProperty.IsPassword);
-            PropertyMapping.Add(30020, UIAProperty.NativeWindowHandle);
-            PropertyMapping.Add(30021, UIAProperty.ItemType);
-            PropertyMapping.Add(30022, UIAProperty.IsOffscreen);
-            PropertyMapping.Add(30023, UIAProperty.Orientation);
-            PropertyMapping.Add(30024, UIAProperty.FrameworkId);
-            PropertyMapping.Add(30025, UIAProperty.IsRequiredForForm);
-            PropertyMapping.Add(30026, UIAProperty.ItemStatus);
-            PropertyMapping.Add(30027, UIAProperty.IsDockPatternAvailable);
-            PropertyMapping.Add(30028, UIAProperty.IsExpandCollapsePatternAvailable);
-            PropertyMapping.Add(30029, UIAProperty.IsGridItemPatternAvailable);
-            PropertyMapping.Add(30030, UIAProperty.IsGridPatternAvailable);
-            PropertyMapping.Add(30031, UIAProperty.IsInvokePatternAvailable);
-            PropertyMapping.Add(30032, UIAProperty.IsMultipleViewPatternAvailable);
-            PropertyMapping.Add(30033, UIAProperty.IsRangeValuePatternAvailable);
-            PropertyMapping.Add(30034, UIAProperty.IsScrollPatternAvailable);
-            PropertyMapping.Add(30035, UIAProperty.IsScrollItemPatternAvailable);
-            PropertyMapping.Add(30036, UIAProperty.IsSelectionItemPatternAvailable);
-            PropertyMapping.Add(30037, UIAProperty.IsSelectionPatternAvailable);
-            PropertyMapping.Add(30038, UIAProperty.IsTablePatternAvailable);
-            PropertyMapping.Add(30039, UIAProperty.IsTableItemPatternAvailable);
-            PropertyMapping.Add(30040, UIAProperty.IsTextPatternAvailable);
-            PropertyMapping.Add(30041, UIAProperty.IsTogglePatternAvailable);
-            PropertyMapping.Add(30042, UIAProperty.IsTransformPatternAvailable);
-            PropertyMapping.Add(30043, UIAProperty.IsValuePatternAvailable);
-            PropertyMapping.Add(30044, UIAProperty.IsWindowPatternAvailable);
-            PropertyMapping.Add(30045, UIAProperty.ValueValue);
-            PropertyMapping.Add(30046, UIAProperty.ValueIsReadOnly);
-            PropertyMapping.Add(30047, UIAProperty.RangeValueValue);
-            PropertyMapping.Add(30048, UIAProperty.RangeValueIsReadOnly);
-            PropertyMapping.Add(30049, UIAProperty.RangeValueMinimum);
-            PropertyMapping.Add(30050, UIAProperty.RangeValueMaximum);
-            PropertyMapping.Add(30051, UIAProperty.RangeValueLargeChange);
-            PropertyMapping.Add(30052, UIAProperty.RangeValueSmallChange);
-            PropertyMapping.Add(30053, UIAProperty.ScrollHorizontalScrollPercent);
-            PropertyMapping.Add(30054, UIAProperty.ScrollHorizontalViewSize);
-            PropertyMapping.Add(30055, UIAProperty.ScrollVerticalScrollPercent);
-            PropertyMapping.Add(30056, UIAProperty.ScrollVerticalViewSize);
-            PropertyMapping.Add(30057, UIAProperty.ScrollHorizontallyScrollable);
-            PropertyMapping.Add(30058, UIAProperty.ScrollVerticallyScrollable);
-            PropertyMapping.Add(30059, UIAProperty.SelectionSelection);
-            PropertyMapping.Add(30060, UIAProperty.SelectionCanSelectMultiple);
-            PropertyMapping.Add(30061, UIAProperty.SelectionIsSelectionRequired);
-            PropertyMapping.Add(30062, UIAProperty.GridRowCount);
-            PropertyMapping.Add(30063, UIAProperty.GridColumnCount);
-            PropertyMapping.Add(30064, UIAProperty.GridItemRow);
-            PropertyMapping.Add(30065, UIAProperty.GridItemColumn);
-            PropertyMapping.Add(30066, UIAProperty.GridItemRowSpan);
-            PropertyMapping.Add(30067, UIAProperty.GridItemColumnSpan);
-            PropertyMapping.Add(30068, UIAProperty.GridItemContainingGrid);
-            PropertyMapping.Add(30069, UIAProperty.DockDockPosition);
-            PropertyMapping.Add(30070, UIAProperty.ExpandCollapseExpandCollapseState);
-            PropertyMapping.Add(30071, UIAProperty.MultipleViewCurrentView);
-            PropertyMapping.Add(30072, UIAProperty.MultipleViewSupportedViews);
-            PropertyMapping.Add(30073, UIAProperty.WindowCanMaximize);
-            PropertyMapping.Add(30074, UIAProperty.WindowCanMinimize);
-            PropertyMapping.Add(30075, UIAProperty.WindowWindowVisualState);
-            PropertyMapping.Add(30076, UIAProperty.WindowWindowInteractionState);
-            PropertyMapping.Add(30077, UIAProperty.WindowIsModal);
-            PropertyMapping.Add(30078, UIAProperty.WindowIsTopmost);
-            PropertyMapping.Add(30079, UIAProperty.SelectionItemIsSelected);
-            PropertyMapping.Add(30080, UIAProperty.SelectionItemSelectionContainer);
-            PropertyMapping.Add(30081, UIAProperty.TableRowHeaders);
-            PropertyMapping.Add(30082, UIAProperty.TableColumnHeaders);
-            PropertyMapping.Add(30083, UIAProperty.TableRowOrColumnMajor);
-            PropertyMapping.Add(30084, UIAProperty.TableItemRowHeaderItems);
-            PropertyMapping.Add(30085, UIAProperty.TableItemColumnHeaderItems);
-            PropertyMapping.Add(30086, UIAProperty.ToggleToggleState);
-            PropertyMapping.Add(30087, UIAProperty.TransformCanMove);
-            PropertyMapping.Add(30088, UIAProperty.TransformCanResize);
-            PropertyMapping.Add(30089, UIAProperty.TransformCanRotate);
-            PropertyMapping.Add(30090, UIAProperty.IsLegacyIAccessiblePatternAvailable);
-            PropertyMapping.Add(30091, UIAProperty.LegacyIAccessibleChildId);
-            PropertyMapping.Add(30092, UIAProperty.LegacyIAccessibleName);
-            PropertyMapping.Add(30093, UIAProperty.LegacyIAccessibleValue);
-            PropertyMapping.Add(30094, UIAProperty.LegacyIAccessibleDescription);
-            PropertyMapping.Add(30095, UIAProperty.LegacyIAccessibleRole);
-            PropertyMapping.Add(30096, UIAProperty.LegacyIAccessibleState);
-            PropertyMapping.Add(30097, UIAProperty.LegacyIAccessibleHelp);
-            PropertyMapping.Add(30098, UIAProperty.LegacyIAccessibleKeyboardShortcut);
-            PropertyMapping.Add(30099, UIAProperty.LegacyIAccessibleSelection);
-            PropertyMapping.Add(30100, UIAProperty.LegacyIAccessibleDefaultAction);
-            PropertyMapping.Add(30101, UIAProperty.AriaRole);
-            PropertyMapping.Add(30102, UIAProperty.AriaProperties);
-            PropertyMapping.Add(30103, UIAProperty.IsDataValidForForm);
-            PropertyMapping.Add(30104, UIAProperty.ControllerFor);
-            PropertyMapping.Add(30105, UIAProperty.DescribedBy);
-            PropertyMapping.Add(30106, UIAProperty.FlowsTo);
-            PropertyMapping.Add(30107, UIAProperty.ProviderDescription);
-            PropertyMapping.Add(30108, UIAProperty.IsItemContainerPatternAvailable);
-            PropertyMapping.Add(30109, UIAProperty.IsVirtualizedItemPatternAvailable);
-            PropertyMapping.Add(30110, UIAProperty.IsSynchronizedInputPatternAvailable);
+            /// <summary>
+            /// Unknown property
+            /// </summary>
+            Unknown,
 
-            _PropertyMapping = PropertyMapping;
+            /// <summary>
+            /// RuntimeId property
+            /// </summary>
+            RuntimeId,
+
+            /// <summary>
+            /// BoundingRectangle property
+            /// </summary>
+            BoundingRectangle,
+
+            /// <summary>
+            /// ProcessId property
+            /// </summary>
+            ProcessId,
+
+            /// <summary>
+            /// ControlType property
+            /// </summary>
+            ControlType,
+
+            /// <summary>
+            /// LocalizedControlType property
+            /// </summary>
+            LocalizedControlType,
+
+            /// <summary>
+            /// Name property
+            /// </summary>
+            Name,
+
+            /// <summary>
+            /// AcceleratorKey property
+            /// </summary>
+            AcceleratorKey,
+
+            /// <summary>
+            /// AccessKey property
+            /// </summary>
+            AccessKey,
+
+            /// <summary>
+            /// HasKeyboardFocus property
+            /// </summary>
+            HasKeyboardFocus,
+
+            /// <summary>
+            /// IsKeyboardFocusable property
+            /// </summary>
+            IsKeyboardFocusable,
+
+            /// <summary>
+            /// IsEnabled property
+            /// </summary>
+            IsEnabled,
+
+            /// <summary>
+            /// AutomationId property
+            /// </summary>
+            AutomationId,
+
+            /// <summary>
+            /// ClassName property
+            /// </summary>
+            ClassName,
+
+            /// <summary>
+            /// HelpText property
+            /// </summary>
+            HelpText,
+
+            /// <summary>
+            /// ClickablePoint property
+            /// </summary>
+            ClickablePoint,
+
+            /// <summary>
+            /// Culture property
+            /// </summary>
+            Culture,
+
+            /// <summary>
+            /// IsControlElement property
+            /// </summary>
+            IsControlElement,
+
+            /// <summary>
+            /// IsContentElement property
+            /// </summary>
+            IsContentElement,
+
+            /// <summary>
+            /// LabeledBy property
+            /// </summary>
+            LabeledBy,
+
+            /// <summary>
+            /// IsPassword property
+            /// </summary>
+            IsPassword,
+
+            /// <summary>
+            /// NativeWindowHandle property
+            /// </summary>
+            NativeWindowHandle,
+
+            /// <summary>
+            /// ItemType property
+            /// </summary>
+            ItemType,
+
+            /// <summary>
+            /// Is Off screen property
+            /// </summary>
+            IsOffscreen,
+
+            /// <summary>
+            /// Orientation property
+            /// </summary>
+            Orientation,
+
+            /// <summary>
+            /// FrameworkId property
+            /// </summary>
+            FrameworkId,
+
+            /// <summary>
+            /// IsRequiredForForm property
+            /// </summary>
+            IsRequiredForForm,
+
+            /// <summary>
+            /// ItemStatus property
+            /// </summary>
+            ItemStatus,
+
+            /// <summary>
+            /// IsDockPatternAvailable property
+            /// </summary>
+            IsDockPatternAvailable,
+
+            /// <summary>
+            /// IsExpandCollapsePatternAvailable property
+            /// </summary>
+            IsExpandCollapsePatternAvailable,
+
+            /// <summary>
+            /// IsGridItemPatternAvailable property
+            /// </summary>
+            IsGridItemPatternAvailable,
+
+            /// <summary>
+            /// IsGridPatternAvailable property
+            /// </summary>
+            IsGridPatternAvailable,
+
+            /// <summary>
+            /// IsInvokePatternAvailable property
+            /// </summary>
+            IsInvokePatternAvailable,
+
+            /// <summary>
+            /// IsMultipleViewPatternAvailable property
+            /// </summary>
+            IsMultipleViewPatternAvailable,
+
+            /// <summary>
+            /// IsRangeValuePatternAvailable property
+            /// </summary>
+            IsRangeValuePatternAvailable,
+
+            /// <summary>
+            /// IsScrollPatternAvailable property
+            /// </summary>
+            IsScrollPatternAvailable,
+
+            /// <summary>
+            /// IsScrollItemPatternAvailable property
+            /// </summary>
+            IsScrollItemPatternAvailable,
+
+            /// <summary>
+            /// IsSelectionItemPatternAvailable property
+            /// </summary>
+            IsSelectionItemPatternAvailable,
+
+            /// <summary>
+            /// IsSelectionPatternAvailable property
+            /// </summary>
+            IsSelectionPatternAvailable,
+
+            /// <summary>
+            /// IsTablePatternAvailable property
+            /// </summary>
+            IsTablePatternAvailable,
+
+            /// <summary>
+            /// IsTableItemPatternAvailable property
+            /// </summary>
+            IsTableItemPatternAvailable,
+
+            /// <summary>
+            /// IsTextPatternAvailable property
+            /// </summary>
+            IsTextPatternAvailable,
+
+            /// <summary>
+            /// IsTogglePatternAvailable property
+            /// </summary>
+            IsTogglePatternAvailable,
+
+            /// <summary>
+            /// IsTransformPatternAvailable property
+            /// </summary>
+            IsTransformPatternAvailable,
+
+            /// <summary>
+            /// IsValuePatternAvailable property
+            /// </summary>
+            IsValuePatternAvailable,
+
+            /// <summary>
+            /// IsWindowPatternAvailable property
+            /// </summary>
+            IsWindowPatternAvailable,
+
+            /// <summary>
+            /// ValueValue property
+            /// </summary>
+            ValueValue,
+
+            /// <summary>
+            /// ValueIsReadOnly property
+            /// </summary>
+            ValueIsReadOnly,
+
+            /// <summary>
+            /// RangeValueValue property
+            /// </summary>
+            RangeValueValue,
+
+            /// <summary>
+            /// RangeValueIsReadOnly property
+            /// </summary>
+            RangeValueIsReadOnly,
+
+            /// <summary>
+            /// RangeValueMinimum property
+            /// </summary>
+            RangeValueMinimum,
+
+            /// <summary>
+            /// RangeValueMaximum property
+            /// </summary>
+            RangeValueMaximum,
+
+            /// <summary>
+            /// RangeValueLargeChange property
+            /// </summary>
+            RangeValueLargeChange,
+
+            /// <summary>
+            /// RangeValueSmallChange property
+            /// </summary>
+            RangeValueSmallChange,
+
+            /// <summary>
+            /// ScrollHorizontalScrollPercent property
+            /// </summary>
+            ScrollHorizontalScrollPercent,
+
+            /// <summary>
+            /// ScrollHorizontalViewSize property
+            /// </summary>
+            ScrollHorizontalViewSize,
+
+            /// <summary>
+            /// ScrollVerticalScrollPercent property
+            /// </summary>
+            ScrollVerticalScrollPercent,
+
+            /// <summary>
+            /// ScrollVerticalViewSize property
+            /// </summary>
+            ScrollVerticalViewSize,
+
+            /// <summary>
+            /// ScrollHorizontallyScrollable property
+            /// </summary>
+            ScrollHorizontallyScrollable,
+
+            /// <summary>
+            /// ScrollVerticallyScrollable property
+            /// </summary>
+            ScrollVerticallyScrollable,
+
+            /// <summary>
+            /// SelectionSelection property
+            /// </summary>
+            SelectionSelection,
+
+            /// <summary>
+            /// SelectionCanSelectMultiple property
+            /// </summary>
+            SelectionCanSelectMultiple,
+
+            /// <summary>
+            /// SelectionIsSelectionRequired property
+            /// </summary>
+            SelectionIsSelectionRequired,
+
+            /// <summary>
+            /// GridRowCount property
+            /// </summary>
+            GridRowCount,
+
+            /// <summary>
+            /// GridColumnCount property
+            /// </summary>
+            GridColumnCount,
+
+            /// <summary>
+            /// GridItemRow property
+            /// </summary>
+            GridItemRow,
+
+            /// <summary>
+            /// GridItemColumn property
+            /// </summary>
+            GridItemColumn,
+
+            /// <summary>
+            /// GridItemRowSpan property
+            /// </summary>
+            GridItemRowSpan,
+
+            /// <summary>
+            /// GridItemColumnSpan property
+            /// </summary>
+            GridItemColumnSpan,
+
+            /// <summary>
+            /// GridItemContainingGrid property
+            /// </summary>
+            GridItemContainingGrid,
+
+            /// <summary>
+            /// DockDockPosition property
+            /// </summary>
+            DockDockPosition,
+
+            /// <summary>
+            /// ExpandCollapseExpandCollapseState property
+            /// </summary>
+            ExpandCollapseExpandCollapseState,
+
+            /// <summary>
+            /// MultipleViewCurrentView property
+            /// </summary>
+            MultipleViewCurrentView,
+
+            /// <summary>
+            /// MultipleViewSupportedViews property
+            /// </summary>
+            MultipleViewSupportedViews,
+
+            /// <summary>
+            /// WindowCanMaximize property
+            /// </summary>
+            WindowCanMaximize,
+
+            /// <summary>
+            /// WindowCanMinimize property
+            /// </summary>
+            WindowCanMinimize,
+
+            /// <summary>
+            /// WindowWindowVisualState property
+            /// </summary>
+            WindowWindowVisualState,
+
+            /// <summary>
+            /// WindowWindowInteractionState property
+            /// </summary>
+            WindowWindowInteractionState,
+
+            /// <summary>
+            /// WindowIsModal property
+            /// </summary>
+            WindowIsModal,
+
+            /// <summary>
+            /// WindowIsTopmost property
+            /// </summary>
+            WindowIsTopmost,
+
+            /// <summary>
+            /// SelectionItemIsSelected property
+            /// </summary>
+            SelectionItemIsSelected,
+
+            /// <summary>
+            /// SelectionItemSelectionContainer property
+            /// </summary>
+            SelectionItemSelectionContainer,
+
+            /// <summary>
+            /// TableRowHeaders property
+            /// </summary>
+            TableRowHeaders,
+
+            /// <summary>
+            /// TableColumnHeaders property
+            /// </summary>
+            TableColumnHeaders,
+
+            /// <summary>
+            /// TableRowOrColumnMajor property
+            /// </summary>
+            TableRowOrColumnMajor,
+
+            /// <summary>
+            /// TableItemRowHeaderItems property
+            /// </summary>
+            TableItemRowHeaderItems,
+
+            /// <summary>
+            /// TableItemColumnHeaderItems property
+            /// </summary>
+            TableItemColumnHeaderItems,
+
+            /// <summary>
+            /// ToggleToggleState property
+            /// </summary>
+            ToggleToggleState,
+
+            /// <summary>
+            /// TransformCanMove property
+            /// </summary>
+            TransformCanMove,
+
+            /// <summary>
+            /// TransformCanResize property
+            /// </summary>
+            TransformCanResize,
+
+            /// <summary>
+            /// TransformCanRotate property
+            /// </summary>
+            TransformCanRotate,
+
+            /// <summary>
+            /// IsLegacyIAccessiblePatternAvailable property
+            /// </summary>
+            IsLegacyIAccessiblePatternAvailable,
+
+            /// <summary>
+            /// LegacyIAccessibleChildId property
+            /// </summary>
+            LegacyIAccessibleChildId,
+
+            /// <summary>
+            /// LegacyIAccessibleName property
+            /// </summary>
+            LegacyIAccessibleName,
+
+            /// <summary>
+            /// LegacyIAccessibleValue property
+            /// </summary>
+            LegacyIAccessibleValue,
+
+            /// <summary>
+            /// LegacyIAccessibleDescription property
+            /// </summary>
+            LegacyIAccessibleDescription,
+
+            /// <summary>
+            /// LegacyIAccessibleRole property
+            /// </summary>
+            LegacyIAccessibleRole,
+
+            /// <summary>
+            /// LegacyIAccessibleState property
+            /// </summary>
+            LegacyIAccessibleState,
+
+            /// <summary>
+            /// LegacyIAccessibleHelp property
+            /// </summary>
+            LegacyIAccessibleHelp,
+
+            /// <summary>
+            /// LegacyIAccessibleKeyboardShortcut property
+            /// </summary>
+            LegacyIAccessibleKeyboardShortcut,
+
+            /// <summary>
+            /// LegacyIAccessibleSelection property
+            /// </summary>
+            LegacyIAccessibleSelection,
+
+            /// <summary>
+            /// LegacyIAccessibleDefaultAction property
+            /// </summary>
+            LegacyIAccessibleDefaultAction,
+
+            /// <summary>
+            /// AriaRole property
+            /// </summary>
+            AriaRole,
+
+            /// <summary>
+            /// AriaProperties property
+            /// </summary>
+            AriaProperties,
+
+            /// <summary>
+            /// IsDataValidForForm property
+            /// </summary>
+            IsDataValidForForm,
+
+            /// <summary>
+            /// ControllerFor property
+            /// </summary>
+            ControllerFor,
+
+            /// <summary>
+            /// DescribedBy property
+            /// </summary>
+            DescribedBy,
+
+            /// <summary>
+            /// FlowsTo property
+            /// </summary>
+            FlowsTo,
+
+            /// <summary>
+            /// ProviderDescription property
+            /// </summary>
+            ProviderDescription,
+
+            /// <summary>
+            /// IsItemContainerPatternAvailable property
+            /// </summary>
+            IsItemContainerPatternAvailable,
+
+            /// <summary>
+            /// IsVirtualizedItemPatternAvailable property
+            /// </summary>
+            IsVirtualizedItemPatternAvailable,
+
+            /// <summary>
+            /// IsSynchronizedInputPatternAvailable property
+            /// </summary>
+            IsSynchronizedInputPatternAvailable,
         }
 
-        private static void InitLandmarkTypeMapping()
+        /// <summary>
+        /// The different landmark types in UIA
+        /// </summary>
+        public enum UIALandmarkType
         {
-            var LandmarkTypeMapping = new Dictionary<int, UIALandmarkType>();
-            LandmarkTypeMapping.Add(-1, UIALandmarkType.Unknown);
-            LandmarkTypeMapping.Add(80000, UIALandmarkType.Custom);
-            LandmarkTypeMapping.Add(80001, UIALandmarkType.Form);
-            LandmarkTypeMapping.Add(80002, UIALandmarkType.Main);
-            LandmarkTypeMapping.Add(80003, UIALandmarkType.Navigation);
-            LandmarkTypeMapping.Add(80004, UIALandmarkType.Search);
-            _LandmarkTypeMapping = LandmarkTypeMapping;
+            /// <summary>
+            /// The Unknown landmark
+            /// </summary>
+            Unknown,
+
+            /// <summary>
+            /// The Custom landmark
+            /// </summary>
+            Custom,
+
+            /// <summary>
+            /// The Form landmark
+            /// </summary>
+            Form,
+
+            /// <summary>
+            /// The Main landmark
+            /// </summary>
+            Main,
+
+            /// <summary>
+            /// The Navigation landmark
+            /// </summary>
+            Navigation,
+
+            /// <summary>
+            /// The Search landmark
+            /// </summary>
+            Search
         }
 
-        private static void InitWebDriverKeyMapping()
+        /// <summary>
+        /// The different special keys that can be sent via WebDriver
+        /// </summary>
+        public enum WebDriverKey
         {
-            var WebDriverKeyMapping = new Dictionary<WebDriverKey, string>();
+            /// <summary>
+            /// The Null key
+            /// </summary>
+            Null,
 
-            WebDriverKeyMapping.Add(WebDriverKey.Wait, null);
-            WebDriverKeyMapping.Add(WebDriverKey.Null, '\uE000'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Cancel, '\uE001'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Help, '\uE002'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Back_space, '\uE003'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Tab, '\uE004'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Clear, '\uE005'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Return, '\uE006'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Enter, '\uE007'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Shift, '\uE008'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Control, '\uE009'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Alt, '\uE00A'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Pause, '\uE00B'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Escape, '\uE00C'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Space, '\uE00D'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Page_up, '\uE00E'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Page_down, '\uE00F'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.End, '\uE010'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Home, '\uE011'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Arrow_left, '\uE012'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Arrow_up, '\uE013'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Arrow_right, '\uE014'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Arrow_down, '\uE015'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Insert, '\uE016'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Delete, '\uE017'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Semicolon, '\uE018'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Equals, '\uE019'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Numpad0, '\uE01A'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Numpad1, '\uE01B'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Numpad2, '\uE01C'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Numpad3, '\uE01D'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Numpad4, '\uE01E'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Numpad5, '\uE01F'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Numpad6, '\uE020'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Numpad7, '\uE021'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Numpad8, '\uE022'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Numpad9, '\uE023'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Multiply, '\uE024'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Add, '\uE025'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Separator, '\uE026'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Subtract, '\uE027'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Decimal, '\uE028'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Divide, '\uE029'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.F1, '\uE031'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.F2, '\uE032'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.F3, '\uE033'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.F4, '\uE034'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.F5, '\uE035'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.F6, '\uE036'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.F7, '\uE037'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.F8, '\uE038'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.F9, '\uE039'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.F10, '\uE03A'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.F11, '\uE03B'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.F12, '\uE03C'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Meta, '\uE03D'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Command, '\uE03D'.ToString());
-            WebDriverKeyMapping.Add(WebDriverKey.Zenkaku_hankaku, '\uE040'.ToString());
+            /// <summary>
+            /// The Cancel key
+            /// </summary>
+            Cancel,
 
-            _WebDriverKeyMapping = WebDriverKeyMapping;
+            /// <summary>
+            /// The Help key
+            /// </summary>
+            Help,
+
+            /// <summary>
+            /// The Backspace key
+            /// </summary>
+            Back_space,
+
+            /// <summary>
+            /// The Tab key
+            /// </summary>
+            Tab,
+
+            /// <summary>
+            /// The Clear key
+            /// </summary>
+            Clear,
+
+            /// <summary>
+            /// The Return key
+            /// </summary>
+            Return,
+
+            /// <summary>
+            /// The Enter key
+            /// </summary>
+            Enter,
+
+            /// <summary>
+            /// The Shift key
+            /// </summary>
+            Shift,
+
+            /// <summary>
+            /// The Control key
+            /// </summary>
+            Control,
+
+            /// <summary>
+            /// The Alt key
+            /// </summary>
+            Alt,
+
+            /// <summary>
+            /// The Pause key
+            /// </summary>
+            Pause,
+
+            /// <summary>
+            /// The Escape key
+            /// </summary>
+            Escape,
+
+            /// <summary>
+            /// The Space key
+            /// </summary>
+            Space,
+
+            /// <summary>
+            /// The Page up key
+            /// </summary>
+            Page_up,
+
+            /// <summary>
+            /// The Page down key
+            /// </summary>
+            Page_down,
+
+            /// <summary>
+            /// The End key
+            /// </summary>
+            End,
+
+            /// <summary>
+            /// The Home key
+            /// </summary>
+            Home,
+
+            /// <summary>
+            /// The Arrow left key
+            /// </summary>
+            Arrow_left,
+
+            /// <summary>
+            /// The Arrow up key
+            /// </summary>
+            Arrow_up,
+
+            /// <summary>
+            /// The Arrow right key
+            /// </summary>
+            Arrow_right,
+
+            /// <summary>
+            /// The Arrow down key
+            /// </summary>
+            Arrow_down,
+
+            /// <summary>
+            /// The Insert key
+            /// </summary>
+            Insert,
+
+            /// <summary>
+            /// The Delete key
+            /// </summary>
+            Delete,
+
+            /// <summary>
+            /// The Semicolon key
+            /// </summary>
+            Semicolon,
+
+            /// <summary>
+            /// The Equals key
+            /// </summary>
+            Equals,
+
+            /// <summary>
+            /// The Numpad0 key
+            /// </summary>
+            Numpad0,
+
+            /// <summary>
+            /// The Numpad1 key
+            /// </summary>
+            Numpad1,
+
+            /// <summary>
+            /// The Numpad2 key
+            /// </summary>
+            Numpad2,
+
+            /// <summary>
+            /// The Numpad3 key
+            /// </summary>
+            Numpad3,
+
+            /// <summary>
+            /// The Numpad4 key
+            /// </summary>
+            Numpad4,
+
+            /// <summary>
+            /// The Numpad5 key
+            /// </summary>
+            Numpad5,
+
+            /// <summary>
+            /// The Numpad6 key
+            /// </summary>
+            Numpad6,
+
+            /// <summary>
+            /// The Numpad7 key
+            /// </summary>
+            Numpad7,
+
+            /// <summary>
+            /// The Numpad8 key
+            /// </summary>
+            Numpad8,
+
+            /// <summary>
+            /// The Numpad9 key
+            /// </summary>
+            Numpad9,
+
+            /// <summary>
+            /// The Multiply key
+            /// </summary>
+            Multiply,
+
+            /// <summary>
+            /// The Add key
+            /// </summary>
+            Add,
+
+            /// <summary>
+            /// The Separator key
+            /// </summary>
+            Separator,
+
+            /// <summary>
+            /// The Subtract key
+            /// </summary>
+            Subtract,
+
+            /// <summary>
+            /// The Decimal key
+            /// </summary>
+            Decimal,
+
+            /// <summary>
+            /// The Divide key
+            /// </summary>
+            Divide,
+
+            /// <summary>
+            /// The F1 key
+            /// </summary>
+            F1,
+
+            /// <summary>
+            /// The F2 key
+            /// </summary>
+            F2,
+
+            /// <summary>
+            /// The F3 key
+            /// </summary>
+            F3,
+
+            /// <summary>
+            /// The F4 key
+            /// </summary>
+            F4,
+
+            /// <summary>
+            /// The F5 key
+            /// </summary>
+            F5,
+
+            /// <summary>
+            /// The F6 key
+            /// </summary>
+            F6,
+
+            /// <summary>
+            /// The F7 key
+            /// </summary>
+            F7,
+
+            /// <summary>
+            /// The F8 key
+            /// </summary>
+            F8,
+
+            /// <summary>
+            /// The F9 key
+            /// </summary>
+            F9,
+
+            /// <summary>
+            /// The F10 key
+            /// </summary>
+            F10,
+
+            /// <summary>
+            /// The F11 key
+            /// </summary>
+            F11,
+
+            /// <summary>
+            /// The F12 key
+            /// </summary>
+            F12,
+
+            /// <summary>
+            /// The Meta key
+            /// </summary>
+            Meta,
+
+            /// <summary>
+            /// The Command key
+            /// </summary>
+            Command,
+
+            /// <summary>
+            /// The Zenkaku/hankaku key
+            /// </summary>
+            Zenkaku_hankaku,
+
+            /// <summary>
+            /// The Wait special character
+            /// </summary>
+            Wait
         }
 
         /// <summary>
         /// Convert a code into an element name
         /// </summary>
-        /// <param name="code"></param>
-        /// <returns></returns>
+        /// <param name="code">The code to search for</param>
+        /// <returns>The ControlType enum of the element, or Unknown if it is not found</returns>
         public static UIAControlType GetControlTypeFromCode(int code)
         {
-            if (_ControlTypeMapping == null)
+            if (controlTypeMapping == null)
             {
                 InitControlTypeMapping();
             }
-            return _ControlTypeMapping.ContainsKey(code) ? _ControlTypeMapping[code] : UIAControlType.Unknown;
+
+            return controlTypeMapping.ContainsKey(code) ? controlTypeMapping[code] : UIAControlType.Unknown;
         }
 
         /// <summary>
         /// Convert a code into a property
         /// </summary>
-        /// <param name="code"></param>
-        /// <returns></returns>
+        /// <param name="code">The code to search for</param>
+        /// <returns>The Property enum of the element, or Unknown if it is not found</returns>
         public static UIAProperty GetPropertyFromCode(int code)
         {
-            if (_PropertyMapping == null)
+            if (propertyMapping == null)
             {
                 InitPropertyMapping();
             }
-            return _PropertyMapping.ContainsKey(code) ? _PropertyMapping[code] : UIAProperty.Unknown;
+
+            return propertyMapping.ContainsKey(code) ? propertyMapping[code] : UIAProperty.Unknown;
         }
 
+        /// <summary>
+        /// Finds the code for a given property
+        /// </summary>
+        /// <param name="property">The property whose code to find</param>
+        /// <returns>The code of the property</returns>
         public static int GetPropertyCode(UIAProperty property)
         {
-            if (_PropertyMapping == null)
+            if (propertyMapping == null)
             {
                 InitPropertyMapping();
             }
-            //will throw if given an invalid code
-            return _PropertyMapping.Keys.First(k => _PropertyMapping[k] == property);
+
+            // will throw if given an invalid code
+            return propertyMapping.Keys.First(k => propertyMapping[k] == property);
         }
 
         /// <summary>
         /// Convert a code into a landmark
         /// </summary>
-        /// <param name="code"></param>
-        /// <returns></returns>
+        /// <param name="code">The code to search for</param>
+        /// <returns>The Landmark enum of the element, or Unknown if it is not found</returns>
         public static UIALandmarkType GetLandmarkTypeFromCode(int code)
         {
-            if (_LandmarkTypeMapping == null)
+            if (landmarkTypeMapping == null)
             {
                 InitLandmarkTypeMapping();
             }
-            return _LandmarkTypeMapping.ContainsKey(code) ? _LandmarkTypeMapping[code] : UIALandmarkType.Unknown;
+
+            return landmarkTypeMapping.ContainsKey(code) ? landmarkTypeMapping[code] : UIALandmarkType.Unknown;
         }
 
         /// <summary>
         /// Convert a WebDriverKey into its string representation
         /// </summary>
-        /// <param name="key"></param>
-        /// <returns></returns>
+        /// <param name="key">The key to search for</param>
+        /// <returns>A string representation of the given key</returns>
         public static string GetWebDriverKeyString(WebDriverKey key)
         {
-            if (_WebDriverKeyMapping == null)
+            if (webDriverKeyMapping == null)
             {
                 InitWebDriverKeyMapping();
             }
-            return _WebDriverKeyMapping[key];
+
+            return webDriverKeyMapping[key];
         }
 
-        public enum UIAControlType
+        /// <summary>
+        /// Initialize the control type mapping
+        /// </summary>
+        private static void InitControlTypeMapping()
         {
-            Unknown,
-            Button,
-            Calendar,
-            Checkbox,
-            Combobox,
-            Edit,
-            Hyperlink,
-            Image,
-            Listitem,
-            List,
-            Menu,
-            Menubar,
-            Menuitem,
-            Progressbar,
-            Radiobutton,
-            Scrollbar,
-            Slider,
-            Spinner,
-            Statusbar,
-            Tab,
-            Tabitem,
-            Text,
-            Toolbar,
-            Tooltip,
-            Tree,
-            Treeitem,
-            Custom,
-            Group,
-            Thumb,
-            Datagrid,
-            Dataitem,
-            Document,
-            Splitbutton,
-            Window,
-            Pane,
-            Header,
-            Headeritem,
-            Table,
-            Titlebar,
-            Separator,
-            Semanticzoom,
-            Appbar,
+            var controlTypeMapping = new Dictionary<int, UIAControlType>();
+            controlTypeMapping.Add(-1, UIAControlType.Unknown);
+            controlTypeMapping.Add(50000, UIAControlType.Button);
+            controlTypeMapping.Add(50001, UIAControlType.Calendar);
+            controlTypeMapping.Add(50002, UIAControlType.Checkbox);
+            controlTypeMapping.Add(50003, UIAControlType.Combobox);
+            controlTypeMapping.Add(50004, UIAControlType.Edit);
+            controlTypeMapping.Add(50005, UIAControlType.Hyperlink);
+            controlTypeMapping.Add(50006, UIAControlType.Image);
+            controlTypeMapping.Add(50007, UIAControlType.Listitem);
+            controlTypeMapping.Add(50008, UIAControlType.List);
+            controlTypeMapping.Add(50009, UIAControlType.Menu);
+            controlTypeMapping.Add(50010, UIAControlType.Menubar);
+            controlTypeMapping.Add(50011, UIAControlType.Menuitem);
+            controlTypeMapping.Add(50012, UIAControlType.Progressbar);
+            controlTypeMapping.Add(50013, UIAControlType.Radiobutton);
+            controlTypeMapping.Add(50014, UIAControlType.Scrollbar);
+            controlTypeMapping.Add(50015, UIAControlType.Slider);
+            controlTypeMapping.Add(50016, UIAControlType.Spinner);
+            controlTypeMapping.Add(50017, UIAControlType.Statusbar);
+            controlTypeMapping.Add(50018, UIAControlType.Tab);
+            controlTypeMapping.Add(50019, UIAControlType.Tabitem);
+            controlTypeMapping.Add(50020, UIAControlType.Text);
+            controlTypeMapping.Add(50021, UIAControlType.Toolbar);
+            controlTypeMapping.Add(50022, UIAControlType.Tooltip);
+            controlTypeMapping.Add(50023, UIAControlType.Tree);
+            controlTypeMapping.Add(50024, UIAControlType.Treeitem);
+            controlTypeMapping.Add(50025, UIAControlType.Custom);
+            controlTypeMapping.Add(50026, UIAControlType.Group);
+            controlTypeMapping.Add(50027, UIAControlType.Thumb);
+            controlTypeMapping.Add(50028, UIAControlType.Datagrid);
+            controlTypeMapping.Add(50029, UIAControlType.Dataitem);
+            controlTypeMapping.Add(50030, UIAControlType.Document);
+            controlTypeMapping.Add(50031, UIAControlType.Splitbutton);
+            controlTypeMapping.Add(50032, UIAControlType.Window);
+            controlTypeMapping.Add(50033, UIAControlType.Pane);
+            controlTypeMapping.Add(50034, UIAControlType.Header);
+            controlTypeMapping.Add(50035, UIAControlType.Headeritem);
+            controlTypeMapping.Add(50036, UIAControlType.Table);
+            controlTypeMapping.Add(50037, UIAControlType.Titlebar);
+            controlTypeMapping.Add(50038, UIAControlType.Separator);
+            controlTypeMapping.Add(50039, UIAControlType.Semanticzoom);
+            controlTypeMapping.Add(50040, UIAControlType.Appbar);
+
+            ElementConverter.controlTypeMapping = controlTypeMapping;
         }
 
-        public enum UIAProperty
+        /// <summary>
+        /// Initialize the property mapping
+        /// </summary>
+        private static void InitPropertyMapping()
         {
-            Unknown,
-            RuntimeId,
-            BoundingRectangle,
-            ProcessId,
-            ControlType,
-            LocalizedControlType,
-            Name,
-            AcceleratorKey,
-            AccessKey,
-            HasKeyboardFocus,
-            IsKeyboardFocusable,
-            IsEnabled,
-            AutomationId,
-            ClassName,
-            HelpText,
-            ClickablePoint,
-            Culture,
-            IsControlElement,
-            IsContentElement,
-            LabeledBy,
-            IsPassword,
-            NativeWindowHandle,
-            ItemType,
-            IsOffscreen,
-            Orientation,
-            FrameworkId,
-            IsRequiredForForm,
-            ItemStatus,
-            IsDockPatternAvailable,
-            IsExpandCollapsePatternAvailable,
-            IsGridItemPatternAvailable,
-            IsGridPatternAvailable,
-            IsInvokePatternAvailable,
-            IsMultipleViewPatternAvailable,
-            IsRangeValuePatternAvailable,
-            IsScrollPatternAvailable,
-            IsScrollItemPatternAvailable,
-            IsSelectionItemPatternAvailable,
-            IsSelectionPatternAvailable,
-            IsTablePatternAvailable,
-            IsTableItemPatternAvailable,
-            IsTextPatternAvailable,
-            IsTogglePatternAvailable,
-            IsTransformPatternAvailable,
-            IsValuePatternAvailable,
-            IsWindowPatternAvailable,
-            ValueValue,
-            ValueIsReadOnly,
-            RangeValueValue,
-            RangeValueIsReadOnly,
-            RangeValueMinimum,
-            RangeValueMaximum,
-            RangeValueLargeChange,
-            RangeValueSmallChange,
-            ScrollHorizontalScrollPercent,
-            ScrollHorizontalViewSize,
-            ScrollVerticalScrollPercent,
-            ScrollVerticalViewSize,
-            ScrollHorizontallyScrollable,
-            ScrollVerticallyScrollable,
-            SelectionSelection,
-            SelectionCanSelectMultiple,
-            SelectionIsSelectionRequired,
-            GridRowCount,
-            GridColumnCount,
-            GridItemRow,
-            GridItemColumn,
-            GridItemRowSpan,
-            GridItemColumnSpan,
-            GridItemContainingGrid,
-            DockDockPosition,
-            ExpandCollapseExpandCollapseState,
-            MultipleViewCurrentView,
-            MultipleViewSupportedViews,
-            WindowCanMaximize,
-            WindowCanMinimize,
-            WindowWindowVisualState,
-            WindowWindowInteractionState,
-            WindowIsModal,
-            WindowIsTopmost,
-            SelectionItemIsSelected,
-            SelectionItemSelectionContainer,
-            TableRowHeaders,
-            TableColumnHeaders,
-            TableRowOrColumnMajor,
-            TableItemRowHeaderItems,
-            TableItemColumnHeaderItems,
-            ToggleToggleState,
-            TransformCanMove,
-            TransformCanResize,
-            TransformCanRotate,
-            IsLegacyIAccessiblePatternAvailable,
-            LegacyIAccessibleChildId,
-            LegacyIAccessibleName,
-            LegacyIAccessibleValue,
-            LegacyIAccessibleDescription,
-            LegacyIAccessibleRole,
-            LegacyIAccessibleState,
-            LegacyIAccessibleHelp,
-            LegacyIAccessibleKeyboardShortcut,
-            LegacyIAccessibleSelection,
-            LegacyIAccessibleDefaultAction,
-            AriaRole,
-            AriaProperties,
-            IsDataValidForForm,
-            ControllerFor,
-            DescribedBy,
-            FlowsTo,
-            ProviderDescription,
-            IsItemContainerPatternAvailable,
-            IsVirtualizedItemPatternAvailable,
-            IsSynchronizedInputPatternAvailable,
+            var propertyMapping = new Dictionary<int, UIAProperty>();
+            propertyMapping.Add(-1, UIAProperty.Unknown);
+            propertyMapping.Add(30000, UIAProperty.RuntimeId);
+            propertyMapping.Add(30001, UIAProperty.BoundingRectangle);
+            propertyMapping.Add(30002, UIAProperty.ProcessId);
+            propertyMapping.Add(30003, UIAProperty.ControlType);
+            propertyMapping.Add(30004, UIAProperty.LocalizedControlType);
+            propertyMapping.Add(30005, UIAProperty.Name);
+            propertyMapping.Add(30006, UIAProperty.AcceleratorKey);
+            propertyMapping.Add(30007, UIAProperty.AccessKey);
+            propertyMapping.Add(30008, UIAProperty.HasKeyboardFocus);
+            propertyMapping.Add(30009, UIAProperty.IsKeyboardFocusable);
+            propertyMapping.Add(30010, UIAProperty.IsEnabled);
+            propertyMapping.Add(30011, UIAProperty.AutomationId);
+            propertyMapping.Add(30012, UIAProperty.ClassName);
+            propertyMapping.Add(30013, UIAProperty.HelpText);
+            propertyMapping.Add(30014, UIAProperty.ClickablePoint);
+            propertyMapping.Add(30015, UIAProperty.Culture);
+            propertyMapping.Add(30016, UIAProperty.IsControlElement);
+            propertyMapping.Add(30017, UIAProperty.IsContentElement);
+            propertyMapping.Add(30018, UIAProperty.LabeledBy);
+            propertyMapping.Add(30019, UIAProperty.IsPassword);
+            propertyMapping.Add(30020, UIAProperty.NativeWindowHandle);
+            propertyMapping.Add(30021, UIAProperty.ItemType);
+            propertyMapping.Add(30022, UIAProperty.IsOffscreen);
+            propertyMapping.Add(30023, UIAProperty.Orientation);
+            propertyMapping.Add(30024, UIAProperty.FrameworkId);
+            propertyMapping.Add(30025, UIAProperty.IsRequiredForForm);
+            propertyMapping.Add(30026, UIAProperty.ItemStatus);
+            propertyMapping.Add(30027, UIAProperty.IsDockPatternAvailable);
+            propertyMapping.Add(30028, UIAProperty.IsExpandCollapsePatternAvailable);
+            propertyMapping.Add(30029, UIAProperty.IsGridItemPatternAvailable);
+            propertyMapping.Add(30030, UIAProperty.IsGridPatternAvailable);
+            propertyMapping.Add(30031, UIAProperty.IsInvokePatternAvailable);
+            propertyMapping.Add(30032, UIAProperty.IsMultipleViewPatternAvailable);
+            propertyMapping.Add(30033, UIAProperty.IsRangeValuePatternAvailable);
+            propertyMapping.Add(30034, UIAProperty.IsScrollPatternAvailable);
+            propertyMapping.Add(30035, UIAProperty.IsScrollItemPatternAvailable);
+            propertyMapping.Add(30036, UIAProperty.IsSelectionItemPatternAvailable);
+            propertyMapping.Add(30037, UIAProperty.IsSelectionPatternAvailable);
+            propertyMapping.Add(30038, UIAProperty.IsTablePatternAvailable);
+            propertyMapping.Add(30039, UIAProperty.IsTableItemPatternAvailable);
+            propertyMapping.Add(30040, UIAProperty.IsTextPatternAvailable);
+            propertyMapping.Add(30041, UIAProperty.IsTogglePatternAvailable);
+            propertyMapping.Add(30042, UIAProperty.IsTransformPatternAvailable);
+            propertyMapping.Add(30043, UIAProperty.IsValuePatternAvailable);
+            propertyMapping.Add(30044, UIAProperty.IsWindowPatternAvailable);
+            propertyMapping.Add(30045, UIAProperty.ValueValue);
+            propertyMapping.Add(30046, UIAProperty.ValueIsReadOnly);
+            propertyMapping.Add(30047, UIAProperty.RangeValueValue);
+            propertyMapping.Add(30048, UIAProperty.RangeValueIsReadOnly);
+            propertyMapping.Add(30049, UIAProperty.RangeValueMinimum);
+            propertyMapping.Add(30050, UIAProperty.RangeValueMaximum);
+            propertyMapping.Add(30051, UIAProperty.RangeValueLargeChange);
+            propertyMapping.Add(30052, UIAProperty.RangeValueSmallChange);
+            propertyMapping.Add(30053, UIAProperty.ScrollHorizontalScrollPercent);
+            propertyMapping.Add(30054, UIAProperty.ScrollHorizontalViewSize);
+            propertyMapping.Add(30055, UIAProperty.ScrollVerticalScrollPercent);
+            propertyMapping.Add(30056, UIAProperty.ScrollVerticalViewSize);
+            propertyMapping.Add(30057, UIAProperty.ScrollHorizontallyScrollable);
+            propertyMapping.Add(30058, UIAProperty.ScrollVerticallyScrollable);
+            propertyMapping.Add(30059, UIAProperty.SelectionSelection);
+            propertyMapping.Add(30060, UIAProperty.SelectionCanSelectMultiple);
+            propertyMapping.Add(30061, UIAProperty.SelectionIsSelectionRequired);
+            propertyMapping.Add(30062, UIAProperty.GridRowCount);
+            propertyMapping.Add(30063, UIAProperty.GridColumnCount);
+            propertyMapping.Add(30064, UIAProperty.GridItemRow);
+            propertyMapping.Add(30065, UIAProperty.GridItemColumn);
+            propertyMapping.Add(30066, UIAProperty.GridItemRowSpan);
+            propertyMapping.Add(30067, UIAProperty.GridItemColumnSpan);
+            propertyMapping.Add(30068, UIAProperty.GridItemContainingGrid);
+            propertyMapping.Add(30069, UIAProperty.DockDockPosition);
+            propertyMapping.Add(30070, UIAProperty.ExpandCollapseExpandCollapseState);
+            propertyMapping.Add(30071, UIAProperty.MultipleViewCurrentView);
+            propertyMapping.Add(30072, UIAProperty.MultipleViewSupportedViews);
+            propertyMapping.Add(30073, UIAProperty.WindowCanMaximize);
+            propertyMapping.Add(30074, UIAProperty.WindowCanMinimize);
+            propertyMapping.Add(30075, UIAProperty.WindowWindowVisualState);
+            propertyMapping.Add(30076, UIAProperty.WindowWindowInteractionState);
+            propertyMapping.Add(30077, UIAProperty.WindowIsModal);
+            propertyMapping.Add(30078, UIAProperty.WindowIsTopmost);
+            propertyMapping.Add(30079, UIAProperty.SelectionItemIsSelected);
+            propertyMapping.Add(30080, UIAProperty.SelectionItemSelectionContainer);
+            propertyMapping.Add(30081, UIAProperty.TableRowHeaders);
+            propertyMapping.Add(30082, UIAProperty.TableColumnHeaders);
+            propertyMapping.Add(30083, UIAProperty.TableRowOrColumnMajor);
+            propertyMapping.Add(30084, UIAProperty.TableItemRowHeaderItems);
+            propertyMapping.Add(30085, UIAProperty.TableItemColumnHeaderItems);
+            propertyMapping.Add(30086, UIAProperty.ToggleToggleState);
+            propertyMapping.Add(30087, UIAProperty.TransformCanMove);
+            propertyMapping.Add(30088, UIAProperty.TransformCanResize);
+            propertyMapping.Add(30089, UIAProperty.TransformCanRotate);
+            propertyMapping.Add(30090, UIAProperty.IsLegacyIAccessiblePatternAvailable);
+            propertyMapping.Add(30091, UIAProperty.LegacyIAccessibleChildId);
+            propertyMapping.Add(30092, UIAProperty.LegacyIAccessibleName);
+            propertyMapping.Add(30093, UIAProperty.LegacyIAccessibleValue);
+            propertyMapping.Add(30094, UIAProperty.LegacyIAccessibleDescription);
+            propertyMapping.Add(30095, UIAProperty.LegacyIAccessibleRole);
+            propertyMapping.Add(30096, UIAProperty.LegacyIAccessibleState);
+            propertyMapping.Add(30097, UIAProperty.LegacyIAccessibleHelp);
+            propertyMapping.Add(30098, UIAProperty.LegacyIAccessibleKeyboardShortcut);
+            propertyMapping.Add(30099, UIAProperty.LegacyIAccessibleSelection);
+            propertyMapping.Add(30100, UIAProperty.LegacyIAccessibleDefaultAction);
+            propertyMapping.Add(30101, UIAProperty.AriaRole);
+            propertyMapping.Add(30102, UIAProperty.AriaProperties);
+            propertyMapping.Add(30103, UIAProperty.IsDataValidForForm);
+            propertyMapping.Add(30104, UIAProperty.ControllerFor);
+            propertyMapping.Add(30105, UIAProperty.DescribedBy);
+            propertyMapping.Add(30106, UIAProperty.FlowsTo);
+            propertyMapping.Add(30107, UIAProperty.ProviderDescription);
+            propertyMapping.Add(30108, UIAProperty.IsItemContainerPatternAvailable);
+            propertyMapping.Add(30109, UIAProperty.IsVirtualizedItemPatternAvailable);
+            propertyMapping.Add(30110, UIAProperty.IsSynchronizedInputPatternAvailable);
+
+            ElementConverter.propertyMapping = propertyMapping;
         }
 
-        public enum UIALandmarkType
+        /// <summary>
+        /// Initialize the landmark mapping
+        /// </summary>
+        private static void InitLandmarkTypeMapping()
         {
-            Unknown,
-            Custom,
-            Form,
-            Main,
-            Navigation,
-            Search
+            var landmarkTypeMapping = new Dictionary<int, UIALandmarkType>();
+            landmarkTypeMapping.Add(-1, UIALandmarkType.Unknown);
+            landmarkTypeMapping.Add(80000, UIALandmarkType.Custom);
+            landmarkTypeMapping.Add(80001, UIALandmarkType.Form);
+            landmarkTypeMapping.Add(80002, UIALandmarkType.Main);
+            landmarkTypeMapping.Add(80003, UIALandmarkType.Navigation);
+            landmarkTypeMapping.Add(80004, UIALandmarkType.Search);
+            ElementConverter.landmarkTypeMapping = landmarkTypeMapping;
         }
 
-        public enum WebDriverKey
+        /// <summary>
+        /// Initialize the key mapping
+        /// </summary>
+        private static void InitWebDriverKeyMapping()
         {
-            Null,
-            Cancel,
-            Help,
-            Back_space,
-            Tab,
-            Clear,
-            Return,
-            Enter,
-            Shift,
-            Control,
-            Alt,
-            Pause,
-            Escape,
-            Space,
-            Page_up,
-            Page_down,
-            End,
-            Home,
-            Arrow_left,
-            Arrow_up,
-            Arrow_right,
-            Arrow_down,
-            Insert,
-            Delete,
-            Semicolon,
-            Equals,
-            Numpad0,
-            Numpad1,
-            Numpad2,
-            Numpad3,
-            Numpad4,
-            Numpad5,
-            Numpad6,
-            Numpad7,
-            Numpad8,
-            Numpad9,
-            Multiply,
-            Add,
-            Separator,
-            Subtract,
-            Decimal,
-            Divide,
-            F1,
-            F2,
-            F3,
-            F4,
-            F5,
-            F6,
-            F7,
-            F8,
-            F9,
-            F10,
-            F11,
-            F12,
-            Meta,
-            Command,
-            Zenkaku_hankaku,
-            Wait
+            var webDriverKeyMapping = new Dictionary<WebDriverKey, string>();
+
+            webDriverKeyMapping.Add(WebDriverKey.Wait, null);
+            webDriverKeyMapping.Add(WebDriverKey.Null, '\uE000'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Cancel, '\uE001'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Help, '\uE002'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Back_space, '\uE003'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Tab, '\uE004'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Clear, '\uE005'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Return, '\uE006'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Enter, '\uE007'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Shift, '\uE008'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Control, '\uE009'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Alt, '\uE00A'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Pause, '\uE00B'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Escape, '\uE00C'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Space, '\uE00D'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Page_up, '\uE00E'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Page_down, '\uE00F'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.End, '\uE010'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Home, '\uE011'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Arrow_left, '\uE012'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Arrow_up, '\uE013'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Arrow_right, '\uE014'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Arrow_down, '\uE015'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Insert, '\uE016'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Delete, '\uE017'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Semicolon, '\uE018'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Equals, '\uE019'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Numpad0, '\uE01A'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Numpad1, '\uE01B'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Numpad2, '\uE01C'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Numpad3, '\uE01D'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Numpad4, '\uE01E'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Numpad5, '\uE01F'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Numpad6, '\uE020'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Numpad7, '\uE021'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Numpad8, '\uE022'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Numpad9, '\uE023'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Multiply, '\uE024'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Add, '\uE025'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Separator, '\uE026'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Subtract, '\uE027'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Decimal, '\uE028'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Divide, '\uE029'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.F1, '\uE031'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.F2, '\uE032'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.F3, '\uE033'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.F4, '\uE034'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.F5, '\uE035'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.F6, '\uE036'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.F7, '\uE037'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.F8, '\uE038'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.F9, '\uE039'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.F10, '\uE03A'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.F11, '\uE03B'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.F12, '\uE03C'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Meta, '\uE03D'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Command, '\uE03D'.ToString());
+            webDriverKeyMapping.Add(WebDriverKey.Zenkaku_hankaku, '\uE040'.ToString());
+
+            ElementConverter.webDriverKeyMapping = webDriverKeyMapping;
         }
     }
 }
