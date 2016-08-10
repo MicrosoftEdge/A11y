@@ -71,4 +71,28 @@
             return this.Name + "," + this.Result + (this.MoreInfo != null ? "," + this.MoreInfo : string.Empty);
         }
     }
+
+
+    public class TestCaseResultExt : TestCaseResult
+    {
+        StringBuilder _MoreInfo = new StringBuilder();
+
+        new public string MoreInfo
+        {
+            get
+            {
+                return _MoreInfo.ToString();
+            }
+        }
+
+        public TestCaseResultExt()
+        {
+            Result = ResultType.Pass;
+        }
+
+        public void AddInfo(string info)
+        {
+            _MoreInfo.Append(info);
+        }
+    }
 }
