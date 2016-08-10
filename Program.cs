@@ -21,7 +21,7 @@
 
             TestStrategy a11yStrategy = new EdgeStrategy(fileSuffix: ".html");
 
-            var results = TestData.alltests.Value.Where(td =>
+            var results = TestData.AllTests().Where(td =>
                 (testName == null || td.TestName == testName)) // Either no test name was provided or the test names match
                 .ToList().ConvertAll(td => a11yStrategy.Execute(td)) // Execute each of the tests
                 .Where(r => r.Any()) // Only keep the ones that were executed

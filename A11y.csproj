@@ -58,9 +58,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="EdgeStrategy.cs">
-      <ExcludeFromStyleCop>False</ExcludeFromStyleCop>
-    </Compile>
+    <Compile Include="EdgeStrategy.cs" />
     <Compile Include="EdgeA11yTools.cs" />
     <Compile Include="ElementConverter.cs" />
     <Compile Include="DriverManager.cs" />

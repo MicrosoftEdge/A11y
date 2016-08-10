@@ -1,158 +1,37 @@
 ﻿namespace Microsoft.Edge.A11y
 {
-    using Interop.UIAutomationCore;
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading;
     using static ElementConverter;
+    using Interop.UIAutomationCore;
 
     /// <summary>
     /// This is where the logic of the tests is stored
     /// </summary>
-    class TestData
+    internal class TestData
     {
-        public const double epsilon = .001;
+        /// <summary>
+        /// Epsilon value used for double comparison
+        /// </summary>
+        public const double Epsilon = .001;
 
         /// <summary>
-        /// The name of the test, which corresponds to the name of the html element
+        /// Initializes a new instance of the <see cref="TestData"/> class
         /// </summary>
-        private string _TestName;
-        public string TestName
-        {
-            get
-            {
-                return _TestName;
-            }
-        }
-
-        /// <summary>
-        /// The name of the UIA control type we will use to search for the element
-        /// </summary>
-        private UIAControlType _ControlType;
-        public UIAControlType ControlType
-        {
-            get
-            {
-                return _ControlType;
-            }
-        }
-
-        /// <summary>
-        /// The name of the UIA localized control type, which will be part of the test
-        /// case if it is not null
-        /// </summary>
-        private string _LocalizedControlType;
-        public string LocalizedControlType
-        {
-            get
-            {
-                return _LocalizedControlType;
-            }
-        }
-
-        /// <summary>
-        /// The name of the UIA landmark type, which will be part of the test
-        /// case if it is not null
-        /// </summary>
-        private UIALandmarkType _LandmarkType;
-        public UIALandmarkType LandmarkType
-        {
-            get
-            {
-                return _LandmarkType;
-            }
-        }
-
-        /// <summary>
-        /// The name of the UIA localized landmark type, which will be part of the test
-        /// case if it is not null
-        /// </summary>
-        private string _LocalizedLandmarkType;
-        public string LocalizedLandmarkType
-        {
-            get
-            {
-                return _LocalizedLandmarkType;
-            }
-        }
-
-        /// <summary>
-        /// A list of ids for all the elements that should be keyboard accessible (via tab)
-        /// </summary>
-        private List<string> _KeyboardElements;
-        public List<string> KeyboardElements
-        {
-            get
-            {
-                return _KeyboardElements;
-            }
-        }
-
-        /// <summary>
-        /// If not null, this func will be used to test elements to see if they should be
-        /// tested (instead of matching _ControlType).
-        /// </summary>
-        private Func<IUIAutomationElement, bool> _SearchStrategy;
-        public Func<IUIAutomationElement, bool> SearchStrategy
-        {
-            get
-            {
-                return _SearchStrategy;
-            }
-        }
-
-        /// <summary>
-        /// A list of expected values which will be compared to the accessible names of
-        /// the found elements.
-        /// </summary>
-        private List<string> _requiredNames;
-        public List<string> RequiredNames
-        {
-            get
-            {
-                return _requiredNames;
-            }
-        }
-
-        /// <summary>
-        /// Same as above, but for accessible descriptions.
-        /// </summary>
-        private List<string> _RequiredDescriptions;
-        public List<string> RequiredDescriptions
-        {
-            get
-            {
-                return _RequiredDescriptions;
-            }
-        }
-
-        /// <summary>
-        /// A func that allows extending the tests for specific elements. 
-        /// </summary>
-        private Func<List<IUIAutomationElement>, DriverManager, List<string>, TestCaseResultExt> _AdditionalRequirement;
-        public Func<List<IUIAutomationElement>, DriverManager, List<string>, TestCaseResultExt> AdditionalRequirement
-        {
-            get
-            {
-                return _AdditionalRequirement;
-            }
-        }
-
-        /// <summary>
-        /// Simple Ctor
-        /// </summary>
-        /// <param name="testName"></param>
-        /// <param name="controlType"></param>
-        /// <param name="localizedControlType"></param>
-        /// <param name="landmarkType"></param>
-        /// <param name="localizedLandmarkType"></param>
-        /// <param name="keyboardElements"></param>
-        /// <param name="searchStrategy"></param>
-        /// <param name="requiredNames"></param>
-        /// <param name="requiredDescriptions"></param>
-        /// <param name="additionalRequirement"></param>
-        public TestData(string testName,
+        /// <param name="testName">The name of the test</param>
+        /// <param name="controlType">The control type of the test</param>
+        /// <param name="localizedControlType">The localized control type of the test</param>
+        /// <param name="landmarkType">The landmark type of the test</param>
+        /// <param name="localizedLandmarkType">The localized landmark type of the test</param>
+        /// <param name="keyboardElements">The keyboard-accessible elements to look for</param>
+        /// <param name="searchStrategy">The search strategy to use when looking for an element</param>
+        /// <param name="requiredNames">The required names on the element's web page</param>
+        /// <param name="requiredDescriptions">The required descriptions on the element's web page</param>
+        /// <param name="additionalRequirement">The additional requirement for the test</param>
+        public TestData(
+            string testName,
             UIAControlType controlType,
             string localizedControlType = null,
             UIALandmarkType landmarkType = UIALandmarkType.Unknown,
@@ -163,121 +42,238 @@
             List<string> requiredDescriptions = null,
             Func<List<IUIAutomationElement>, DriverManager, List<string>, TestCaseResultExt> additionalRequirement = null)
         {
-            _TestName = testName;
-            _ControlType = controlType;
-            _LocalizedControlType = localizedControlType;
-            _LandmarkType = landmarkType;
-            _LocalizedLandmarkType = localizedLandmarkType;
-            _KeyboardElements = keyboardElements;
-            _SearchStrategy = searchStrategy;
-            _requiredNames = requiredNames;
-            _RequiredDescriptions = requiredDescriptions;
-            _AdditionalRequirement = additionalRequirement;
-        }
-
-        //All the tests to run
-        public static Lazy<List<TestData>> alltests = new Lazy<List<TestData>>(AllTests);
-
-        /// <summary>
-        /// Get the TestData for the given test page
-        /// </summary>
-        /// <param name="testName">The name of the file being tested</param>
-        /// <returns>TestData for the given test page, or null if it couldn't be found</returns>
-        public static TestData DataFromName(string testName)
-        {
-            return alltests.Value.FirstOrDefault(t => t._TestName == testName);
+            this.TestName = testName;
+            this.ControlType = controlType;
+            this.LocalizedControlType = localizedControlType;
+            this.LandmarkType = landmarkType;
+            this.LocalizedLandmarkType = localizedLandmarkType;
+            this.KeyboardElements = keyboardElements;
+            this.SearchStrategy = searchStrategy;
+            this.RequiredNames = requiredNames;
+            this.RequiredDescriptions = requiredDescriptions;
+            this.AdditionalRequirement = additionalRequirement;
         }
 
         /// <summary>
-        /// Singleton initializer
+        /// Gets the name of the test, which corresponds to the name of the html element
         /// </summary>
-        /// <returns></returns>
-        static List<TestData> AllTests()
+        public string TestName
         {
-            const int timeout = 0;
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// Gets the name of the UIA control type we will use to search for the element
+        /// </summary>
+        public UIAControlType ControlType
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// Gets the name of the UIA localized control type, which will be part of the test
+        /// case if it is not null
+        /// </summary>
+        public string LocalizedControlType
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// Gets the name of the UIA landmark type, which will be part of the test
+        /// case if it is not null
+        /// </summary>
+        public UIALandmarkType LandmarkType
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// Gets the name of the UIA localized landmark type, which will be part of the test
+        /// case if it is not null
+        /// </summary>
+        public string LocalizedLandmarkType
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// Gets a list of ids for all the elements that should be keyboard accessible (via tab)
+        /// </summary>
+        public List<string> KeyboardElements
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// Gets if not null, this func will be used to test elements to see if they should be
+        /// tested (instead of matching _ControlType).
+        /// </summary>
+        public Func<IUIAutomationElement, bool> SearchStrategy
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// Gets a list of expected values which will be compared to the accessible names of
+        /// the found elements.
+        /// </summary>
+        public List<string> RequiredNames
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// Gets same as above, but for accessible descriptions.
+        /// </summary>
+        public List<string> RequiredDescriptions
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// Gets a func that allows extending the tests for specific elements. 
+        /// </summary>
+        public Func<List<IUIAutomationElement>, DriverManager, List<string>, TestCaseResultExt> AdditionalRequirement
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// Creates the list of tests for html5accessibility.com    
+        /// </summary>
+        /// <returns>Returns the list of tests</returns>
+        public static List<TestData> AllTests()
+        {
+            const int Timeout = 0;
             var uia = new CUIAutomation8();
             var walker = uia.RawViewWalker;
 
-            return new List<TestData>{
-                new TestData("article", UIAControlType.Group, "article",
+            return new List<TestData>
+            {
+                new TestData(
+                    "article",
+                    UIAControlType.Group,
+                    "article",
                     requiredNames:
-                        new List<string>{
+                        new List<string>
+                        {
                             "aria-label attribute 3",
                             "h1 referenced by aria-labelledby4",
                             "title attribute 5",
-                            "aria-label attribute 7"},
+                            "aria-label attribute 7"
+                        },
                     requiredDescriptions:
-                        new List<string>{
+                        new List<string>
+                        {
                             "h1 referenced by aria-describedby6",
                             "title attribute 7"
-                    }),
-                new TestData("aside", UIAControlType.Group, "aside", UIALandmarkType.Custom, "complementary",
+                        }),
+                new TestData(
+                    "aside",
+                    UIAControlType.Group,
+                    "aside",
+                    UIALandmarkType.Custom,
+                    "complementary",
                     requiredNames:
-                        new List<string>{
+                        new List<string>
+                        {
                             "aria-label attribute 3",
                             "h1 referenced by aria-labelledby4",
                             "title attribute 5",
-                            "aria-label attribute 7"},
+                            "aria-label attribute 7"
+                        },
                     requiredDescriptions:
-                        new List<string>{
+                        new List<string>
+                        {
                             "h1 referenced by aria-describedby6",
                             "title attribute 7"
-                    }),
-                new TestData("audio", UIAControlType.Group, "audio",
-                    additionalRequirement: ((elements, driver, ids) => {
+                        }),
+                new TestData(
+                    "audio",
+                    UIAControlType.Group,
+                    "audio",
+                    additionalRequirement: (elements, driver, ids) =>
+                    {
                         var result = new TestCaseResultExt();
 
-                        CheckChildNames(new List<string> {
+                        CheckChildNames(
+                            new List<string>
+                            {
                                 "Play",
                                 "Time elapsed",
                                 "Seek",
                                 "Time remaining",
                                 "Mute",
-                                "Volume"})(elements, driver, ids, result);
+                                "Volume"
+                            })(elements, driver, ids, result);
 
-                        CheckAudioKeyboardInteractions(elements, driver, ids, result);
-                        return result;
-                        }
-                    )),
-                new TestData("canvas", UIAControlType.Image,
-                    additionalRequirement: ((elements, driver, ids) => {
-                        var result = new TestCaseResultExt();
-                        var subdomElements = new List<IUIAutomationElement>();
-
-                        foreach (var e in elements)
+                            CheckAudioKeyboardInteractions(elements, driver, ids, result);
+                            return result;
+                        }),
+                new TestData(
+                    "canvas",
+                    UIAControlType.Image,
+                    additionalRequirement: 
+                        (elements, driver, ids) =>
                         {
-                            subdomElements.AddRange(e.GetAllDescendants((d) =>
+                            var result = new TestCaseResultExt();
+                            var subdomElements = new List<IUIAutomationElement>();
+
+                            foreach (var e in elements)
                             {
-                                var convertedRole =
-                                    GetControlTypeFromCode(d.CurrentControlType);
-                                return (convertedRole == UIAControlType.Button || convertedRole == UIAControlType.Text);
-                            }));
-                        }
-                        if(subdomElements.Count() != 3)
+                                subdomElements.AddRange(e.GetAllDescendants((d) =>
+                                {
+                                    var convertedRole =
+                                        GetControlTypeFromCode(d.CurrentControlType);
+                                    return convertedRole == UIAControlType.Button || convertedRole == UIAControlType.Text;
+                                }));
+                            }
+
+                            if (subdomElements.Count() != 3)
+                            {
+                                result.Result = ResultType.Half;
+                                result.AddInfo("Unable to find subdom elements");
+                            }
+
+                            var featureDetectionScript = @"canvas = document.getElementById('myCanvas');
+                                                            isSupported = !!(canvas.getContext && canvas.getContext('2d'));
+                                                            isSupported = isSupported && !!(canvas.getContext('2d').drawFocusIfNeeded);
+                                                            return isSupported;";
+
+                            if (!(bool)driver.ExecuteScript(featureDetectionScript, Timeout))
+                            {
+                                result.Result = ResultType.Half;
+                                result.AddInfo("\nFailed feature detection");
+                            }
+
+                            return result;
+                        }),
+                new TestData(
+                    "datalist",
+                    UIAControlType.Combobox,
+                    keyboardElements:
+                        new List<string>
                         {
-                            result.Result = ResultType.Half;
-                            result.AddInfo("Unable to find subdom elements");
-                        }
-
-                        var featureDetectionScript = @"canvas = document.getElementById('myCanvas');
-                                                        isSupported = !!(canvas.getContext && canvas.getContext('2d'));
-                                                        isSupported = isSupported && !!(canvas.getContext('2d').drawFocusIfNeeded);
-                                                        return isSupported;";
-
-                        if(!(bool)driver.ExecuteScript(featureDetectionScript, timeout))
-                        {
-                            result.Result = ResultType.Half;
-                            result.AddInfo("\nFailed feature detection");
-                        }
-
-                        return result;
-                    })),
-                new TestData("datalist", UIAControlType.Combobox, keyboardElements: new List<string> { "input1" },
-                    additionalRequirement: ((elements, driver, ids) => {
+                            "input1"
+                        },
+                    additionalRequirement:
+                    (elements, driver, ids) =>
+                    {
                         Func<string, string> datalistValue = (id) => (string)driver.ExecuteScript("return document.getElementById('" + id + "').value", 0);
                         var result = new TestCaseResultExt();
 
-                        foreach(var element in elements)
+                        foreach (var element in elements)
                         {
                             var elementFive = (IUIAutomationElement5)element;
                             List<int> patternIds;
@@ -288,27 +284,30 @@
                                 result.Result = ResultType.Half;
                                 result.AddInfo("\nElement did not support SelectionPattern");
                             }
-                            else {
+                            else
+                            {
                                 var selectionPattern = (IUIAutomationSelectionPattern)elementFive.GetCurrentPattern(
                                     patternIds[names.IndexOf("SelectionPattern")]);
 
-                                if(selectionPattern.CurrentCanSelectMultiple == 1)
+                                if (selectionPattern.CurrentCanSelectMultiple == 1)
                                 {
                                     result.Result = ResultType.Half;
                                     result.AddInfo("\nCanSelectMultiple set to true");
                                 }
                             }
                         }
+
                         var previousControllerForElements = new HashSet<int>();
 
-                        //keyboard a11y
+                        // keyboard a11y
                         foreach (var id in ids.Take(1))
                         {
                             var initial = datalistValue(id);
                             driver.SendSpecialKeys(id, WebDriverKey.Arrow_down);
 
                             var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().Select(element => elements.IndexOf(element));
-                            if(controllerForElements.All(element => previousControllerForElements.Contains(element))){
+                            if (controllerForElements.All(element => previousControllerForElements.Contains(element)))
+                            {
                                 result.Result = ResultType.Half;
                                 result.AddInfo("Element controller for not set for id: " + id);
                             }
@@ -325,32 +324,42 @@
                         }
 
                         return result;
-                    })),
-                new TestData("figure", UIAControlType.Group, "figure",
+                    }),
+                new TestData(
+                    "figure",
+                    UIAControlType.Group,
+                    "figure",
                     requiredNames:
-                        new List<string>{
+                        new List<string>
+                        {
                             "aria-label attribute 2",
                             "p referenced by aria-labelledby3",
                             "title attribute 4",
                             "Figcaption element 5",
-                            "Figcaption element 7"},
+                            "Figcaption element 7"
+                        },
                     requiredDescriptions:
-                        new List<string>{
+                        new List<string>
+                        {
                             "p referenced by aria-describedby6",
                             "title attribute 7"
-                    }),
-                new TestData("figure-figcaption", UIAControlType.Text,//Control type is ignored
-                    searchStrategy: element => true, //Verify this element via text range
-                    additionalRequirement: ((elements, driver, ids) =>
+                        }),
+
+                // Control type is ignored, verify this element via text range
+                new TestData(
+                    "figure-figcaption",
+                    UIAControlType.Text,
+                    searchStrategy: element => true,
+                    additionalRequirement: (elements, driver, ids) =>
                         {
                             var result = new TestCaseResultExt();
                             var logoText = "HTML5 logo 1";
 
-                            //there will be only one, since element is the pane in this case
-                            foreach(var element in elements) {
-                                var five = (IUIAutomationElement5)
-                                    walker.GetFirstChildElement(
-                                        walker.GetFirstChildElement(elements[0]));//only have the pane element, take its grandchild
+                            // there will be only one, since element is the pane in this case
+                            foreach (var element in elements)
+                            {
+                                var five = (IUIAutomationElement5)walker.GetFirstChildElement(walker.GetFirstChildElement(elements[0]));
+
                                 List<int> patternIds;
                                 var names = five.GetPatterns(out patternIds);
 
@@ -380,7 +389,7 @@
 
                                 var childRangeText = childRange.GetText(1000).Trim();
 
-                                if(childRangeText != logoText)
+                                if (childRangeText != logoText)
                                 {
                                     result.Result = ResultType.Half;
                                     result.AddInfo(string.Format("\nUnable to find correct text range. Found '{0}' instead", childRangeText));
@@ -388,23 +397,29 @@
                             }
 
                             return result;
-                        })),
-                new TestData("footer", UIAControlType.Group,
+                        }),
+                new TestData(
+                    "footer",
+                    UIAControlType.Group,
                     searchStrategy: element =>
                         GetControlTypeFromCode(element.CurrentControlType) == UIAControlType.Group
                         && element.CurrentLocalizedControlType != "article",
                     requiredNames:
-                        new List<string>{
+                        new List<string>
+                        {
                             "aria-label attribute 3",
                             "small referenced by aria-labelledby4",
                             "title attribute 5",
-                            "aria-label attribute 7"},
+                            "aria-label attribute 7"
+                        },
                     requiredDescriptions:
-                        new List<string>{
+                        new List<string>
+                        {
                             "small referenced by aria-describedby6",
                             "title attribute 7"
                         },
-                    additionalRequirement: (elements, driver, ids) => {
+                    additionalRequirement: (elements, driver, ids) => 
+                    {
                         var result = new TestCaseResultExt();
 
                         if (elements.Count() != 7)
@@ -415,7 +430,8 @@
 
                         var convertedLandmarks = 0;
                         var localizedLandmarks = 0;
-                        //same for landmark and localizedlandmark
+
+                        // same for landmark and localizedlandmark
                         foreach (var element in elements)
                         {
                             var five = element as IUIAutomationElement5;
@@ -425,11 +441,13 @@
                             {
                                 convertedLandmarks++;
                             }
+
                             if (localizedLandmark == "content information")
                             {
                                 localizedLandmarks++;
                             }
                         }
+
                         if (convertedLandmarks != 1)
                         {
                             result.Result = ResultType.Half;
@@ -444,21 +462,28 @@
 
                         return result;
                     }),
-                new TestData("header", UIAControlType.Group,
+                new TestData(
+                    "header",
+                    UIAControlType.Group,
                     searchStrategy: element =>
                         GetControlTypeFromCode(element.CurrentControlType) == UIAControlType.Group
                         && element.CurrentLocalizedControlType != "article",
                     requiredNames:
-                        new List<string>{
+                        new List<string>
+                        {
                             "aria-label attribute 3",
                             "h1 referenced by aria-labelledby4",
                             "title attribute 5",
-                            "aria-label attribute 7"},
+                            "aria-label attribute 7"
+                        },
                     requiredDescriptions:
-                        new List<string>{
+                        new List<string>
+                        {
                             "h1 referenced by aria-describedby6",
-                            "title attribute 7"},
-                    additionalRequirement: (elements, driver, ids) => {
+                            "title attribute 7"
+                        },
+                    additionalRequirement: (elements, driver, ids) =>
+                    {
                         var result = new TestCaseResultExt();
 
                         if (elements.Count() != 7)
@@ -470,7 +495,8 @@
                         var convertedLandmarks = 0;
                         var localizedLandmarks = 0;
                         var landmarkCode = 0;
-                        //same for landmark and localizedlandmark
+
+                        // same for landmark and localizedlandmark
                         foreach (var element in elements)
                         {
                             var five = element as IUIAutomationElement5;
@@ -481,11 +507,13 @@
                             {
                                 convertedLandmarks++;
                             }
+
                             if (localizedLandmark == "banner")
                             {
                                 localizedLandmarks++;
                             }
                         }
+
                         if (convertedLandmarks != 1)
                         {
                             result.Result = ResultType.Half;
@@ -500,40 +528,56 @@
 
                         return result;
                     }),
-                new TestData("input-color", UIAControlType.Button, "color picker",
-                    additionalRequirement: (elements, driver, ids) => {
+                new TestData(
+                    "input-color",
+                    UIAControlType.Button,
+                    "color picker",
+                    additionalRequirement: (elements, driver, ids) =>
+                    {
                         var result = new TestCaseResultExt();
 
                         var previousControllerForElements = new HashSet<int>();
-                        foreach(var id in ids.Take(1))
+                        foreach (var id in ids.Take(1))
                         {
-                            Func<string> CheckColorValue = () => (string) driver.ExecuteScript("return document.getElementById('"+ id + "').value", timeout);
-                            Action<string> ChangeColorValue = (value) => driver.ExecuteScript("document.getElementById('"+ id + "').value = '" + value + "'", timeout);
+                            Func<string> CheckColorValue = () => (string)driver.ExecuteScript("return document.getElementById('" + id + "').value", Timeout);
+                            Action<string> ChangeColorValue = (value) => driver.ExecuteScript("document.getElementById('" + id + "').value = '" + value + "'", Timeout);
                             Func<string> ActiveElement = () => (string)driver.ExecuteScript("return document.activeElement.id", 0);
 
                             var initial = CheckColorValue();
-                            driver.SendSpecialKeys(id, new List<WebDriverKey> { WebDriverKey.Enter, WebDriverKey.Escape, WebDriverKey.Enter, WebDriverKey.Enter });
+                            driver.SendSpecialKeys(
+                                id,
+                                new List<WebDriverKey>
+                                {
+                                    WebDriverKey.Enter,
+                                    WebDriverKey.Escape,
+                                    WebDriverKey.Enter,
+                                    WebDriverKey.Enter
+                                });
 
-                            //open dialog to check controllerfor
+                            // open dialog to check controllerfor
                             driver.SendSpecialKeys(id, WebDriverKey.Enter);
                             var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().Select(element => elements.IndexOf(element));
-                            if(controllerForElements.All(element => previousControllerForElements.Contains(element))){
+                            if (controllerForElements.All(element => previousControllerForElements.Contains(element)))
+                            {
                                 result.Result = ResultType.Half;
                                 result.AddInfo("\nElement controller for not set for id: " + id);
                             }
                             else
                             {
-                                //the element that corresponds to this id
+                                // the element that corresponds to this id
                                 var thisElement = elements[controllerForElements.First(element => !previousControllerForElements.Contains(element))];
-                                if(thisElement.CurrentControllerFor.Length > 1){
+                                if (thisElement.CurrentControllerFor.Length > 1)
+                                {
                                     throw new Exception("\nMore than one ControllerFor present, test assumption failed");
                                 }
+
                                 var thisDialog = thisElement.CurrentControllerFor.GetElement(0);
                                 var descendents = thisDialog.GetAllDescendants();
 
-                                //sliders
+                                // sliders
                                 var sliders = descendents.Where(d => GetControlTypeFromCode(d.CurrentControlType) == UIAControlType.Slider);
-                                if(sliders.Count() != 3){
+                                if (sliders.Count() != 3)
+                                {
                                     result.Result = ResultType.Half;
                                     result.AddInfo("\nDialog did not have three slider elements");
                                 }
@@ -543,14 +587,14 @@
                                     result.AddInfo("\nDialog's sliders did not implement RangeValuePattern");
                                 }
 
-                                //buttons
+                                // buttons
                                 if (descendents.Count(d => GetControlTypeFromCode(d.CurrentControlType) == UIAControlType.Button) != 2)
                                 {
                                     result.Result = ResultType.Half;
                                     result.AddInfo("\nDialog did not have two button elements");
                                 }
 
-                                //color well
+                                // color well
                                 var outputs = descendents.Where(d => GetControlTypeFromCode(d.CurrentControlType) == UIAControlType.Group && d.CurrentLocalizedControlType == "output");
                                 if (outputs.Count() > 1)
                                 {
@@ -564,7 +608,7 @@
                                 else if (outputs.Count() == 1)
                                 {
                                     var output = outputs.First();
-                                    if (output.CurrentName == null || output.CurrentName == "")
+                                    if (output.CurrentName == null || output.CurrentName == string.Empty)
                                     {
                                         result.Result = ResultType.Half;
                                         result.AddInfo("\nColor dialog output did not have name set");
@@ -573,10 +617,15 @@
                                     {
                                         var initialName = output.CurrentName;
 
-                                        driver.SendSpecialKeys(id, new List<WebDriverKey> { WebDriverKey.Tab,
-                                            WebDriverKey.Tab,
-                                            WebDriverKey.Arrow_right,
-                                            WebDriverKey.Arrow_right });
+                                        driver.SendSpecialKeys(
+                                            id,
+                                            new List<WebDriverKey>
+                                            {
+                                                WebDriverKey.Tab,
+                                                WebDriverKey.Tab,
+                                                WebDriverKey.Arrow_right,
+                                                WebDriverKey.Arrow_right
+                                            });
 
                                         if (output.CurrentName == initialName)
                                         {
@@ -584,49 +633,63 @@
                                             result.AddInfo("\nColor dialog output did not change name when color changed: " + output.CurrentName);
                                         }
 
-                                        ChangeColorValue("#000000");//Ensure that the color is clear before continuing
+                                        // Ensure that the color is clear before continuing
+                                        ChangeColorValue("#000000");
                                     }
                                 }
                             }
 
-                            //open with enter, close with escape
-                            driver.SendSpecialKeys(id, new List<WebDriverKey> { WebDriverKey.Escape,
-                                WebDriverKey.Enter,
-                                WebDriverKey.Tab,
-                                WebDriverKey.Arrow_right,
-                                WebDriverKey.Arrow_right,
-                                WebDriverKey.Escape });
+                            // open with enter, close with escape
+                            driver.SendSpecialKeys(
+                                id,
+                                new List<WebDriverKey>
+                                {
+                                    WebDriverKey.Escape,
+                                    WebDriverKey.Enter,
+                                    WebDriverKey.Tab,
+                                    WebDriverKey.Arrow_right,
+                                    WebDriverKey.Arrow_right,
+                                    WebDriverKey.Escape
+                                });
                             if (CheckColorValue() != initial)
                             {
                                 result.Result = ResultType.Half;
                                 result.AddInfo("\nUnable to cancel with escape");
                             }
 
-                            //open with enter, close with enter
-                            driver.SendSpecialKeys(id, new List<WebDriverKey> {
-                                WebDriverKey.Escape,
-                                WebDriverKey.Enter,
-                                WebDriverKey.Tab,
-                                WebDriverKey.Tab,
-                                WebDriverKey.Arrow_right,
-                                WebDriverKey.Arrow_right,
-                                WebDriverKey.Enter });
+                            // open with enter, close with enter
+                            driver.SendSpecialKeys(
+                                id,
+                                new List<WebDriverKey>
+                                {
+                                    WebDriverKey.Escape,
+                                    WebDriverKey.Enter,
+                                    WebDriverKey.Tab,
+                                    WebDriverKey.Tab,
+                                    WebDriverKey.Arrow_right,
+                                    WebDriverKey.Arrow_right,
+                                    WebDriverKey.Enter
+                                });
                             if (CheckColorValue() == initial)
                             {
                                 result.Result = ResultType.Half;
                                 result.AddInfo("\nUnable to change value with arrow keys and submit with enter");
                             }
 
-                            //open with space, close with enter
+                            // open with space, close with enter
                             initial = CheckColorValue();
-                            driver.SendSpecialKeys(id, new List<WebDriverKey> {
-                                WebDriverKey.Escape,
-                                WebDriverKey.Space,
-                                WebDriverKey.Tab,
-                                WebDriverKey.Tab,
-                                WebDriverKey.Arrow_right,
-                                WebDriverKey.Arrow_right,
-                                WebDriverKey.Enter });
+                            driver.SendSpecialKeys(
+                                id,
+                                new List<WebDriverKey>
+                                {
+                                    WebDriverKey.Escape,
+                                    WebDriverKey.Space,
+                                    WebDriverKey.Tab,
+                                    WebDriverKey.Tab,
+                                    WebDriverKey.Arrow_right,
+                                    WebDriverKey.Arrow_right,
+                                    WebDriverKey.Enter
+                                });
                             if (initial == CheckColorValue())
                             {
                                 result.Result = ResultType.Half;
@@ -635,93 +698,119 @@
 
                             initial = CheckColorValue();
 
-                            driver.SendSpecialKeys(id, new List<WebDriverKey> {
-                                WebDriverKey.Enter,
-                                WebDriverKey.Tab,
-                                WebDriverKey.Tab,
-                                WebDriverKey.Tab });
+                            driver.SendSpecialKeys(
+                                id,
+                                new List<WebDriverKey>
+                                {
+                                    WebDriverKey.Enter,
+                                    WebDriverKey.Tab,
+                                    WebDriverKey.Tab,
+                                    WebDriverKey.Tab
+                                });
                             if (ActiveElement() != id)
                             {
                                 result.Result = ResultType.Half;
                                 result.AddInfo("\nUnable to reach accept/dismiss buttons via tab");
                             }
-                            else//only try to use the buttons if they're there
+
+                            // only try to use the buttons if they're there
+                            else
                             {
-                                //**Dismiss button**
-                                //Open the dialog, change hue, tab to cancel button, activate it with space,
-                                //check that tabbing moves to the previous button (on the page not the dialog)
-                                driver.SendSpecialKeys(id, new List<WebDriverKey> { WebDriverKey.Escape,
-                                    WebDriverKey.Enter,
-                                    WebDriverKey.Arrow_right,
-                                    WebDriverKey.Arrow_right,
-                                    WebDriverKey.Tab,
-                                    WebDriverKey.Tab,
-                                    WebDriverKey.Tab,
-                                    WebDriverKey.Tab,
-                                    WebDriverKey.Space,
-                                    WebDriverKey.Shift,
-                                    WebDriverKey.Tab,
-                                    WebDriverKey.Shift });
+                                // **Dismiss button**
+                                // Open the dialog, change hue, tab to cancel button, activate it with space,
+                                // check that tabbing moves to the previous button (on the page not the dialog)
+                                driver.SendSpecialKeys(
+                                    id,
+                                    new List<WebDriverKey>
+                                    {
+                                        WebDriverKey.Escape,
+                                        WebDriverKey.Enter,
+                                        WebDriverKey.Arrow_right,
+                                        WebDriverKey.Arrow_right,
+                                        WebDriverKey.Tab,
+                                        WebDriverKey.Tab,
+                                        WebDriverKey.Tab,
+                                        WebDriverKey.Tab,
+                                        WebDriverKey.Space,
+                                        WebDriverKey.Shift,
+                                        WebDriverKey.Tab,
+                                        WebDriverKey.Shift
+                                    });
                                 if (initial != CheckColorValue() || ActiveElement() == id)
                                 {
                                     result.Result = ResultType.Half;
                                     result.AddInfo("\nUnable to cancel with dismiss button via space");
                                 }
 
-                                //do the same as above, but activate the button with enter this time
-                                driver.SendSpecialKeys(id, new List<WebDriverKey> { WebDriverKey.Escape,
-                                    WebDriverKey.Enter,
-                                    WebDriverKey.Arrow_right,
-                                    WebDriverKey.Arrow_right,
-                                    WebDriverKey.Tab,
-                                    WebDriverKey.Tab,
-                                    WebDriverKey.Tab,
-                                    WebDriverKey.Tab,
-                                    WebDriverKey.Enter,
-                                    WebDriverKey.Shift,
-                                    WebDriverKey.Tab,
-                                    WebDriverKey.Shift });
+                                // do the same as above, but activate the button with enter this time
+                                driver.SendSpecialKeys(
+                                    id,
+                                    new List<WebDriverKey>
+                                    {
+                                        WebDriverKey.Escape,
+                                        WebDriverKey.Enter,
+                                        WebDriverKey.Arrow_right,
+                                        WebDriverKey.Arrow_right,
+                                        WebDriverKey.Tab,
+                                        WebDriverKey.Tab,
+                                        WebDriverKey.Tab,
+                                        WebDriverKey.Tab,
+                                        WebDriverKey.Enter,
+                                        WebDriverKey.Shift,
+                                        WebDriverKey.Tab,
+                                        WebDriverKey.Shift
+                                    });
                                 if (initial != CheckColorValue() || ActiveElement() == id)
                                 {
                                     result.Result = ResultType.Half;
                                     result.AddInfo("\nUnable to cancel with dismiss button via enter");
                                 }
 
-
-                                //**Accept button**
+                                // **Accept button**
                                 initial = CheckColorValue();
 
-                                //Open the dialog, tab to hue, change hue, tab to accept button, activate it with space,
-                                //send tab (since the dialog should be closed, this will transfer focus to the next
-                                //input-color button)
-                                driver.SendSpecialKeys(id, new List<WebDriverKey> { WebDriverKey.Escape,
-                                    WebDriverKey.Enter,
-                                    WebDriverKey.Tab,
-                                    WebDriverKey.Tab,
-                                    WebDriverKey.Arrow_right,
-                                    WebDriverKey.Arrow_right,
-                                    WebDriverKey.Tab,
-                                    WebDriverKey.Space,
-                                    WebDriverKey.Tab });
+                                // Open the dialog, tab to hue, change hue, tab to accept button, activate it with space,
+                                // send tab (since the dialog should be closed, this will transfer focus to the next
+                                // input-color button)
+                                driver.SendSpecialKeys(
+                                    id,
+                                    new List<WebDriverKey>
+                                    {
+                                        WebDriverKey.Escape,
+                                        WebDriverKey.Enter,
+                                        WebDriverKey.Tab,
+                                        WebDriverKey.Tab,
+                                        WebDriverKey.Arrow_right,
+                                        WebDriverKey.Arrow_right,
+                                        WebDriverKey.Tab,
+                                        WebDriverKey.Space,
+                                        WebDriverKey.Tab
+                                    });
                                 if (initial == CheckColorValue() || ActiveElement() == id)
                                 {
                                     result.Result = ResultType.Half;
                                     result.AddInfo("\nUnable to accept with accept button via space");
                                 }
 
-                                initial = CheckColorValue();//the value hopefully changed above, but just to be safe
+                                // the value hopefully changed above, but just to be safe
+                                initial = CheckColorValue();
 
-                                //Open the dialog, tab to hue, change hue, tab to accept button, activate it with enter
-                                //We don't have to worry about why the dialog closed here (button or global enter)
-                                driver.SendSpecialKeys(id, new List<WebDriverKey> { WebDriverKey.Escape,
-                                    WebDriverKey.Enter,
-                                    WebDriverKey.Tab,
-                                    WebDriverKey.Tab,
-                                    WebDriverKey.Arrow_right,
-                                    WebDriverKey.Arrow_right,
-                                    WebDriverKey.Tab,
-                                    WebDriverKey.Enter,
-                                    WebDriverKey.Tab });
+                                // Open the dialog, tab to hue, change hue, tab to accept button, activate it with enter
+                                // We don't have to worry about why the dialog closed here (button or global enter)
+                                driver.SendSpecialKeys(
+                                    id,
+                                    new List<WebDriverKey>
+                                    {
+                                        WebDriverKey.Escape,
+                                        WebDriverKey.Enter,
+                                        WebDriverKey.Tab,
+                                        WebDriverKey.Tab,
+                                        WebDriverKey.Arrow_right,
+                                        WebDriverKey.Arrow_right,
+                                        WebDriverKey.Tab,
+                                        WebDriverKey.Enter,
+                                        WebDriverKey.Tab
+                                    });
                                 if (initial == CheckColorValue() || ActiveElement() == id)
                                 {
                                     result.Result = ResultType.Half;
@@ -732,19 +821,30 @@
 
                         return result;
                     }),
-                new TestData("input-date", UIAControlType.Edit,
-                    keyboardElements: new List<string> { "input1", "input2" },
+                new TestData(
+                    "input-date",
+                    UIAControlType.Edit,
+                    keyboardElements:
+                        new List<string>
+                        {
+                            "input1",
+                            "input2"
+                        },
                     requiredNames:
-                        new List<string>{
+                        new List<string>
+                        {
                             "aria-label attribute2",
                             "p referenced by aria-labelledby3",
                             "label wrapping input 4",
                             "title attribute 5",
-                            "label referenced by for/id attributes 7"},
+                            "label referenced by for/id attributes 7"
+                        },
                     requiredDescriptions:
-                        new List<string>{
+                        new List<string>
+                        {
                             "p referenced by aria-describedby6",
-                            "title attribute 7" },
+                            "title attribute 7"
+                        },
                     additionalRequirement:
                         (element, driver, ids) =>
                         {
@@ -752,18 +852,24 @@
                             CheckCalendar(3)(element, driver, ids, result);
                             return result;
                         }),
-                new TestData("input-datetime-local", UIAControlType.Edit,
+                new TestData(
+                    "input-datetime-local",
+                    UIAControlType.Edit,
                     requiredNames:
-                        new List<string>{
+                        new List<string>
+                        {
                             "aria-label attribute2",
                             "p referenced by aria-labelledby3",
                             "label wrapping input 4",
                             "title attribute 5",
-                            "label referenced by for/id attributes 7"},
+                            "label referenced by for/id attributes 7"
+                        },
                     requiredDescriptions:
-                        new List<string>{
+                        new List<string>
+                        {
                             "p referenced by aria-describedby6",
-                            "title attribute 7" },
+                            "title attribute 7"
+                        },
                     additionalRequirement:
                         (element, driver, ids) =>
                         {
@@ -771,37 +877,62 @@
                             CheckDatetimeLocal()(element, driver, ids, result);
                             return result;
                         }),
-                new TestData("input-email", UIAControlType.Edit, "email",
-                    keyboardElements: new List<string> { "input1", "input2" },
+                new TestData(
+                    "input-email",
+                    UIAControlType.Edit,
+                    "email",
+                    keyboardElements:
+                        new List<string>
+                        {
+                            "input1",
+                            "input2"
+                        },
                     requiredNames:
-                        new List<string>{
+                        new List<string>
+                        {
                             "aria-label attribute2",
                             "p referenced by aria-labelledby3",
                             "label wrapping input 4",
                             "title attribute 5",
-                            "label referenced by for/id attributes 7"},
+                            "label referenced by for/id attributes 7"
+                        },
                     requiredDescriptions:
-                        new List<string>{
+                        new List<string>
+                        {
                             "p referenced by aria-describedby6",
-                            "title attribute 7" },
-                    additionalRequirement: (elements, driver, ids) => {
+                            "title attribute 7"
+                        },
+                    additionalRequirement: (elements, driver, ids) =>
+                    {
                         var result = new TestCaseResultExt();
                         CheckValidation()(elements, driver, ids, result);
                         CheckClearButton()(elements, driver, ids, result);
                         return result;
                     }),
-                new TestData("input-month", UIAControlType.Edit, keyboardElements: new List<string> { "input1", "input2" },
+                new TestData(
+                    "input-month",
+                    UIAControlType.Edit,
+                    keyboardElements:
+                        new List<string>
+                        {
+                            "input1",
+                            "input2"
+                        },
                     requiredNames:
-                        new List<string>{
+                        new List<string>
+                        {
                             "aria-label attribute2",
                             "p referenced by aria-labelledby3",
                             "label wrapping input 4",
                             "title attribute 5",
-                            "label referenced by for/id attributes 7"},
+                            "label referenced by for/id attributes 7"
+                        },
                     requiredDescriptions:
-                        new List<string>{
+                        new List<string>
+                        {
                             "p referenced by aria-describedby6",
-                            "title attribute 7" },
+                            "title attribute 7"
+                        },
                     additionalRequirement:
                         (elements, driver, ids) =>
                         {
@@ -809,19 +940,31 @@
                             CheckCalendar(2)(elements, driver, ids, result);
                             return result;
                         }),
-                new TestData("input-number", UIAControlType.Spinner, "number",
-                    keyboardElements: new List<string> { "input1", "input2" },
+                new TestData(
+                    "input-number",
+                    UIAControlType.Spinner,
+                    "number",
+                    keyboardElements:
+                        new List<string>
+                        {
+                            "input1",
+                            "input2"
+                        },
                     requiredNames:
-                        new List<string>{
+                        new List<string>
+                        {
                             "aria-label attribute2",
                             "p referenced by aria-labelledby3",
                             "label wrapping input 4",
                             "title attribute 5",
-                            "label referenced by for/id attributes 7"},
+                            "label referenced by for/id attributes 7"
+                        },
                     requiredDescriptions:
-                        new List<string>{
+                        new List<string>
+                        {
                             "p referenced by aria-describedby6",
-                            "title attribute 7" },
+                            "title attribute 7"
+                        },
                     additionalRequirement:
                         (elements, driver, ids) =>
                         {
@@ -829,24 +972,38 @@
                             CheckValidation()(elements, driver, ids, result);
                             return result;
                         }),
-                new TestData("input-range", UIAControlType.Slider, keyboardElements: new List<string> { "input1", "input2" },
+                new TestData(
+                    "input-range",
+                    UIAControlType.Slider,
+                    keyboardElements:
+                        new List<string>
+                        {
+                            "input1",
+                            "input2"
+                        },
                     requiredNames:
-                        new List<string>{
+                        new List<string>
+                        {
                             "aria-label attribute 2",
                             "p referenced by aria-labelledby3",
                             "label wrapping input 4",
                             "title attribute 5",
-                            "label referenced by for/id attributes 7"},
+                            "label referenced by for/id attributes 7"
+                        },
                     requiredDescriptions:
-                        new List<string>{
+                        new List<string>
+                        {
                             "p referenced by aria-describedby6",
-                            "title attribute 7"},
-                    additionalRequirement: (elements, driver, ids) => {
+                            "title attribute 7"
+                        },
+                    additionalRequirement: (elements, driver, ids) =>
+                    {
                         var result = new TestCaseResultExt();
 
-                        //keyboard interaction
-                        foreach(var id in ids.Take(1)){
-                            Func<int> RangeValue = () => (int) Int32.Parse((string) driver.ExecuteScript("return document.getElementById('" + id + "').value", 0));
+                        // keyboard interaction
+                        foreach (var id in ids.Take(1))
+                        {
+                            Func<int> RangeValue = () => int.Parse((string)driver.ExecuteScript("return document.getElementById('" + id + "').value", 0));
 
                             var initial = RangeValue();
                             driver.SendSpecialKeys(id, WebDriverKey.Arrow_up);
@@ -856,6 +1013,7 @@
                                 result.AddInfo("\nUnable to increase range with arrow up");
                                 continue;
                             }
+
                             driver.SendSpecialKeys(id, WebDriverKey.Arrow_down);
                             if (initial != RangeValue())
                             {
@@ -871,6 +1029,7 @@
                                 result.AddInfo("\nUnable to increase range with arrow right");
                                 continue;
                             }
+
                             driver.SendSpecialKeys(id, WebDriverKey.Arrow_left);
                             if (initial != RangeValue())
                             {
@@ -880,100 +1039,172 @@
                             }
                         }
 
-                        //rangevalue pattern
-                        foreach(var element in elements){
+                        // rangevalue pattern
+                        foreach (var element in elements)
+                        {
                             var rangeValuePattern = "RangeValuePattern";
-                            if (!element.GetPatterns().Contains(rangeValuePattern)) {
+                            if (!element.GetPatterns().Contains(rangeValuePattern))
+                            {
                                 result.Result = ResultType.Half;
                                 result.AddInfo("\nElement did not implement the RangeValuePattern");
                             }
                         }
+
                         return result;
                     }),
-                new TestData("input-search", UIAControlType.Edit, "search", keyboardElements: new List<string> { "input1", "input2" },
+                new TestData(
+                    "input-search",
+                    UIAControlType.Edit,
+                    "search",
+                    keyboardElements:
+                        new List<string>
+                        {
+                            "input1",
+                            "input2"
+                        },
                     requiredNames:
-                        new List<string>{
+                        new List<string>
+                        {
                             "aria-label attribute 2",
                             "p referenced by aria-labelledby3",
                             "label wrapping input 4",
                             "title attribute 5",
-                            "label referenced by for/id attributes 7"},
+                            "label referenced by for/id attributes 7"
+                        },
                     requiredDescriptions:
-                        new List<string>{
+                        new List<string>
+                        {
                             "p referenced by aria-describedby6",
-                            "title attribute 7"},
+                            "title attribute 7"
+                        },
                     additionalRequirement:
-                        (elements, driver, ids) => {
+                        (elements, driver, ids) =>
+                        {
                             var result = new TestCaseResultExt();
                             CheckClearButton()(elements, driver, ids, result);
                             return result;
                         }),
-                new TestData("input-tel", UIAControlType.Edit, "telephone", keyboardElements: new List<string> { "input1", "input2" },
+                new TestData(
+                    "input-tel",
+                    UIAControlType.Edit,
+                    "telephone",
+                    keyboardElements:
+                        new List<string>
+                        {
+                            "input1",
+                            "input2"
+                        },
                     requiredNames:
-                        new List<string>{
+                        new List<string>
+                        {
                             "aria-label attribute 2",
                             "p referenced by aria-labelledby3",
                             "label wrapping input 4",
                             "title attribute 5",
-                            "label referenced by for/id attributes 7"},
+                            "label referenced by for/id attributes 7"
+                        },
                     requiredDescriptions:
-                        new List<string>{
+                        new List<string>
+                        {
                             "p referenced by aria-describedby6",
-                            "title attribute 7"},
+                            "title attribute 7"
+                        },
                     additionalRequirement:
-                        (elements, driver, ids) => {
+                        (elements, driver, ids) =>
+                        {
                             var result = new TestCaseResultExt();
                             CheckClearButton()(elements, driver, ids, result);
                             return result;
                         }),
-                new TestData("input-time", UIAControlType.Edit, keyboardElements: new List<string> { "input1", "input2" },
+                new TestData(
+                    "input-time",
+                    UIAControlType.Edit,
+                    keyboardElements:
+                        new List<string>
+                        {
+                            "input1",
+                            "input2"
+                        },
                     requiredNames:
-                        new List<string>{
+                        new List<string>
+                        {
                             "aria-label attribute 2",
                             "p referenced by aria-labelledby3",
                             "label wrapping input 4",
                             "title attribute 5",
-                            "label referenced by for/id attributes 7"},
+                            "label referenced by for/id attributes 7"
+                        },
                     requiredDescriptions:
-                        new List<string>{
+                        new List<string>
+                        {
                             "p referenced by aria-describedby6",
-                            "title attribute 7" },
+                            "title attribute 7"
+                        },
                     additionalRequirement:
-                        (elements, driver, ids) => {
+                        (elements, driver, ids) =>
+                        {
                             var result = new TestCaseResultExt();
                             CheckCalendar(3, 2)(elements, driver, ids, result);
                             return result;
                         }),
-                new TestData("input-url", UIAControlType.Edit, "url",
-                        keyboardElements: new List<string> { "input1", "input2" },
+                new TestData(
+                    "input-url",
+                    UIAControlType.Edit,
+                    "url",
+                        keyboardElements:
+                            new List<string>
+                            {
+                                "input1",
+                                "input2"
+                            },
                         additionalRequirement:
-                            (elements, driver, ids) => {
+                            (elements, driver, ids) =>
+                            {
                                 var result = new TestCaseResultExt();
                                 CheckValidation()(elements, driver, ids, result);
                                 CheckClearButton()(elements, driver, ids, result);
                                 return result;
                             }),
-                new TestData("input-week", UIAControlType.Edit, keyboardElements: new List<string> { "input1", "input2" },
+                new TestData(
+                    "input-week",
+                    UIAControlType.Edit,
+                    keyboardElements:
+                        new List<string>
+                        {
+                            "input1",
+                            "input2"
+                        },
                     requiredNames:
-                        new List<string>{
+                        new List<string>
+                        {
                             "aria-label attribute 2",
                             "p referenced by aria-labelledby3",
                             "label wrapping input 4",
                             "title attribute 5",
-                            "label referenced by for/id attributes 7"},
+                            "label referenced by for/id attributes 7"
+                        },
                     requiredDescriptions:
-                        new List<string>{
+                        new List<string>
+                        {
                             "p referenced by aria-describedby6",
-                            "title attribute 7" },
+                            "title attribute 7"
+                        },
                     additionalRequirement:
-                        (elements, driver, ids) => {
+                        (elements, driver, ids) =>
+                        {
                             var result = new TestCaseResultExt();
                             CheckCalendar(2)(elements, driver, ids, result);
                             return result;
                         }),
-                new TestData("main", UIAControlType.Group, "main", UIALandmarkType.Main, "main",
+                new TestData(
+                    "main",
+                    UIAControlType.Group,
+                    "main",
+                    UIALandmarkType.Main,
+                    "main",
                     requiredNames:
-                        new List<string>{
+                        new List<string>
+                        {
                             "title attribute 1",
                             "aria-label attribute 2",
                             "h1 referenced by aria-labelledby3",
@@ -981,70 +1212,90 @@
                             "aria-label attribute 6"
                         },
                     requiredDescriptions:
-                        new List<string>{
+                        new List<string>
+                        {
                             "h1 referenced by aria-describedby5",
-                            "title attribute 6"}),
-                new TestData("mark", UIAControlType.Text,
+                            "title attribute 6"
+                        }),
+                new TestData(
+                    "mark",
+                    UIAControlType.Text,
                     searchStrategy: element =>
                         GetControlTypeFromCode(element.CurrentControlType) == UIAControlType.Text
                         && element.CurrentLocalizedControlType == "mark",
                     requiredNames:
-                        new List<string>{
+                        new List<string>
+                        {
                             "aria-label attribute2",
                             "Element referenced by aria-labelledby attribute3",
                             "title attribute 4",
                             "aria-label attribute 6"
                         },
                     requiredDescriptions:
-                        new List<string>{
+                        new List<string>
+                        {
                             "Element referenced by aria-describedby attribute5",
-                            "title attribute 6"}),
-                new TestData("meter", UIAControlType.Progressbar, "meter",
+                            "title attribute 6"
+                        }),
+                new TestData(
+                    "meter",
+                    UIAControlType.Progressbar,
+                    "meter",
                     requiredNames:
-                        new List<string>{
+                        new List<string>
+                        {
                             "aria-label attribute 2",
                             "p referenced by aria-labelledby3",
                             "label wrapping meter 4",
                             "title attribute 5",
-                            "label referenced by for/id attributes 7"},
+                            "label referenced by for/id attributes 7"
+                        },
                     requiredDescriptions:
-                        new List<string>{
+                        new List<string>
+                        {
                             "p referenced by aria-describedby6",
-                            "title attribute 7" },
+                            "title attribute 7"
+                        },
                     additionalRequirement:
-                        ((elements, driver, ids) => {
+                        (elements, driver, ids) =>
+                        {
                             var result = new TestCaseResultExt();
-                            //readonly
-                            if(!elements.All(element => element.GetProperties().Any(p => p.Contains("IsReadOnly")))){
+
+                            // readonly
+                            if (!elements.All(element => element.GetProperties().Any(p => p.Contains("IsReadOnly"))))
+                            {
                                 result.Result = ResultType.Half;
                                 result.AddInfo("Not all elements were read only");
                             }
 
-                            //rangevalue
+                            // rangevalue
                             foreach (var element in elements)
                             {
                                 var patternName = "RangeValuePattern";
 
                                 var patterned = GetPattern<IUIAutomationRangeValuePattern>(patternName, element);
-                                if(patterned == null)
+                                if (patterned == null)
                                 {
                                     result.Result = ResultType.Half;
                                     result.AddInfo("\nElement did not support " + patternName);
                                 }
                                 else
                                 {
-                                    if (patterned.CurrentMaximum - 100 > epsilon)
+                                    if (patterned.CurrentMaximum - 100 > Epsilon)
                                     {
                                         result.Result = ResultType.Half;
                                         result.AddInfo("\nElement did not have the correct max");
                                     }
-                                    if (patterned.CurrentMinimum - 0 > epsilon)
+
+                                    if (patterned.CurrentMinimum - 0 > Epsilon)
                                     {
                                         result.Result = ResultType.Half;
                                         result.AddInfo("\nElement did not have the correct min");
                                     }
-                                    var value = 83.5;//All the meters are set to this
-                                    if (patterned.CurrentValue - value > epsilon)
+
+                                    // All the meters are set to this
+                                    var value = 83.5;
+                                    if (patterned.CurrentValue - value > Epsilon)
                                     {
                                         result.Result = ResultType.Half;
                                         result.AddInfo("\nElement did not have the correct value");
@@ -1052,7 +1303,7 @@
                                 }
                             }
 
-                            //value
+                            // value
                             foreach (var element in elements)
                             {
                                 var patterned = GetPattern<IUIAutomationValuePattern>("ValuePattern", element);
@@ -1072,86 +1323,117 @@
                             }
 
                             return result;
-                        }),
-                    searchStrategy: (element => element.GetPatterns().Contains("RangeValuePattern"))),//NB the ControlType is not used for searching this element
-                new TestData("nav", UIAControlType.Group, "navigation", UIALandmarkType.Navigation, "navigation",
+                        },
+                    searchStrategy:
+                        element => element.GetPatterns().Contains("RangeValuePattern")),
+                new TestData(
+                    "nav",
+                    UIAControlType.Group,
+                    "navigation",
+                    UIALandmarkType.Navigation,
+                    "navigation",
                     requiredNames:
-                        new List<string>{
+                        new List<string>
+                        {
                             "aria-label attribute 2",
                             "h1 referenced by aria-labelledby3",
                             "title attribute 4",
-                            "aria-label attribute 6"},
+                            "aria-label attribute 6"
+                        },
                     requiredDescriptions:
-                        new List<string>{
+                        new List<string>
+                        {
                             "h1 referenced by aria-describedby5",
-                            "title attribute 6"}),
-                new TestData("output", UIAControlType.Group, "output",
+                            "title attribute 6"
+                        }),
+                new TestData(
+                    "output",
+                    UIAControlType.Group,
+                    "output",
                     requiredNames:
-                        new List<string>{
+                        new List<string>
+                        {
                             "aria-label attribute 2",
                             "p referenced by aria-labelledby3",
                             "label wrapping output 410",
                             "title attribute 5",
-                            "label referenced by for/id attributes 7" },
+                            "label referenced by for/id attributes 7"
+                        },
                     requiredDescriptions:
-                        new List<string>{
+                        new List<string>
+                        {
                             "p referenced by aria-describedby6",
-                            "title attribute 7" },
-                    additionalRequirement: ((elements, driver, ids) => {
+                            "title attribute 7"
+                        },
+                    additionalRequirement: (elements, driver, ids) =>
+                    {
                         var result = new TestCaseResultExt();
 
-                        if (!elements.All(element => ((IUIAutomationElement5)element).CurrentLiveSetting == LiveSetting.Polite)){
+                        if (!elements.All(element => ((IUIAutomationElement5)element).CurrentLiveSetting == LiveSetting.Polite))
+                        {
                             result.Result = ResultType.Half;
                             result.AddInfo("\nElement did not have LiveSetting = Polite");
                         }
+
                         var controllerForLengths = elements.Select(element => element.CurrentControllerFor != null ? element.CurrentControllerFor.Length : 0);
                         if (controllerForLengths.Count(cfl => cfl > 0) != 1)
                         {
                             result.Result = ResultType.Half;
                             result.AddInfo("\nExpected 1 element with ControllerFor set. Found " + controllerForLengths.Count(cfl => cfl > 0));
                         }
+
                         return result;
-                    })),
-                new TestData("progress", UIAControlType.Progressbar,
+                    }),
+                new TestData(
+                    "progress",
+                    UIAControlType.Progressbar,
                     requiredNames:
-                        new List<string>{
+                        new List<string>
+                        {
                             "aria-label attribute 2",
                             "p referenced by aria-labelledby3",
                             "label wrapping output 4",
                             "title attribute 5",
-                            "label referenced by for/id attributes 7" },
+                            "label referenced by for/id attributes 7"
+                        },
                     requiredDescriptions:
-                        new List<string>{
+                        new List<string>
+                        {
                             "p referenced by aria-describedby6",
-                            "title attribute 7" },
-                    additionalRequirement: (elements, driver, ids) => {
+                            "title attribute 7"
+                        },
+                    additionalRequirement: (elements, driver, ids) =>
+                    {
                         var result = new TestCaseResultExt();
 
-                        //rangevalue
+                        // range value
                         foreach (var element in elements)
                         {
                             var patternName = "RangeValuePattern";
 
                             var patterned = GetPattern<IUIAutomationRangeValuePattern>(patternName, element);
-                            if(patterned == null)
+                            if (patterned == null)
                             {
                                 result.Result = ResultType.Half;
                                 result.AddInfo("\nElement did not support " + patternName);
                             }
                             else
                             {
-                                if (patterned.CurrentMaximum - 100 > epsilon)
+                                if (patterned.CurrentMaximum - 100 > Epsilon)
                                 {
                                     result.Result = ResultType.Half;
                                     result.AddInfo("\nElement did not have the correct max");
                                 }
-                                if (patterned.CurrentMinimum - 0 > epsilon)
+
+                                if (patterned.CurrentMinimum - 0 > Epsilon)
                                 {
                                     result.Result = ResultType.Half;
                                     result.AddInfo("\nElement did not have the correct min");
                                 }
-                                var value = 22;//All the progress bars are set to this
-                                if (patterned.CurrentValue - value > epsilon)
+
+                                // All the progress bars are set to this
+                                var value = 22;
+                                if (patterned.CurrentValue - value > Epsilon)
                                 {
                                     result.Result = ResultType.Half;
                                     result.AddInfo("\nElement did not have the correct value");
@@ -1161,30 +1443,43 @@
 
                         return result;
                     }),
-                new TestData("section", UIAControlType.Group, "section", UIALandmarkType.Custom, "region",
+                new TestData(
+                    "section",
+                    UIAControlType.Group,
+                    "section",
+                    UIALandmarkType.Custom,
+                    "region",
                     requiredNames:
-                        new List<string>{
+                        new List<string>
+                        {
                             "aria-label attribute 3",
                             "h1 referenced by aria-labelledby4",
                             "title attribute 5",
-                            "aria-label attribute 7"},
+                            "aria-label attribute 7"
+                        },
                     requiredDescriptions:
-                        new List<string>{
+                        new List<string>
+                        {
                             "h1 referenced by aria-describedby6",
-                            "title attribute 7" }),
-                new TestData("time", UIAControlType.Text,
+                            "title attribute 7"
+                        }),
+                new TestData(
+                    "time",
+                    UIAControlType.Text,
                     searchStrategy: element =>
                         GetControlTypeFromCode(element.CurrentControlType) == UIAControlType.Text
                         && element.CurrentLocalizedControlType == "time",
                     requiredNames:
-                        new List<string>{
+                        new List<string>
+                        {
                             "aria-label attribute2",
                             "Element referenced by aria-labelledby attribute 3",
                             "title attribute 4",
                             "aria-label attribute 6"
                         },
                     requiredDescriptions:
-                        new List<string>{
+                        new List<string>
+                        {
                             "2015-10-01",
                             "2015-10-02",
                             "2015-10-03",
@@ -1192,40 +1487,60 @@
                             "Element referenced by aria-describedby attribute",
                             "title attribute 6",
                         }),
-                new TestData("track", UIAControlType.Unknown,
-                    additionalRequirement: ((elements, driver, ids) =>
+                new TestData(
+                    "track",
+                    UIAControlType.Unknown,
+                    additionalRequirement: (elements, driver, ids) =>
                     {
                         var result = new TestCaseResultExt();
-                        driver.ExecuteScript(Javascript.Track, timeout);
+                        driver.ExecuteScript(Javascript.Track, Timeout);
 
-                        if(!(bool)driver.ExecuteScript("return Modernizr.track && Modernizr.texttrackapi", timeout)) {
+                        if (!(bool)driver.ExecuteScript("return Modernizr.track && Modernizr.texttrackapi", Timeout))
+                        {
                             result.Result = ResultType.Half;
                             result.AddInfo("Element was not found to be supported by Modernizr");
                         }
+
                         return result;
-                    }),
-                    searchStrategy: (element => true)),
-                new TestData("video", UIAControlType.Group, null, keyboardElements: new List<string> { "video1" },
-                    additionalRequirement: ((elements, driver, ids) =>
-                    {
-                        var result = new TestCaseResultExt();
-                        CheckChildNames(
-                            new List<string> {
-                                "Play",
-                                "Time elapsed",
-                                "Seek",
-                                "Time remaining",
-                                "Zoom in",
-                                "Show audio",
-                                "Show captioning",
-                                "Mute",
-                                "Volume",
-                                "Full screen" })(elements, driver, ids, result);
-                       CheckVideoKeyboardInteractions(elements, driver, ids, result);
-                        return result;
-                    })),
-                    new TestData("hidden-att", UIAControlType.Button, null,
-                    additionalRequirement: ((elements, driver, ids) =>
+                    },
+                    searchStrategy:
+                        element => true),
+                new TestData(
+                    "video",
+                    UIAControlType.Group,
+                    null,
+                    keyboardElements:
+                        new List<string>
+                        {
+                            "video1"
+                        },
+                    additionalRequirement:
+                        (elements, driver, ids) =>
+                        {
+                            var result = new TestCaseResultExt();
+                            CheckChildNames(
+                                new List<string>
+                                {
+                                    "Play",
+                                    "Time elapsed",
+                                    "Seek",
+                                    "Time remaining",
+                                    "Zoom in",
+                                    "Show audio",
+                                    "Show captioning",
+                                    "Mute",
+                                    "Volume",
+                                    "Full screen"
+                                })(elements, driver, ids, result);
+                            CheckVideoKeyboardInteractions(elements, driver, ids, result);
+
+                            return result;
+                        }),
+                new TestData(
+                    "hidden-att",
+                    UIAControlType.Button,
+                    null,
+                    additionalRequirement: (elements, driver, ids) =>
                     {
                         var result = new TestCaseResultExt();
 
@@ -1238,10 +1553,12 @@
                             return result;
                         }
 
-                        //Make sure the text isn't showing up on the page
+                        // Make sure the text isn't showing up on the page
+
+                        // We only have the pane element, take its grandchild
                         var five = (IUIAutomationElement5)
                             walker.GetFirstChildElement(
-                                walker.GetFirstChildElement(elements[0]));//only have the pane element, take its grandchild
+                                walker.GetFirstChildElement(elements[0]));
 
                         List<int> patternIds;
                         var names = five.GetPatterns(out patternIds);
@@ -1259,16 +1576,16 @@
                         var documentRange = textPattern.DocumentRange;
 
                         var foundText = documentRange.GetText(1000);
-                        if(foundText.Contains("HiDdEn TeXt"))
+                        if (foundText.Contains("HiDdEn TeXt"))
                         {
                             result.Result = ResultType.Half;
                             result.AddInfo("\nFound text that should have been hidden");
                         }
 
-                        //remove hidden attribute
-                        driver.ExecuteScript(Javascript.RemoveHidden, timeout);
+                        // remove hidden attribute
+                        driver.ExecuteScript(Javascript.RemoveHidden, Timeout);
 
-                        //make sure the button show up now that their parents are not hidden
+                        // make sure the button show up now that their parents are not hidden
                         HashSet<UIAControlType> foundControlTypes;
                         elements = EdgeA11yTools.SearchChildren(browserElement, UIAControlType.Button, null, out foundControlTypes);
                         if (elements.Count(e => GetControlTypeFromCode(e.CurrentControlType) != UIAControlType.Pane) != 1)
@@ -1277,10 +1594,10 @@
                             result.AddInfo("\nFound " + elements.Count(e => GetControlTypeFromCode(e.CurrentControlType) != UIAControlType.Pane) + " elements. Expected 1");
                         }
 
-                        //remove aria-hidden attribute
-                        driver.ExecuteScript(Javascript.RemoveAriaHidden, timeout);
+                        // remove aria-hidden attribute
+                        driver.ExecuteScript(Javascript.RemoveAriaHidden, Timeout);
 
-                        //both buttons should now be visible, since both aria-hidden and hidden attribute are missing
+                        // both buttons should now be visible, since both aria-hidden and hidden attribute are missing
                         elements = EdgeA11yTools.SearchChildren(browserElement, UIAControlType.Button, null, out foundControlTypes);
                         if (elements.Count(e => GetControlTypeFromCode(e.CurrentControlType) != UIAControlType.Pane) != 2)
                         {
@@ -1289,26 +1606,34 @@
                         }
 
                         return result;
-                    }),
-                    searchStrategy: (element => true)),//take the pane
-                new TestData("required-att", UIAControlType.Edit,
+                    },
+                    searchStrategy: element => true),
+                new TestData(
+                    "required-att",
+                    UIAControlType.Edit,
                     additionalRequirement: (elements, driver, ids) =>
                     {
                         var result = new TestCaseResultExt();
                         driver.SendSpecialKeys("input1", WebDriverKey.Enter);
                         Thread.Sleep(TimeSpan.FromMilliseconds(500));
-                        foreach(var element in elements){//there can only be one
-                            if(element.CurrentControllerFor == null || element.CurrentControllerFor.Length == 0){
+
+                        // there can only be one
+                        foreach (var element in elements)
+                        {
+                            if (element.CurrentControllerFor == null || element.CurrentControllerFor.Length == 0)
+                            {
                                 result.Result = ResultType.Half;
                                 result.AddInfo("\nElement did not have controller for set");
                             }
 
-                            if(element.CurrentIsRequiredForForm != 1){
+                            if (element.CurrentIsRequiredForForm != 1)
+                            {
                                 result.Result = ResultType.Half;
                                 result.AddInfo("\nElement did not have IsRequiredForForm set to true");
                             }
 
-                            if(element.CurrentHelpText == null || element.CurrentHelpText.Length == 0){
+                            if (element.CurrentHelpText == null || element.CurrentHelpText.Length == 0)
+                            {
                                 result.Result = ResultType.Half;
                                 result.AddInfo("\nElement did not have HelpText");
                             }
@@ -1316,21 +1641,26 @@
 
                         return result;
                     }),
-                new TestData("placeholder-att", UIAControlType.Edit,
+                new TestData(
+                    "placeholder-att",
+                    UIAControlType.Edit,
                     requiredNames:
-                        new List<string> {
+                        new List<string>
+                        {
                             "placeholder text 1",
                             "Label text 2:",
                             "Label text 3:",
                             "placeholder text 4",
                             "placeholder text 5",
-                            "aria-placeholder text 6" },
+                            "aria-placeholder text 6"
+                        },
                     requiredDescriptions:
-                        new List<string> {
+                        new List<string>
+                        {
                             "placeholder text 2",
                             "placeholder text 3",
                             "title text 4",
-                            })
+                        })
             };
         }
 
@@ -1386,159 +1716,183 @@
                     }
                 }
             }
+
             return true;
         }
 
         /// <summary>
-        /// Check basic keyboard interactions for the video control
+        /// Checks keyboard interactions for the video control
         /// </summary>
-        /// <param name="elements"></param>
-        /// <param name="driver"></param>
-        /// <param name="ids"></param>
-        /// <returns>An empty string if an element fails, otherwise an explanation</returns>
+        /// <param name="elements">The UIA elements on the page</param>
+        /// <param name="driver">The WebDriver wrapper</param>
+        /// <param name="ids">The html ids of elements found on the page</param>
+        /// <param name="result">The aggregate result of the testing</param>
         private static void CheckVideoKeyboardInteractions(List<IUIAutomationElement> elements, DriverManager driver, List<string> ids, TestCaseResultExt result)
         {
             string videoId = "video1";
 
-            Func<bool> VideoPlaying = () => (bool)driver.ExecuteScript("return !document.getElementById('" + videoId + "').paused", 0);
-            Func<object> PauseVideo = () => driver.ExecuteScript("document.getElementById('" + videoId + "').pause()", 0);
-            Func<object> PlayVideo = () => driver.ExecuteScript("document.getElementById('" + videoId + "').play()", 0);
-            Func<double> GetVideoVolume = () => driver.ExecuteScript("return document.getElementById('" + videoId + "').volume", 0).ParseMystery();
-            Func<double, bool> VideoVolume = expected => Math.Abs(GetVideoVolume() - expected) < epsilon;
-            Func<bool> VideoMuted = () => (bool)driver.ExecuteScript("return document.getElementById('" + videoId + "').muted", 0);
-            Func<double> GetVideoElapsed = () => driver.ExecuteScript("return document.getElementById('" + videoId + "').currentTime", 0).ParseMystery();
-            Func<double, bool> VideoElapsed = expected => Math.Abs(GetVideoElapsed() - expected) < epsilon;
-            Func<bool> IsVideoFullScreen = () => driver.ExecuteScript("return document.webkitFullscreenElement", 0) != null;
-            Func<bool> IsVideoLoaded = () => (bool)driver.ExecuteScript("return document.getElementById('" + videoId + "').readyState == 4", 0);
+            Func<bool> videoPlaying = () => (bool)driver.ExecuteScript("return !document.getElementById('" + videoId + "').paused", 0);
+            Func<object> pauseVideo = () => driver.ExecuteScript("document.getElementById('" + videoId + "').pause()", 0);
+            Func<object> playVideo = () => driver.ExecuteScript("document.getElementById('" + videoId + "').play()", 0);
+            Func<double> getVideoVolume = () => driver.ExecuteScript("return document.getElementById('" + videoId + "').volume", 0).ParseMystery();
+            Func<double, bool> videoVolume = expected => Math.Abs(getVideoVolume() - expected) < Epsilon;
+            Func<bool> videoMuted = () => (bool)driver.ExecuteScript("return document.getElementById('" + videoId + "').muted", 0);
+            Func<double> getVideoElapsed = () => driver.ExecuteScript("return document.getElementById('" + videoId + "').currentTime", 0).ParseMystery();
+            Func<double, bool> videoElapsed = expected => Math.Abs(getVideoElapsed() - expected) < Epsilon;
+            Func<bool> isVideoFullScreen = () => driver.ExecuteScript("return document.webkitFullscreenElement", 0) != null;
+            Func<bool> isVideoLoaded = () => (bool)driver.ExecuteScript("return document.getElementById('" + videoId + "').readyState == 4", 0);
 
-            if (!WaitForCondition(IsVideoLoaded, attempts: 40))
+            if (!WaitForCondition(isVideoLoaded, attempts: 40))
             {
                 result.Result = ResultType.Half;
                 result.AddInfo("\nVideo did not load after 20 seconds");
                 return;
             }
 
-            //Case 1: tab to play button and play/pause
+            // Case 1: tab to play button and play/pause
             TabToElementByName(elements[0], "Play", videoId, driver);
             driver.SendSpecialKeys(videoId, WebDriverKey.Space);
-            if (!WaitForCondition(VideoPlaying))
+            if (!WaitForCondition(videoPlaying))
             {
                 result.Result = ResultType.Half;
                 result.AddInfo("\tVideo was not playing after spacebar on play button\n");
-                PlayVideo();
+                playVideo();
             }
+
             driver.SendSpecialKeys(videoId, WebDriverKey.Enter);
-            if (!WaitForCondition(VideoPlaying, reverse: true))
+            if (!WaitForCondition(videoPlaying, reverse: true))
             {
                 result.Result = ResultType.Half;
                 result.AddInfo("\tVideo was not paused after enter on play button\n");
-                PauseVideo();
+                pauseVideo();
             }
 
-            //Case 2: Volume and mute
+            // Case 2: Volume and mute
             Javascript.ScrollIntoView(driver, 0);
             Javascript.ClearFocus(driver, 0);
             TabToElementByName(elements[0], "Mute", videoId, driver);
             driver.Screenshot("before_enter_to_mute");
-            driver.SendSpecialKeys(videoId, WebDriverKey.Enter);//mute
+
+            // mute
+            driver.SendSpecialKeys(videoId, WebDriverKey.Enter);
             driver.Screenshot("after_enter_to_mute");
-            if (!WaitForCondition(VideoMuted))
+            if (!WaitForCondition(videoMuted))
             {
                 result.Result = ResultType.Half;
                 result.AddInfo("\tEnter did not mute the video\n");
             }
 
-            WaitForCondition(() =>
-                elements[0].GetAllDescendants().Any(e => e.CurrentName == "Unmute")
-            );
+            WaitForCondition(() => elements[0].GetAllDescendants().Any(e => e.CurrentName == "Unmute"));
 
             driver.Screenshot("before_enter_to_unmute");
-            driver.SendSpecialKeys(videoId, WebDriverKey.Enter);//unmute
+
+            // unmute
+            driver.SendSpecialKeys(videoId, WebDriverKey.Enter);
             driver.Screenshot("after_enter_to_unmute");
-            if (!WaitForCondition(VideoMuted, reverse: true))
+            if (!WaitForCondition(videoMuted, reverse: true))
             {
                 result.Result = ResultType.Half;
                 result.AddInfo("\tEnter did not unmute the video\n");
             }
-            var initial = GetVideoVolume();
-            driver.SendSpecialKeys(videoId, new List<WebDriverKey> { WebDriverKey.Arrow_down, WebDriverKey.Arrow_down });//volume down
-            if (!WaitForCondition(VideoVolume, initial - 0.1))
+
+            var initial = getVideoVolume();
+
+            // volume down
+            driver.SendSpecialKeys(videoId, new List<WebDriverKey> { WebDriverKey.Arrow_down, WebDriverKey.Arrow_down });
+            if (!WaitForCondition(videoVolume, initial - 0.1))
             {
                 result.Result = ResultType.Half;
                 result.AddInfo("\tVolume did not decrease with arrow keys\n");
             }
-            driver.SendSpecialKeys(videoId, new List<WebDriverKey> { WebDriverKey.Arrow_up, WebDriverKey.Arrow_up });//volume up
-            if (!WaitForCondition(VideoVolume, initial))
+
+            // volume up
+            driver.SendSpecialKeys(videoId, new List<WebDriverKey> { WebDriverKey.Arrow_up, WebDriverKey.Arrow_up });
+            if (!WaitForCondition(videoVolume, initial))
             {
                 result.Result = ResultType.Half;
                 result.AddInfo("\tVolume did not increase with arrow keys\n");
             }
 
-            //Case 3: Audio selection
-            //TODO test manually
+            // Case 3: Audio selection
+            // TODO test manually
 
-            //Case 4: Progress and seek
-            if (VideoPlaying())
-            { //this should not be playing
+            // Case 4: Progress and seek
+            if (videoPlaying())
+            {
+                // this should not be playing
                 result.Result = ResultType.Half;
                 result.AddInfo("\tVideo was playing when it shouldn't have been\n");
             }
+
             Javascript.ClearFocus(driver, 0);
             TabToElementByName(elements[0], "Seek", videoId, driver);
-            initial = GetVideoElapsed();
-            driver.SendSpecialKeys(videoId, WebDriverKey.Arrow_right); //skip ahead
-            if (!WaitForCondition(VideoElapsed, initial + 10))
+            initial = getVideoElapsed();
+
+            // skip ahead
+            driver.SendSpecialKeys(videoId, WebDriverKey.Arrow_right);
+            if (!WaitForCondition(videoElapsed, initial + 10))
             {
                 result.Result = ResultType.Half;
                 result.AddInfo("\tVideo did not skip forward with arrow right\n");
             }
 
-            driver.SendSpecialKeys(videoId, WebDriverKey.Arrow_left); //skip back
-            if (!WaitForCondition(VideoElapsed, initial))
+            // skip back
+            driver.SendSpecialKeys(videoId, WebDriverKey.Arrow_left);
+            if (!WaitForCondition(videoElapsed, initial))
             {
                 result.Result = ResultType.Half;
                 result.AddInfo("\tVideo did not skip back with arrow left\n");
             }
 
-            //Case 5: Progress and seek on remaining time
-            if (VideoPlaying())
-            { //this should not be playing
+            // Case 5: Progress and seek on remaining time
+            if (videoPlaying())
+            {
+                // this should not be playing
                 result.Result = ResultType.Half;
                 result.AddInfo("\tVideo was playing when it shouldn't have been\n");
             }
+
             Javascript.ClearFocus(driver, 0);
             TabToElementByName(elements[0], "Seek", videoId, driver);
-            initial = GetVideoElapsed();
-            driver.SendSpecialKeys(videoId, WebDriverKey.Arrow_right); //skip ahead
-            if (!WaitForCondition(VideoElapsed, initial + 10))
+            initial = getVideoElapsed();
+
+            // skip ahead
+            driver.SendSpecialKeys(videoId, WebDriverKey.Arrow_right);
+            if (!WaitForCondition(videoElapsed, initial + 10))
             {
                 result.Result = ResultType.Half;
                 result.AddInfo("\tVideo did not skip forward with arrow right\n");
             }
 
-            driver.SendSpecialKeys(videoId, WebDriverKey.Arrow_left); //skip back
-            if (!WaitForCondition(VideoElapsed, initial))
+            // skip back
+            driver.SendSpecialKeys(videoId, WebDriverKey.Arrow_left);
+            if (!WaitForCondition(videoElapsed, initial))
             {
                 result.Result = ResultType.Half;
                 result.AddInfo("\tVideo did not skip back with arrow left\n");
-                driver.SendSpecialKeys(videoId, WebDriverKey.Arrow_left); //skip back
+
+                // skip back
+                driver.SendSpecialKeys(videoId, WebDriverKey.Arrow_left);
             }
 
-            //Case 6: Full screen
+            // Case 6: Full screen
             Javascript.ClearFocus(driver, 0);
             TabToElementByName(elements[0], "Full screen", videoId, driver);
             driver.Screenshot("before_enter_to_fullscreen");
-            driver.SendSpecialKeys(videoId, WebDriverKey.Enter); //enter fullscreen mode
+
+            // enter fullscreen mode
+            driver.SendSpecialKeys(videoId, WebDriverKey.Enter);
             driver.Screenshot("after_enter_to_fullscreen");
-            if (!WaitForCondition(IsVideoFullScreen))
+            if (!WaitForCondition(isVideoFullScreen))
             {
                 result.Result = ResultType.Half;
                 result.AddInfo("\tVideo did not enter FullScreen mode\n");
             }
+
             driver.Screenshot("before_escape_from_fullscreen");
             driver.SendSpecialKeys(videoId, WebDriverKey.Escape);
             driver.Screenshot("after_escape_from_fullscreen");
-            if (!WaitForCondition(IsVideoFullScreen, reverse: true))
+            if (!WaitForCondition(isVideoFullScreen, reverse: true))
             {
                 result.Result = ResultType.Half;
                 result.AddInfo("\tVideo did not exit FullScreen mode\n");
@@ -1551,92 +1905,97 @@
         /// <param name="elements">The elements found on the page</param>
         /// <param name="driver">The driver</param>
         /// <param name="ids">The html ids of the elements on the page</param>
-        /// <returns>An empty string if an element fails, otherwise an explanation</returns>
+        /// <param name="result">The result aggregator</param>
         private static void CheckAudioKeyboardInteractions(List<IUIAutomationElement> elements, DriverManager driver, List<string> ids, TestCaseResultExt result)
         {
             string audioId = "audio1";
-            Func<bool> AudioPlaying = () => (bool)driver.ExecuteScript("return !document.getElementById('" + audioId + "').paused", 0);
-            Func<object> PauseAudio = () => driver.ExecuteScript("!document.getElementById('" + audioId + "').pause()", 0);
-            Func<object> PlayAudio = () => driver.ExecuteScript("!document.getElementById('" + audioId + "').play()", 0);
-            Func<double> GetAudioVolume = () => driver.ExecuteScript("return document.getElementById('" + audioId + "').volume", 0).ParseMystery();
-            Func<double, bool> AudioVolume = expected => Math.Abs(GetAudioVolume() - expected) < epsilon;
-            Func<bool> AudioMuted = () => (bool)driver.ExecuteScript("return document.getElementById('" + audioId + "').muted", 0);
-            Func<double> GetAudioElapsed = () => driver.ExecuteScript("return document.getElementById('" + audioId + "').currentTime", 0).ParseMystery();
-            Func<double, bool> AudioElapsed = expected => Math.Abs(GetAudioElapsed() - expected) < epsilon;
-            Func<bool> IsAudioLoaded = () => (bool)driver.ExecuteScript("return document.getElementById('" + audioId + "').readyState == 4", 0);
+            Func<bool> audioPlaying = () => (bool)driver.ExecuteScript("return !document.getElementById('" + audioId + "').paused", 0);
+            Func<object> pauseAudio = () => driver.ExecuteScript("!document.getElementById('" + audioId + "').pause()", 0);
+            Func<object> playAudio = () => driver.ExecuteScript("!document.getElementById('" + audioId + "').play()", 0);
+            Func<double> getAudioVolume = () => driver.ExecuteScript("return document.getElementById('" + audioId + "').volume", 0).ParseMystery();
+            Func<double, bool> audioVolume = expected => Math.Abs(getAudioVolume() - expected) < Epsilon;
+            Func<bool> audioMuted = () => (bool)driver.ExecuteScript("return document.getElementById('" + audioId + "').muted", 0);
+            Func<double> getAudioElapsed = () => driver.ExecuteScript("return document.getElementById('" + audioId + "').currentTime", 0).ParseMystery();
+            Func<double, bool> audioElapsed = expected => Math.Abs(getAudioElapsed() - expected) < Epsilon;
+            Func<bool> isAudioLoaded = () => (bool)driver.ExecuteScript("return document.getElementById('" + audioId + "').readyState == 4", 0);
 
-            if (!WaitForCondition(IsAudioLoaded, attempts: 40))
+            if (!WaitForCondition(isAudioLoaded, attempts: 40))
             {
                 result.Result = ResultType.Half;
                 result.AddInfo("\nAudio did not load after 20 seconds");
                 return;
             }
 
-            //Case 1: Play/Pause
-            driver.SendTabs(audioId, 1); //Tab to play button
+            // Case 1: Play/Pause
+
+            // Tab to play button
+            driver.SendTabs(audioId, 1);
             driver.SendSpecialKeys(audioId, WebDriverKey.Enter);
-            if (!WaitForCondition(AudioPlaying))
+            if (!WaitForCondition(audioPlaying))
             {
                 result.Result = ResultType.Half;
                 result.AddInfo("\tAudio did not play with enter\n");
-                PlayAudio();
+                playAudio();
             }
 
             driver.SendSpecialKeys(audioId, WebDriverKey.Space);
-            if (!WaitForCondition(AudioPlaying, reverse: true))
+            if (!WaitForCondition(audioPlaying, reverse: true))
             {
                 result.Result = ResultType.Half;
                 result.AddInfo("\tAudio did not pause with space\n");
-                PauseAudio();
+                pauseAudio();
             }
 
-            //Case 2: Seek
-            if (AudioPlaying())
+            // Case 2: Seek
+            if (audioPlaying())
             {
                 result.Result = ResultType.Half;
                 result.AddInfo("\tAudio was playing when it shouldn't have been\n");
             }
+
             driver.SendTabs(audioId, 3);
-            var initial = GetAudioElapsed();
+            var initial = getAudioElapsed();
             driver.SendSpecialKeys(audioId, WebDriverKey.Arrow_right);
-            if (!WaitForCondition(AudioElapsed, initial + 10))
+            if (!WaitForCondition(audioElapsed, initial + 10))
             {
                 result.Result = ResultType.Half;
                 result.AddInfo("\tAudio did not skip forward with arrow right\n");
             }
+
             driver.SendSpecialKeys(audioId, WebDriverKey.Arrow_left);
-            if (!WaitForCondition(AudioElapsed, initial))
+            if (!WaitForCondition(audioElapsed, initial))
             {
                 result.Result = ResultType.Half;
                 result.AddInfo("\tAudio did not skip back with arrow left\n");
             }
 
-            //Case 3: Volume and mute
+            // Case 3: Volume and mute
             Javascript.ClearFocus(driver, 0);
             driver.SendTabs(audioId, 5);
-            initial = GetAudioVolume();
+            initial = getAudioVolume();
             driver.SendSpecialKeys(audioId, WebDriverKey.Arrow_down);
-            if (!WaitForCondition(AudioVolume, initial - .05))
+            if (!WaitForCondition(audioVolume, initial - .05))
             {
                 result.Result = ResultType.Half;
                 result.AddInfo("\tVolume did not decrease with arrow down\n");
             }
 
             driver.SendSpecialKeys(audioId, WebDriverKey.Arrow_up);
-            if (!WaitForCondition(AudioVolume, initial))
+            if (!WaitForCondition(audioVolume, initial))
             {
                 result.Result = ResultType.Half;
                 result.AddInfo("\tVolume did not increase with arrow up\n");
             }
 
             driver.SendSpecialKeys(audioId, WebDriverKey.Enter);
-            if (!WaitForCondition(AudioMuted))
+            if (!WaitForCondition(audioMuted))
             {
                 result.Result = ResultType.Half;
                 result.AddInfo("\tAudio was not muted by enter on the volume control\n");
             }
+
             driver.SendSpecialKeys(audioId, WebDriverKey.Enter);
-            if (!WaitForCondition(AudioMuted, reverse: true))
+            if (!WaitForCondition(audioMuted, reverse: true))
             {
                 result.Result = ResultType.Half;
                 result.AddInfo("\tAudio was not unmuted by enter on the volume control\n");
@@ -1644,40 +2003,49 @@
         }
 
         /// <summary>
-        /// Test all date/time elements except for datetime-local, which is tested by the
+        /// Test all date/time elements except for datetime local, which is tested by the
         /// amended method below.
         /// </summary>
         /// <param name="fields">A count of the number of fields to test</param>
         /// <param name="outputFields">A count of the number of output fields to test</param>
-        /// <returns></returns>
-        public static Action<List<IUIAutomationElement>, DriverManager, List<string>, TestCaseResultExt> CheckCalendar(int fields, int outputFields = -1)
+        /// <returns>An action for checking date/time elements</returns>
+        private static Action<List<IUIAutomationElement>, DriverManager, List<string>, TestCaseResultExt> CheckCalendar(int fields, int outputFields = -1)
         {
-            return ((elements, driver, ids, result) =>
+            return (elements, driver, ids, result) =>
             {
-                //set to the number of fields by default
+                // set to the number of fields by default
                 outputFields = outputFields == -1 ? fields : outputFields;
 
                 var previousControllerForElements = new HashSet<int>();
                 foreach (var id in ids.Take(1))
                 {
-                    driver.SendSpecialKeys(id, new List<WebDriverKey> {
-                        WebDriverKey.Enter,
-                        WebDriverKey.Escape,
-                        WebDriverKey.Enter,
-                        WebDriverKey.Enter });//Make sure that the element has focus (gets around weirdness in WebDriver)
+                    // Make sure that the element has focus (gets around weirdness in WebDriver)
+                    driver.SendSpecialKeys(
+                        id,
+                        new List<WebDriverKey>
+                        {
+                            WebDriverKey.Enter,
+                            WebDriverKey.Escape,
+                            WebDriverKey.Enter,
+                            WebDriverKey.Enter
+                        });
 
-                    Func<string> DateValue = () => (string)driver.ExecuteScript("return document.getElementById('" + id + "').value", 0);
-                    Func<string> ActiveElement = () => (string)driver.ExecuteScript("return document.activeElement.id", 0);
+                    Func<string> dateValue = () => (string)driver.ExecuteScript("return document.getElementById('" + id + "').value", 0);
+                    Func<string> activeElement = () => (string)driver.ExecuteScript("return document.activeElement.id", 0);
 
-                    var today = DateValue();
+                    var today = dateValue();
 
-                    //Open the menu
-                    driver.SendSpecialKeys(id, new List<WebDriverKey> {
-                        WebDriverKey.Escape,
-                        WebDriverKey.Enter,
-                        WebDriverKey.Wait });
+                    // Open the menu
+                    driver.SendSpecialKeys(
+                        id,
+                        new List<WebDriverKey>
+                        {
+                            WebDriverKey.Escape,
+                            WebDriverKey.Enter,
+                            WebDriverKey.Wait
+                        });
 
-                    //Check ControllerFor
+                    // Check ControllerFor
                     var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().Select(element => elements.IndexOf(element));
                     if (controllerForElements.All(element => previousControllerForElements.Contains(element)))
                     {
@@ -1685,25 +2053,28 @@
                         result.AddInfo("\nElement controller for not set for id: " + id);
                     }
 
-                    //Change each field in the calendar
+                    // Change each field in the calendar
                     for (int i = 0; i < fields; i++)
                     {
-                        driver.SendSpecialKeys(id, new List<WebDriverKey> {
-                            WebDriverKey.Arrow_down,
-                            WebDriverKey.Tab });
+                        driver.SendSpecialKeys(
+                            id,
+                            new List<WebDriverKey>
+                            {
+                                WebDriverKey.Arrow_down,
+                                WebDriverKey.Tab
+                            });
                     }
 
-
-                    //Close the menu (only necessary for time)
+                    // Close the menu (only necessary for time)
                     driver.SendSpecialKeys(id, WebDriverKey.Enter);
 
-                    //Get the altered value, which should be one off the default
-                    //for each field
-                    var newdate = DateValue();
+                    // Get the altered value, which should be one off the default
+                    // for each field
+                    var newdate = dateValue();
                     var newdatesplit = newdate.Split('-', ':');
                     var todaysplit = today.Split('-', ':');
 
-                    //ensure that all fields have been changed
+                    // ensure that all fields have been changed
                     for (int i = 0; i < outputFields; i++)
                     {
                         if (newdatesplit[i] == todaysplit[i])
@@ -1719,114 +2090,146 @@
                         fieldTabs.Add(WebDriverKey.Tab);
                     }
 
-                    var keys = new List<WebDriverKey> { WebDriverKey.Enter, WebDriverKey.Wait };
+                    var keys = new List<WebDriverKey>
+                    {
+                        WebDriverKey.Enter,
+                        WebDriverKey.Wait
+                    };
+
                     keys.AddRange(fieldTabs);
                     driver.SendSpecialKeys(id, keys);
 
-                    var initial = "";
+                    var initial = string.Empty;
 
-                    //Check that the accept and cancel buttons are in the tab order
-                    if (ActiveElement() != id)
+                    // Check that the accept and cancel buttons are in the tab order
+                    if (activeElement() != id)
                     {
                         result.Result = ResultType.Half;
                         result.AddInfo("\nUnable to get to accept/dismiss buttons by tab");
                     }
-                    else//only try to use the buttons if they're there
+
+                    // only try to use the buttons if they're there
+                    else
                     {
-                        initial = DateValue();
-                        //**Dismiss button**
-                        //Open the dialog, change a field, tab to cancel button, activate it with space,
-                        //check that tabbing moves to the previous button (on the page not the dialog)
-                        keys = new List<WebDriverKey> {
+                        initial = dateValue();
+
+                        // **Dismiss button**
+                        // Open the dialog, change a field, tab to cancel button, activate it with space,
+                        // check that tabbing moves to the previous button (on the page not the dialog)
+                        keys = new List<WebDriverKey>
+                        {
                             WebDriverKey.Escape,
                             WebDriverKey.Enter,
                             WebDriverKey.Wait,
-                            WebDriverKey.Arrow_down };
+                            WebDriverKey.Arrow_down
+                        };
                         keys.AddRange(fieldTabs);
-                        keys.AddRange(new List<WebDriverKey> {
+                        keys.AddRange(
+                            new List<WebDriverKey>
+                            {
                                 WebDriverKey.Tab,
                                 WebDriverKey.Space,
                                 WebDriverKey.Shift,
                                 WebDriverKey.Tab,
-                                WebDriverKey.Shift});
+                                WebDriverKey.Shift
+                            });
                         driver.SendSpecialKeys(id, keys);
-                        if (initial != DateValue() || ActiveElement() == id)
+                        if (initial != dateValue() || activeElement() == id)
                         {
                             result.Result = ResultType.Half;
                             result.AddInfo("\nUnable to cancel with dismiss button via space");
                         }
 
-                        //do the same as above, but activate the button with enter this time
-                        keys = new List<WebDriverKey> {
+                        // do the same as above, but activate the button with enter this time
+                        keys = new List<WebDriverKey>
+                        {
                             WebDriverKey.Escape,
                             WebDriverKey.Enter,
                             WebDriverKey.Wait,
-                            WebDriverKey.Arrow_down };
+                            WebDriverKey.Arrow_down
+                        };
                         keys.AddRange(fieldTabs);
-                        keys.AddRange(new List<WebDriverKey> {
-                            WebDriverKey.Tab,
-                            WebDriverKey.Enter,
-                            WebDriverKey.Shift,
-                            WebDriverKey.Tab,
-                            WebDriverKey.Shift });
+                        keys.AddRange(
+                            new List<WebDriverKey>
+                            {
+                                WebDriverKey.Tab,
+                                WebDriverKey.Enter,
+                                WebDriverKey.Shift,
+                                WebDriverKey.Tab,
+                                WebDriverKey.Shift
+                            });
                         driver.SendSpecialKeys(id, keys);
-                        if (initial != DateValue() || ActiveElement() == id)
+                        if (initial != dateValue() || activeElement() == id)
                         {
                             result.Result = ResultType.Half;
                             result.AddInfo("\nUnable to cancel with dismiss button via enter");
                         }
 
-                        //**Accept button**
-                        initial = DateValue();
+                        // **Accept button**
+                        initial = dateValue();
 
-                        //Open the dialog, change a field, tab to accept button, activate it with space,
-                        //send tab (since the dialog should be closed, this will transfer focus to the next
-                        //input-color button)
-                        keys = new List<WebDriverKey> {
+                        // Open the dialog, change a field, tab to accept button, activate it with space,
+                        // send tab (since the dialog should be closed, this will transfer focus to the next
+                        // input-color button)
+                        keys = new List<WebDriverKey>
+                        {
                             WebDriverKey.Escape,
                             WebDriverKey.Enter,
                             WebDriverKey.Wait,
-                            WebDriverKey.Arrow_down };
+                            WebDriverKey.Arrow_down
+                        };
                         keys.AddRange(fieldTabs);
-                        keys.AddRange(new List<WebDriverKey> {
+                        keys.AddRange(new List<WebDriverKey>
+                        {
                             WebDriverKey.Space,
-                            WebDriverKey.Tab });
+                            WebDriverKey.Tab
+                        });
                         driver.SendSpecialKeys(id, keys);
-                        if (initial == DateValue() || ActiveElement() == id)
+                        if (initial == dateValue() || activeElement() == id)
                         {
                             result.Result = ResultType.Half;
-                            result.AddInfo("\nUnable to accept with accept button via space. Found value: " + DateValue() + " with active element: " + ActiveElement());
+                            result.AddInfo("\nUnable to accept with accept button via space. Found value: " + dateValue() + " with active element: " + activeElement());
                         }
 
-                        initial = DateValue();//the value hopefully changed above, but just to be safe
+                        // the value hopefully changed above, but just to be safe
+                        initial = dateValue();
 
-                        //Open the dialog, tab to hue, change hue, tab to accept button, activate it with enter
-                        //We don't have to worry about why the dialog closed here (button or global enter)
-                        keys = new List<WebDriverKey> {
+                        // Open the dialog, tab to hue, change hue, tab to accept button, activate it with enter
+                        // We don't have to worry about why the dialog closed here (button or global enter)
+                        keys = new List<WebDriverKey>
+                        {
                             WebDriverKey.Escape,
                             WebDriverKey.Enter,
                             WebDriverKey.Wait,
-                            WebDriverKey.Arrow_down };
+                            WebDriverKey.Arrow_down
+                        };
                         keys.AddRange(fieldTabs);
-                        keys.AddRange(new List<WebDriverKey> {
-                            WebDriverKey.Enter,
-                            WebDriverKey.Tab });
+                        keys.AddRange(
+                            new List<WebDriverKey>
+                            {
+                                WebDriverKey.Enter,
+                                WebDriverKey.Tab
+                            });
                         driver.SendSpecialKeys(id, keys);
-                        if (initial == DateValue() || ActiveElement() == id)
+                        if (initial == dateValue() || activeElement() == id)
                         {
                             result.Result = ResultType.Half;
-                            result.AddInfo("\nUnable to accept with accept button via enter. Found value: " + DateValue() + " with active element: " + ActiveElement());
+                            result.AddInfo("\nUnable to accept with accept button via enter. Found value: " + dateValue() + " with active element: " + activeElement());
                         }
                     }
 
-                    //open with space, close with enter
-                    initial = DateValue();
-                    driver.SendSpecialKeys(id, new List<WebDriverKey> {
-                        WebDriverKey.Escape,
-                        WebDriverKey.Space,
-                        WebDriverKey.Arrow_down,
-                        WebDriverKey.Enter });
-                    if (DateValue() == initial)
+                    // open with space, close with enter
+                    initial = dateValue();
+                    driver.SendSpecialKeys(
+                        id,
+                        new List<WebDriverKey>
+                        {
+                            WebDriverKey.Escape,
+                            WebDriverKey.Space,
+                            WebDriverKey.Arrow_down,
+                            WebDriverKey.Enter
+                        });
+                    if (dateValue() == initial)
                     {
                         result.AddInfo("\nUnable to open dialog with space");
                     }
@@ -1843,56 +2246,74 @@
                     }
                     else
                     {
-                        if (patterned.CurrentValue == null || patterned.CurrentValue == "")
+                        if (patterned.CurrentValue == null || patterned.CurrentValue == string.Empty)
                         {
                             result.Result = ResultType.Half;
                             result.AddInfo("\nElement did not have value.value set");
                         }
                     }
                 }
-            });
+            };
         }
 
         /// <summary>
-        /// Test the datetime-local input element with an amended version of the method
+        /// Test the datetime local input element with an amended version of the method
         /// above.
         /// </summary>
-        /// <returns></returns>
-        public static Action<List<IUIAutomationElement>, DriverManager, List<string>, TestCaseResultExt> CheckDatetimeLocal()
+        /// <returns>An action to test the datetime local element</returns>
+        private static Action<List<IUIAutomationElement>, DriverManager, List<string>, TestCaseResultExt> CheckDatetimeLocal()
         {
-            return ((elements, driver, ids, result) =>
+            return (elements, driver, ids, result) =>
             {
-                var inputFields = new List<int> { 3, 3 };
+                var inputFields = new List<int>
+                {
+                    3,
+                    3
+                };
+
                 var outputFields = 5;
 
                 var previousControllerForElements = new HashSet<int>();
                 foreach (var id in ids.Take(1))
                 {
-                    driver.SendSpecialKeys(id, new List<WebDriverKey> {
-                        WebDriverKey.Enter,
-                        WebDriverKey.Enter,
-                        WebDriverKey.Escape });//Make sure that the element has focus (gets around weirdness in WebDriver)
+                    // Make sure that the element has focus (gets around weirdness in WebDriver)
+                    driver.SendSpecialKeys(
+                        id,
+                        new List<WebDriverKey>
+                        {
+                            WebDriverKey.Enter,
+                            WebDriverKey.Enter,
+                            WebDriverKey.Escape
+                        });
 
                     Func<string> DateValue = () => (string)driver.ExecuteScript("return document.getElementById('" + id + "').value", 0);
                     Func<string> ActiveElement = () => (string)driver.ExecuteScript("return document.activeElement.id", 0);
 
-                    driver.SendSpecialKeys(id, new List<WebDriverKey> {
-                        WebDriverKey.Tab,
-                        WebDriverKey.Enter,
-                        WebDriverKey.Enter,
-                        WebDriverKey.Tab,
-                        WebDriverKey.Enter,
-                        WebDriverKey.Enter });
+                    driver.SendSpecialKeys(
+                        id,
+                        new List<WebDriverKey>
+                        {
+                            WebDriverKey.Tab,
+                            WebDriverKey.Enter,
+                            WebDriverKey.Enter,
+                            WebDriverKey.Tab,
+                            WebDriverKey.Enter,
+                            WebDriverKey.Enter
+                        });
                     var today = DateValue();
 
-                    //Open the date menu
-                    driver.SendSpecialKeys(id, new List<WebDriverKey> {
-                        WebDriverKey.Shift,
-                        WebDriverKey.Tab,
-                        WebDriverKey.Enter,
-                        WebDriverKey.Wait });
+                    // Open the date menu
+                    driver.SendSpecialKeys(
+                        id,
+                        new List<WebDriverKey>
+                        {
+                            WebDriverKey.Shift,
+                            WebDriverKey.Tab,
+                            WebDriverKey.Enter,
+                            WebDriverKey.Wait
+                        });
 
-                    //Check ControllerFor
+                    // Check ControllerFor
                     var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().Select(element => elements.IndexOf(element));
                     if (controllerForElements.All(element => previousControllerForElements.Contains(element)))
                     {
@@ -1900,18 +2321,30 @@
                         result.AddInfo("\nElement controller for not set for id: " + id);
                     }
 
-                    for (var i = 0; i < inputFields.Count;)//NB ++i later
+                    // NB ++i later
+                    for (var i = 0; i < inputFields.Count;)
                     {
-                        //Change each field in the calendar
+                        // Change each field in the calendar
                         for (var j = 0; j < inputFields[i]; j++)
                         {
-                            driver.SendSpecialKeys(id, new List<WebDriverKey> { WebDriverKey.Arrow_down,
-                                WebDriverKey.Tab });
+                            driver.SendSpecialKeys(
+                                id,
+                                new List<WebDriverKey>
+                                {
+                                    WebDriverKey.Arrow_down,
+                                    WebDriverKey.Tab
+                                });
                         }
-                        driver.SendSpecialKeys(id, new List<WebDriverKey> {
-                            WebDriverKey.Enter,
-                            WebDriverKey.Wait,
-                            WebDriverKey.Tab });
+
+                        driver.SendSpecialKeys(
+                            id,
+                            new List<WebDriverKey>
+                            {
+                                WebDriverKey.Enter,
+                                WebDriverKey.Wait,
+                                WebDriverKey.Tab
+                            });
+
                         // send Enter to open menu
                         if (++i != inputFields.Count)
                         {
@@ -1920,13 +2353,13 @@
                         }
                     }
 
-                    //Get the altered value, which should be one off the default
-                    //for each field
+                    // Get the altered value, which should be one off the default
+                    // for each field
                     var newdate = DateValue();
                     var newdatesplit = newdate.Split('-', ':', 'T');
                     var todaysplit = today.Split('-', ':', 'T');
 
-                    //ensure that all fields have been changed
+                    // ensure that all fields have been changed
                     for (int i = 0; i < outputFields; i++)
                     {
                         if (newdatesplit[i] == todaysplit[i])
@@ -1936,7 +2369,7 @@
                         }
                     }
 
-                    var initial = "";
+                    var initial = string.Empty;
 
                     for (var i = 0; i < inputFields.Count(); i++)
                     {
@@ -1949,9 +2382,10 @@
                         var secondPass = i == 1;
 
                         initial = DateValue();
-                        //**Dismiss button**
-                        //Open the dialog, change a field, tab to cancel button, activate it with space,
-                        //check that tabbing moves to the previous button (on the page not the dialog)
+
+                        // **Dismiss button**
+                        // Open the dialog, change a field, tab to cancel button, activate it with space,
+                        // check that tabbing moves to the previous button (on the page not the dialog)
                         var keys = new List<WebDriverKey>();
                         if (secondPass)
                         {
@@ -1963,16 +2397,21 @@
                                 WebDriverKey.Arrow_down
                             };
                             keys.AddRange(fieldTabs);
-                            keys.AddRange(new List<WebDriverKey> {
-                                WebDriverKey.Tab,
-                                WebDriverKey.Wait,
-                                WebDriverKey.Space,
-                                WebDriverKey.Wait,
-                                WebDriverKey.Shift,
-                                WebDriverKey.Tab,
-                                WebDriverKey.Shift });
+                            keys.AddRange(
+                                new List<WebDriverKey>
+                                {
+                                    WebDriverKey.Tab,
+                                    WebDriverKey.Wait,
+                                    WebDriverKey.Space,
+                                    WebDriverKey.Wait,
+                                    WebDriverKey.Shift,
+                                    WebDriverKey.Tab,
+                                    WebDriverKey.Shift
+                                });
                         }
-                        else//same as above except without the tab to start
+
+                        // same as above except without the tab to start
+                        else
                         {
                             keys = new List<WebDriverKey>
                             {
@@ -1981,15 +2420,19 @@
                                 WebDriverKey.Arrow_down
                             };
                             keys.AddRange(fieldTabs);
-                            keys.AddRange(new List<WebDriverKey> {
-                                WebDriverKey.Tab,
-                                WebDriverKey.Wait,
-                                WebDriverKey.Space,
-                                WebDriverKey.Wait,
-                                WebDriverKey.Shift,
-                                WebDriverKey.Tab,
-                                WebDriverKey.Shift });
+                            keys.AddRange(
+                                new List<WebDriverKey>
+                                {
+                                    WebDriverKey.Tab,
+                                    WebDriverKey.Wait,
+                                    WebDriverKey.Space,
+                                    WebDriverKey.Wait,
+                                    WebDriverKey.Shift,
+                                    WebDriverKey.Tab,
+                                    WebDriverKey.Shift
+                                });
                         }
+
                         driver.SendSpecialKeys(id, keys);
 
                         if (initial != DateValue())
@@ -1998,7 +2441,7 @@
                             result.AddInfo("\nUnable to cancel with dismiss button via space");
                         }
 
-                        //do the same as above, but activate the button with enter this time
+                        // do the same as above, but activate the button with enter this time
                         if (secondPass)
                         {
                             keys = new List<WebDriverKey>
@@ -2009,16 +2452,21 @@
                                 WebDriverKey.Arrow_down
                             };
                             keys.AddRange(fieldTabs);
-                            keys.AddRange(new List<WebDriverKey> {
-                                WebDriverKey.Tab,
-                                WebDriverKey.Wait,
-                                WebDriverKey.Enter,
-                                WebDriverKey.Wait,
-                                WebDriverKey.Shift,
-                                WebDriverKey.Tab,
-                                WebDriverKey.Shift });
+                            keys.AddRange(
+                                new List<WebDriverKey>
+                                {
+                                    WebDriverKey.Tab,
+                                    WebDriverKey.Wait,
+                                    WebDriverKey.Enter,
+                                    WebDriverKey.Wait,
+                                    WebDriverKey.Shift,
+                                    WebDriverKey.Tab,
+                                    WebDriverKey.Shift
+                                });
                         }
-                        else//same as above except without the tab to start
+
+                        // same as above except without the tab to start
+                        else
                         {
                             keys = new List<WebDriverKey>
                             {
@@ -2027,15 +2475,19 @@
                                 WebDriverKey.Arrow_down
                             };
                             keys.AddRange(fieldTabs);
-                            keys.AddRange(new List<WebDriverKey> {
-                                WebDriverKey.Tab,
-                                WebDriverKey.Wait,
-                                WebDriverKey.Enter,
-                                WebDriverKey.Wait,
-                                WebDriverKey.Shift,
-                                WebDriverKey.Tab,
-                                WebDriverKey.Shift });
+                            keys.AddRange(
+                                new List<WebDriverKey>
+                                {
+                                    WebDriverKey.Tab,
+                                    WebDriverKey.Wait,
+                                    WebDriverKey.Enter,
+                                    WebDriverKey.Wait,
+                                    WebDriverKey.Shift,
+                                    WebDriverKey.Tab,
+                                    WebDriverKey.Shift
+                                });
                         }
+
                         driver.SendSpecialKeys(id, keys);
 
                         if (initial != DateValue())
@@ -2044,16 +2496,16 @@
                             result.AddInfo("\nUnable to cancel with dismiss button via enter");
                         }
 
-
-                        //**Accept button**
+                        // **Accept button**
                         initial = DateValue();
 
-                        //Open the dialog, change a field, tab to accept button, activate it with space,
-                        //send tab (since the dialog should be closed, this will transfer focus to the next
-                        //button)
+                        // Open the dialog, change a field, tab to accept button, activate it with space,
+                        // send tab (since the dialog should be closed, this will transfer focus to the next
+                        // button)
                         if (secondPass)
                         {
-                            keys = new List<WebDriverKey> {
+                            keys = new List<WebDriverKey>
+                            {
                                 WebDriverKey.Escape,
                                 WebDriverKey.Tab,
                                 WebDriverKey.Tab,
@@ -2061,31 +2513,39 @@
                                 WebDriverKey.Enter,
                                 WebDriverKey.Wait,
                                 WebDriverKey.Arrow_down,
-                                WebDriverKey.Wait };
+                                WebDriverKey.Wait
+                            };
                             keys.AddRange(fieldTabs);
-                            keys.AddRange(new List<WebDriverKey> {
+                            keys.AddRange(new List<WebDriverKey>
+                            {
                                 WebDriverKey.Wait,
                                 WebDriverKey.Space,
                                 WebDriverKey.Wait,
-                                WebDriverKey.Tab});
+                                WebDriverKey.Tab
+                            });
                         }
                         else
                         {
-                            keys = new List<WebDriverKey> {
+                            keys = new List<WebDriverKey>
+                            {
                                 WebDriverKey.Escape,
                                 WebDriverKey.Tab,
                                 WebDriverKey.Wait,
                                 WebDriverKey.Enter,
                                 WebDriverKey.Wait,
                                 WebDriverKey.Arrow_down,
-                                WebDriverKey.Wait };
+                                WebDriverKey.Wait
+                            };
                             keys.AddRange(fieldTabs);
-                            keys.AddRange(new List<WebDriverKey> {
+                            keys.AddRange(new List<WebDriverKey>
+                            {
                                 WebDriverKey.Wait,
                                 WebDriverKey.Space,
                                 WebDriverKey.Wait,
-                                WebDriverKey.Tab});
+                                WebDriverKey.Tab
+                            });
                         }
+
                         driver.SendSpecialKeys(id, keys);
                         if (initial == DateValue())
                         {
@@ -2093,37 +2553,47 @@
                             result.AddInfo("\nUnable to accept with accept button via space");
                         }
 
-                        initial = DateValue();//the value hopefully changed above, but just to be safe
+                        // the value hopefully changed above, but just to be safe
+                        initial = DateValue();
 
-                        //Open the dialog, tab to hue, change hue, tab to accept button, activate it with enter
-                        //We don't have to worry about why the dialog closed here (button or global enter)
+                        // Open the dialog, tab to hue, change hue, tab to accept button, activate it with enter
+                        // We don't have to worry about why the dialog closed here (button or global enter)
                         if (secondPass)
                         {
-                            keys = new List<WebDriverKey> {
+                            keys = new List<WebDriverKey>
+                            {
                                 WebDriverKey.Escape,
                                 WebDriverKey.Tab,
                                 WebDriverKey.Wait,
                                 WebDriverKey.Enter,
                                 WebDriverKey.Wait,
-                                WebDriverKey.Arrow_down };
+                                WebDriverKey.Arrow_down
+                            };
                             keys.AddRange(fieldTabs);
-                            keys.AddRange(new List<WebDriverKey> {
+                            keys.AddRange(new List<WebDriverKey>
+                            {
                                 WebDriverKey.Enter,
-                                WebDriverKey.Tab});
+                                WebDriverKey.Tab
+                            });
                         }
                         else
                         {
-                            keys = new List<WebDriverKey> {
+                            keys = new List<WebDriverKey>
+                            {
                                 WebDriverKey.Escape,
                                 WebDriverKey.Wait,
                                 WebDriverKey.Enter,
                                 WebDriverKey.Wait,
-                                WebDriverKey.Arrow_down };
+                                WebDriverKey.Arrow_down
+                            };
                             keys.AddRange(fieldTabs);
-                            keys.AddRange(new List<WebDriverKey> {
+                            keys.AddRange(new List<WebDriverKey>
+                            {
                                 WebDriverKey.Enter,
-                                WebDriverKey.Tab});
+                                WebDriverKey.Tab
+                            });
                         }
+
                         driver.SendSpecialKeys(id, keys);
                         if (initial == DateValue())
                         {
@@ -2132,15 +2602,19 @@
                         }
                     }
 
-                    //open with space, close with enter
+                    // open with space, close with enter
                     initial = DateValue();
-                    driver.SendSpecialKeys(id, new List<WebDriverKey> {
-                        WebDriverKey.Escape,
-                        WebDriverKey.Space,
-                        WebDriverKey.Wait,
-                        WebDriverKey.Wait,
-                        WebDriverKey.Arrow_down,
-                        WebDriverKey.Enter });
+                    driver.SendSpecialKeys(
+                        id,
+                        new List<WebDriverKey>
+                        {
+                            WebDriverKey.Escape,
+                            WebDriverKey.Space,
+                            WebDriverKey.Wait,
+                            WebDriverKey.Wait,
+                            WebDriverKey.Arrow_down,
+                            WebDriverKey.Enter
+                        });
                     if (DateValue() == initial)
                     {
                         result.Result = ResultType.Half;
@@ -2159,26 +2633,26 @@
                     }
                     else
                     {
-                        if (patterned.CurrentValue == null || patterned.CurrentValue == "")
+                        if (patterned.CurrentValue == null || patterned.CurrentValue == string.Empty)
                         {
                             result.Result = ResultType.Half;
                             result.AddInfo("\nElement did not have value.value set");
                         }
                     }
                 }
-            });
+            };
         }
 
         /// <summary>
         /// Func factory for checking that when invalid input is entered into a form,
         /// an error message appears.
         /// </summary>
-        /// <returns></returns>
-        public static Action<List<IUIAutomationElement>, DriverManager, List<string>, TestCaseResultExt> CheckValidation()
+        /// <returns>An action for checking input validation</returns>
+        private static Action<List<IUIAutomationElement>, DriverManager, List<string>, TestCaseResultExt> CheckValidation()
         {
             return (elements, driver, ids, result) =>
                 {
-                    //The indices of the elements that have been found to be invalid before
+                    // The indices of the elements that have been found to be invalid before
                     foreach (var id in ids.Take(1))
                     {
                         Javascript.ScrollIntoView(driver, 0);
@@ -2186,11 +2660,10 @@
                         driver.SendKeys(id, "invalid");
                         driver.SendSpecialKeys(id, WebDriverKey.Enter);
 
-                        //Everything that is invalid on the page
-                        //We search by both with an OR condition because it gives a better chance to
-                        //find elements that are partially correct.
-                        var invalid = elements.Where(e =>
-                                        e.CurrentIsDataValidForForm == 0);
+                        // Everything that is invalid on the page
+                        // We search by both with an OR condition because it gives a better chance to
+                        // find elements that are partially correct.
+                        var invalid = elements.Where(e => e.CurrentIsDataValidForForm == 0);
 
                         if (invalid.Count() > 1)
                         {
@@ -2246,9 +2719,10 @@
         /// Func factory for checking that the required child elements are in the accessibility tree.
         /// </summary>
         /// <param name="requiredNames">The names of the elements to search for</param>
+        /// <param name="searchStrategy">A strategy to be used when looking for elements</param>
         /// <returns>A Func that can be used to verify whether the elements in the list are child elements</returns>
-        public static Action<List<IUIAutomationElement>, DriverManager, List<string>, TestCaseResultExt> CheckChildNames(List<string> requiredNames,
-            bool strict = false,
+        private static Action<List<IUIAutomationElement>, DriverManager, List<string>, TestCaseResultExt> CheckChildNames(
+            List<string> requiredNames,
             Func<IUIAutomationElement, bool> searchStrategy = null)
         {
             return (elements, driver, ids, result) =>
@@ -2257,10 +2731,13 @@
                 {
                     var names = element.GetChildNames(searchStrategy);
 
-                    var expectedNotFound = requiredNames.Where(rn => !names.Contains(rn)).ToList();//get a list of all required names not found
-                    var foundNotExpected = names.Where(n => !requiredNames.Contains(n)).ToList();//get a list of all found names that weren't required
+                    // get a list of all required names not found
+                    var expectedNotFound = requiredNames.Where(rn => !names.Contains(rn)).ToList();
 
-                    if (strict && names.Count() != requiredNames.Count)
+                    // get a list of all found names that weren't required
+                    var foundNotExpected = names.Where(n => !requiredNames.Contains(n)).ToList();
+
+                    if (names.Count() != requiredNames.Count)
                     {
                         result.Result = ResultType.Half;
                         result.AddInfo(
@@ -2269,14 +2746,14 @@
                                 (expectedNotFound.Count() > 1 ?
                                     " were expected as names but not found. " :
                                     " was expected as a name but not found. ")
-                                : "");
+                                : string.Empty);
                         result.AddInfo(
                             foundNotExpected.Any() ? "\n" +
                                 foundNotExpected.Aggregate((a, b) => a + ", " + b) +
                                 (foundNotExpected.Count() > 1 ?
                                     " were found as names but not expected. " :
                                     " was found as a name but not expected. ")
-                                : "");
+                                : string.Empty);
                     }
                 }
             };
@@ -2285,8 +2762,8 @@
         /// <summary>
         /// Check that the clear button can be tabbed to and that it can be activated with space
         /// </summary>
-        /// <returns></returns>
-        public static Action<IEnumerable<IUIAutomationElement>, DriverManager, List<string>, TestCaseResultExt> CheckClearButton()
+        /// <returns>An action that checks the clear button</returns>
+        private static Action<IEnumerable<IUIAutomationElement>, DriverManager, List<string>, TestCaseResultExt> CheckClearButton()
         {
             return (elements, driver, ids, result) =>
             {
@@ -2295,7 +2772,7 @@
 
                 foreach (var id in ids.Take(1))
                 {
-                    //Enter something, tab to the clear button, clear with space
+                    // Enter something, tab to the clear button, clear with space
                     driver.SendKeys(id, "x");
                     driver.SendSpecialKeys(id, WebDriverKey.Wait);
                     if (!elements.Any(e => e.GetAllDescendants().Any(d => d.CurrentName.ToLowerInvariant().Contains("clear value"))))
@@ -2303,19 +2780,21 @@
                         result.Result = ResultType.Half;
                         result.AddInfo("\nUnable to find a clear button as a child of any element");
                     }
-                    //Don't leave input which could cause problems with other tests
+
+                    // Don't leave input which could cause problems with other tests
                     clearInput(id);
                 }
             };
         }
 
         /// <summary>
-        /// Wait for a condition that tests a double value
+        /// Wait for a condition using a given checker
         /// </summary>
-        /// <param name="conditionCheck">The condition checker</param>
-        /// <param name="value">The double value to look for</param>
-        /// <returns>true if the condition passes, false otherwise</returns>
-        public static bool WaitForCondition(Func<double, bool> conditionCheck, double value, int attempts = 20)
+        /// <param name="conditionCheck">A function that will tell when the function has waited long enough</param>
+        /// <param name="value">The double value to be passed into the condition check func</param>
+        /// <param name="attempts">How many times to wait</param>
+        /// <returns>Whether the condition was ever successful</returns>
+        private static bool WaitForCondition(Func<double, bool> conditionCheck, double value, int attempts = 20)
         {
             for (var i = 0; i < attempts; i++)
             {
@@ -2325,17 +2804,19 @@
                     return true;
                 }
             }
+
             return false;
         }
 
         /// <summary>
-        /// Wait for a condition that tests a double value
+        /// Wait for a condition using a given checker
         /// </summary>
-        /// <param name="conditionCheck">The condition checker</param>
-        /// <param name="reverse">Whether to reverse the result</param>
-        /// <param name="attempts">How many times to check</param>
-        /// <returns>true if the condition passes, false otherwise</returns>
-        public static bool WaitForCondition(Func<bool> conditionCheck, Action waitAction = null, bool reverse = false, int attempts = 20)
+        /// <param name="conditionCheck">A function that will tell when the function has waited long enough</param>
+        /// <param name="waitAction">An optional action to take between waits</param>
+        /// <param name="reverse">If the function should wait until the condition check should return false instead of true</param>
+        /// <param name="attempts">How many times to wait</param>
+        /// <returns>Whether the condition was ever successful</returns>
+        private static bool WaitForCondition(Func<bool> conditionCheck, Action waitAction = null, bool reverse = false, int attempts = 20)
         {
             for (var i = 0; i < attempts; i++)
             {
@@ -2344,8 +2825,10 @@
                 {
                     return true;
                 }
+
                 waitAction?.Invoke();
             }
+
             return false;
         }
     }

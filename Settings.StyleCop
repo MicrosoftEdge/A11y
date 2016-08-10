@@ -3,6 +3,7 @@
     <CollectionProperty Name="RecognizedWords">
       <Value>controltype</Value>
       <Value>csv</Value>
+      <Value>datetime</Value>
       <Value>executable</Value>
       <Value>executables</Value>
       <Value>func</Value>
