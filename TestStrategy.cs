@@ -59,7 +59,7 @@
         /// <returns>Two TestCaseResults which are both marked as failures</returns>
         protected List<TestCaseResult> Pass(string name)
         {
-            return new List<TestCaseResult>
+            return new List<TestCaseResult>(2)
             {
                 new TestCaseResult
                 {
@@ -82,7 +82,7 @@
         /// <returns>Two TestCaseResults which are both marked as failures</returns>
         protected List<TestCaseResult> Fail(string name, string cause)
         {
-            return new List<TestCaseResult>
+            return new List<TestCaseResult>(2)
             {
                 new TestCaseResult
                 {
@@ -107,7 +107,7 @@
         /// <returns>Two TestCaseResults, one pass and one fail</returns>
         protected List<TestCaseResult> Half(string name, string cause)
         {
-            return new List<TestCaseResult>
+            return new List<TestCaseResult>(2)
             {
                 new TestCaseResult
                 {

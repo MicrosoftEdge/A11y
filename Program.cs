@@ -21,25 +21,29 @@
 
             TestStrategy a11yStrategy = new EdgeStrategy(fileSuffix: ".html");
 
-            var results = TestData.AllTests().Where(td =>
-                (testName == null || td.TestName == testName)) // Either no test name was provided or the test names match
-                .ToList().ConvertAll(td => a11yStrategy.Execute(td)) // Execute each of the tests
+            var results = TestData.AllTests()
+                .Where(td => (testName == null || td.TestName == testName)) // Either no test name was provided or the test names match
+                .Select(td => a11yStrategy.Execute(td).ToList()) // Execute each of the tests
                 .Where(r => r.Any()) // Only keep the ones that were executed
-                .ToList().ConvertAll(r => // Convert results from internal form (Pass/Pass, Pass/Fail, Fail/Fail) to external (Pass, Half, Fail)
+                .Select(r => // Convert results from internal form (Pass/Pass, Pass/Fail, Fail/Fail) to external (Pass, Half, Fail)
                 {
                     var first = r.ElementAt(0);
                     var second = r.ElementAt(1);
                     second.Result = second.Result == ResultType.Fail && first.Result == ResultType.Pass ? ResultType.Half : second.Result;
                     second.Name = second.Name.Replace("-2", string.Empty);
                     return second;
-                });
+                })
+                .ToList();
 
             // output results to the console: failures, then halves, then passes
-            results.OrderBy(r => r.Result == ResultType.Pass).ThenBy(r => r.Result == ResultType.Half).ToList().ForEach(r => Console.WriteLine(r));
+            results.OrderBy(r => r.Result == ResultType.Pass)
+                .ThenBy(r => r.Result == ResultType.Half)
+                .ToList()
+                .ForEach(r => Console.WriteLine(r));
 
             if (results.Any())
             {
-                var score = results.ConvertAll(r =>
+                var score = results.Select(r =>
                 {
                     switch (r.Result)
                     {
@@ -84,8 +88,8 @@
                 File.WriteAllText(filePath, headerLine);
             }
 
-            var build = Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "BuildLabEx", null);
-            if (build == null || build as string == null)
+            var build = Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "BuildLabEx", null) as string;
+            if (build == null)
             {
                 throw new Exception("Unable to get build string");
             }
@@ -94,7 +98,7 @@
 
             // Write the results
             var writer = File.AppendText(filePath);
-            var resultline = (build as string).Replace('.', ',') + "," + score + "," + time + "," +
+            var resultline = build.Replace('.', ',') + "," + score + "," + time + "," +
                 results.Select(r => r.Result.ToString() + "," + (r.MoreInfo != null ? r.MoreInfo.Replace('\n', '\t') : string.Empty))
                 .Aggregate((s1, s2) => s1 + "," + s2);
             writer.WriteLine(resultline);

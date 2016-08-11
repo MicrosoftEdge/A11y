@@ -155,8 +155,8 @@
         /// <param name="requiredDescriptions">The descriptions to search for</param>
         private static void CheckElementNames(StringBuilder moreInfo, List<IUIAutomationElement> elements, List<string> requiredNames, List<string> requiredDescriptions)
         {
-            var names = elements.ConvertAll(element => element.CurrentName).Where(e => !string.IsNullOrEmpty(e)).ToList();
-            var descriptions = elements.ConvertAll(element => ((IUIAutomationElement6)element).CurrentFullDescription).Where(e => !string.IsNullOrEmpty(e)).ToList();
+            var names = elements.Select(element => element.CurrentName).Where(e => !string.IsNullOrEmpty(e)).ToList();
+            var descriptions = elements.Select(element => ((IUIAutomationElement6)element).CurrentFullDescription).Where(e => !string.IsNullOrEmpty(e)).ToList();
 
             // Check names - get a list of all required names not found
             var expectedNotFound = requiredNames.Where(rn => !names.Contains(rn)).ToList();
@@ -167,14 +167,14 @@
             moreInfo.Append(
                 expectedNotFound.Any() ? "\n" +
                     expectedNotFound.Aggregate((a, b) => a + ", " + b) +
-                    (expectedNotFound.Count() > 1 ?
+                    (expectedNotFound.Count > 1 ?
                         " were expected as names but not found. " :
                         " was expected as a name but not found. ")
                     : string.Empty);
             moreInfo.Append(
                 foundNotExpected.Any() ? "\n" +
                     foundNotExpected.Aggregate((a, b) => a + ", " + b) +
-                    (foundNotExpected.Count() > 1 ?
+                    (foundNotExpected.Count > 1 ?
                         " were found as names but not expected. " :
                         " was found as a name but not expected. ")
                     : string.Empty);
@@ -185,14 +185,14 @@
             moreInfo.Append(
                 expectedNotFound.Any() ? "\n" +
                     expectedNotFound.Aggregate((a, b) => a + ", " + b) +
-                    (expectedNotFound.Count() > 1 ?
+                    (expectedNotFound.Count > 1 ?
                         " were expected as descriptions but not found. " :
                         " was expected as a description but not found. ")
                     : string.Empty);
             moreInfo.Append(
                 foundNotExpected.Any() ? "\n" +
                     foundNotExpected.Aggregate((a, b) => a + ", " + b) +
-                    (foundNotExpected.Count() > 1 ?
+                    (foundNotExpected.Count > 1 ?
                         " were found as descriptions but not expected. " :
                         " was found as a description but not expected. ")
                     : string.Empty);

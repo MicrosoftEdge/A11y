@@ -22,7 +22,7 @@
         /// <param name="count">The number of times to send tab</param>
         public static void SendTabs(this DriverManager driver, string element, int count)
         {
-            var tabs = new List<WebDriverKey>();
+            var tabs = new List<WebDriverKey>(count);
             for (var i = 0; i < count; i++)
             {
                 tabs.Add(WebDriverKey.Tab);
@@ -63,9 +63,9 @@
         /// <param name="driver">The WebDriver instance</param>
         /// <param name="elementId">The html id of the element to which to send keys</param>
         /// <param name="key">The key to send</param>
-        public static void SendSpecialKeys(this DriverManager driver, string elementId, WebDriverKey key)
+        public static void SendSpecialKey(this DriverManager driver, string elementId, WebDriverKey key)
         {
-            driver.SendSpecialKeys(elementId, new List<WebDriverKey> { key });
+            driver.SendSpecialKeys(elementId, new List<WebDriverKey>(1) { key });
         }
 
         /// <summary>
@@ -90,7 +90,7 @@
         /// <returns>A list of all the patterns supported</returns>
         public static List<string> GetPatterns(this IUIAutomationElement element)
         {
-            var ids = new List<int>();
+            List<int> ids;
             return GetPatterns(element, out ids);
         }
 
@@ -168,40 +168,25 @@
         /// <returns>A double if the object can be converted</returns>
         public static double ParseMystery(this object o)
         {
-            try
+            if (o is int)
             {
                 return (int)o;
             }
-            catch
-            {
-                // do nothing
-            }
 
-            try
+            if (o is long)
             {
                 return (long)o;
             }
-            catch
-            {
-                // do nothing
-            }
 
-            try
+            if (o is double)
             {
                 return (double)o;
             }
-            catch
-            {
-                // do nothing
-            }
 
-            try
+            double d;
+            if (o is string && double.TryParse((string)o, out d))
             {
-                return double.Parse((string)o);
-            }
-            catch
-            {
-                // do nothing
+                return d;
             }
 
             throw new InvalidCastException("Cannot parse to int, double, or string");
