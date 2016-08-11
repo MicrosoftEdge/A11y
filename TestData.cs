@@ -234,22 +234,21 @@
                             {
                                 subdomElements.AddRange(e.GetAllDescendants((d) =>
                                 {
-                                    var convertedRole =
-                                        GetControlTypeFromCode(d.CurrentControlType);
+                                    var convertedRole = GetControlTypeFromCode(d.CurrentControlType);
                                     return convertedRole == UIAControlType.Button || convertedRole == UIAControlType.Text;
                                 }));
                             }
 
-                            if (subdomElements.Count() != 3)
+                            if (subdomElements.Count != 3)
                             {
                                 result.Result = ResultType.Half;
                                 result.AddInfo("Unable to find subdom elements");
                             }
 
-                            var featureDetectionScript = @"canvas = document.getElementById('myCanvas');
-                                                            isSupported = !!(canvas.getContext && canvas.getContext('2d'));
-                                                            isSupported = isSupported && !!(canvas.getContext('2d').drawFocusIfNeeded);
-                                                            return isSupported;";
+                            const string featureDetectionScript = @"canvas = document.getElementById('myCanvas');
+                                                                    isSupported = !!(canvas.getContext && canvas.getContext('2d'));
+                                                                    isSupported = isSupported && !!(canvas.getContext('2d').drawFocusIfNeeded);
+                                                                    return isSupported;";
 
                             if (!(bool)driver.ExecuteScript(featureDetectionScript, Timeout))
                             {
@@ -303,9 +302,12 @@
                         foreach (var id in ids.Take(1))
                         {
                             var initial = datalistValue(id);
-                            driver.SendSpecialKeys(id, WebDriverKey.Arrow_down);
+                            driver.SendSpecialKey(id, WebDriverKey.Arrow_down);
 
-                            var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().Select(element => elements.IndexOf(element));
+                            var controllerForElements = elements
+                                .Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0)
+                                .Select(element => elements.IndexOf(element))
+                                .ToList();
                             if (controllerForElements.All(element => previousControllerForElements.Contains(element)))
                             {
                                 result.Result = ResultType.Half;
@@ -314,7 +316,7 @@
 
                             previousControllerForElements.Add(controllerForElements.First(element => !previousControllerForElements.Contains(element)));
 
-                            driver.SendSpecialKeys(id, WebDriverKey.Enter);
+                            driver.SendSpecialKey(id, WebDriverKey.Enter);
                             if (datalistValue(id) != "Item value 1")
                             {
                                 result.Result = ResultType.Half;
@@ -353,7 +355,7 @@
                     additionalRequirement: (elements, driver, ids) =>
                         {
                             var result = new TestCaseResultExt();
-                            var logoText = "HTML5 logo 1";
+                            const string logoText = "HTML5 logo 1";
 
                             // there will be only one, since element is the pane in this case
                             foreach (var element in elements)
@@ -382,7 +384,7 @@
                                     result.AddInfo("\nText not found on page");
                                 }
 
-                                var foundControlTypes = new HashSet<UIAControlType>();
+                                HashSet<UIAControlType> foundControlTypes;
                                 var figure = EdgeA11yTools.SearchChildren(element, UIAControlType.Group, null, out foundControlTypes);
 
                                 var childRange = textPattern.RangeFromChild(figure[0]);
@@ -422,10 +424,10 @@
                     {
                         var result = new TestCaseResultExt();
 
-                        if (elements.Count() != 7)
+                        if (elements.Count != 7)
                         {
                             result.Result = ResultType.Half;
-                            result.AddInfo("\nFound " + elements.Count() + " elements, expected 7.");
+                            result.AddInfo("\nFound " + elements.Count + " elements, expected 7.");
                         }
 
                         var convertedLandmarks = 0;
@@ -486,10 +488,10 @@
                     {
                         var result = new TestCaseResultExt();
 
-                        if (elements.Count() != 7)
+                        if (elements.Count != 7)
                         {
                             result.Result = ResultType.Half;
-                            result.AddInfo("\nFound " + elements.Count() + " elements, expected 7.");
+                            result.AddInfo("\nFound " + elements.Count + " elements, expected 7.");
                         }
 
                         var convertedLandmarks = 0;
@@ -555,8 +557,11 @@
                                 });
 
                             // open dialog to check controllerfor
-                            driver.SendSpecialKeys(id, WebDriverKey.Enter);
-                            var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().Select(element => elements.IndexOf(element));
+                            driver.SendSpecialKey(id, WebDriverKey.Enter);
+                            var controllerForElements = elements
+                                .Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0)
+                                .Select(element => elements.IndexOf(element))
+                                .ToList();
                             if (controllerForElements.All(element => previousControllerForElements.Contains(element)))
                             {
                                 result.Result = ResultType.Half;
@@ -575,8 +580,10 @@
                                 var descendents = thisDialog.GetAllDescendants();
 
                                 // sliders
-                                var sliders = descendents.Where(d => GetControlTypeFromCode(d.CurrentControlType) == UIAControlType.Slider);
-                                if (sliders.Count() != 3)
+                                var sliders = descendents
+                                    .Where(d => GetControlTypeFromCode(d.CurrentControlType) == UIAControlType.Slider)
+                                    .ToList();
+                                if (sliders.Count != 3)
                                 {
                                     result.Result = ResultType.Half;
                                     result.AddInfo("\nDialog did not have three slider elements");
@@ -595,20 +602,22 @@
                                 }
 
                                 // color well
-                                var outputs = descendents.Where(d => GetControlTypeFromCode(d.CurrentControlType) == UIAControlType.Group && d.CurrentLocalizedControlType == "output");
-                                if (outputs.Count() > 1)
+                                var outputs = descendents
+                                    .Where(d => GetControlTypeFromCode(d.CurrentControlType) == UIAControlType.Group && d.CurrentLocalizedControlType == "output")
+                                    .ToList();
+                                if (outputs.Count > 1)
                                 {
                                     throw new Exception("Test assumption failed: expected color dialog to have at most one output");
                                 }
-                                else if (outputs.Count() == 0)
+                                else if (outputs.Count == 0)
                                 {
                                     result.Result = ResultType.Half;
                                     result.AddInfo("\nCould not find output in color dialog");
                                 }
-                                else if (outputs.Count() == 1)
+                                else if (outputs.Count == 1)
                                 {
                                     var output = outputs.First();
-                                    if (output.CurrentName == null || output.CurrentName == string.Empty)
+                                    if (string.IsNullOrEmpty(output.CurrentName))
                                     {
                                         result.Result = ResultType.Half;
                                         result.AddInfo("\nColor dialog output did not have name set");
@@ -1006,7 +1015,7 @@
                             Func<int> RangeValue = () => int.Parse((string)driver.ExecuteScript("return document.getElementById('" + id + "').value", 0));
 
                             var initial = RangeValue();
-                            driver.SendSpecialKeys(id, WebDriverKey.Arrow_up);
+                            driver.SendSpecialKey(id, WebDriverKey.Arrow_up);
                             if (initial == RangeValue())
                             {
                                 result.Result = ResultType.Half;
@@ -1014,7 +1023,7 @@
                                 continue;
                             }
 
-                            driver.SendSpecialKeys(id, WebDriverKey.Arrow_down);
+                            driver.SendSpecialKey(id, WebDriverKey.Arrow_down);
                             if (initial != RangeValue())
                             {
                                 result.Result = ResultType.Half;
@@ -1022,7 +1031,7 @@
                                 continue;
                             }
 
-                            driver.SendSpecialKeys(id, WebDriverKey.Arrow_right);
+                            driver.SendSpecialKey(id, WebDriverKey.Arrow_right);
                             if (initial >= RangeValue())
                             {
                                 result.Result = ResultType.Half;
@@ -1030,7 +1039,7 @@
                                 continue;
                             }
 
-                            driver.SendSpecialKeys(id, WebDriverKey.Arrow_left);
+                            driver.SendSpecialKey(id, WebDriverKey.Arrow_left);
                             if (initial != RangeValue())
                             {
                                 result.Result = ResultType.Half;
@@ -1042,8 +1051,7 @@
                         // rangevalue pattern
                         foreach (var element in elements)
                         {
-                            var rangeValuePattern = "RangeValuePattern";
-                            if (!element.GetPatterns().Contains(rangeValuePattern))
+                            if (!element.GetPatterns().Contains("RangeValuePattern"))
                             {
                                 result.Result = ResultType.Half;
                                 result.AddInfo("\nElement did not implement the RangeValuePattern");
@@ -1271,7 +1279,7 @@
                             // rangevalue
                             foreach (var element in elements)
                             {
-                                var patternName = "RangeValuePattern";
+                                const string patternName = "RangeValuePattern";
 
                                 var patterned = GetPattern<IUIAutomationRangeValuePattern>(patternName, element);
                                 if (patterned == null)
@@ -1294,7 +1302,7 @@
                                     }
 
                                     // All the meters are set to this
-                                    var value = 83.5;
+                                    const double value = 83.5;
                                     if (patterned.CurrentValue - value > Epsilon)
                                     {
                                         result.Result = ResultType.Half;
@@ -1376,10 +1384,11 @@
                         }
 
                         var controllerForLengths = elements.Select(element => element.CurrentControllerFor != null ? element.CurrentControllerFor.Length : 0);
-                        if (controllerForLengths.Count(cfl => cfl > 0) != 1)
+                        var positiveLengthCount = controllerForLengths.Count(cfl => cfl > 0);
+                        if (positiveLengthCount != 1)
                         {
                             result.Result = ResultType.Half;
-                            result.AddInfo("\nExpected 1 element with ControllerFor set. Found " + controllerForLengths.Count(cfl => cfl > 0));
+                            result.AddInfo("\nExpected 1 element with ControllerFor set. Found " + positiveLengthCount);
                         }
 
                         return result;
@@ -1409,7 +1418,7 @@
                         // range value
                         foreach (var element in elements)
                         {
-                            var patternName = "RangeValuePattern";
+                            const string patternName = "RangeValuePattern";
 
                             var patterned = GetPattern<IUIAutomationRangeValuePattern>(patternName, element);
                             if (patterned == null)
@@ -1432,7 +1441,7 @@
                                 }
 
                                 // All the progress bars are set to this
-                                var value = 22;
+                                const double value = 22;
                                 if (patterned.CurrentValue - value > Epsilon)
                                 {
                                     result.Result = ResultType.Half;
@@ -1546,10 +1555,11 @@
 
                         var browserElement = EdgeA11yTools.FindBrowserDocument(0);
 
-                        if (elements.Count(e => GetControlTypeFromCode(e.CurrentControlType) != UIAControlType.Pane) != 0)
+                        var count = elements.Count(e => GetControlTypeFromCode(e.CurrentControlType) != UIAControlType.Pane);
+                        if (count != 0)
                         {
                             result.Result = ResultType.Half;
-                            result.AddInfo("Found " + elements.Count(e => GetControlTypeFromCode(e.CurrentControlType) != UIAControlType.Pane) + " elements. Expected 0");
+                            result.AddInfo("Found " + count + " elements. Expected 0");
                             return result;
                         }
 
@@ -1562,7 +1572,7 @@
 
                         List<int> patternIds;
                         var names = five.GetPatterns(out patternIds);
-                        var textPatternString = "TextPattern";
+                        const string textPatternString = "TextPattern";
                         if (!names.Contains(textPatternString))
                         {
                             result.Result = ResultType.Half;
@@ -1588,10 +1598,11 @@
                         // make sure the button show up now that their parents are not hidden
                         HashSet<UIAControlType> foundControlTypes;
                         elements = EdgeA11yTools.SearchChildren(browserElement, UIAControlType.Button, null, out foundControlTypes);
-                        if (elements.Count(e => GetControlTypeFromCode(e.CurrentControlType) != UIAControlType.Pane) != 1)
+                        count = elements.Count(e => GetControlTypeFromCode(e.CurrentControlType) != UIAControlType.Pane);
+                        if (count != 1)
                         {
                             result.Result = ResultType.Half;
-                            result.AddInfo("\nFound " + elements.Count(e => GetControlTypeFromCode(e.CurrentControlType) != UIAControlType.Pane) + " elements. Expected 1");
+                            result.AddInfo("\nFound " + count + " elements. Expected 1");
                         }
 
                         // remove aria-hidden attribute
@@ -1599,10 +1610,11 @@
 
                         // both buttons should now be visible, since both aria-hidden and hidden attribute are missing
                         elements = EdgeA11yTools.SearchChildren(browserElement, UIAControlType.Button, null, out foundControlTypes);
-                        if (elements.Count(e => GetControlTypeFromCode(e.CurrentControlType) != UIAControlType.Pane) != 2)
+                        count = elements.Count(e => GetControlTypeFromCode(e.CurrentControlType) != UIAControlType.Pane);
+                        if (count != 2)
                         {
                             result.Result = ResultType.Half;
-                            result.AddInfo("\nFound " + elements.Count(e => GetControlTypeFromCode(e.CurrentControlType) != UIAControlType.Pane) + " elements. Expected 2");
+                            result.AddInfo("\nFound " + count + " elements. Expected 2");
                         }
 
                         return result;
@@ -1614,7 +1626,7 @@
                     additionalRequirement: (elements, driver, ids) =>
                     {
                         var result = new TestCaseResultExt();
-                        driver.SendSpecialKeys("input1", WebDriverKey.Enter);
+                        driver.SendSpecialKey("input1", WebDriverKey.Enter);
                         Thread.Sleep(TimeSpan.FromMilliseconds(500));
 
                         // there can only be one
@@ -1632,7 +1644,7 @@
                                 result.AddInfo("\nElement did not have IsRequiredForForm set to true");
                             }
 
-                            if (element.CurrentHelpText == null || element.CurrentHelpText.Length == 0)
+                            if (string.IsNullOrEmpty(element.CurrentHelpText))
                             {
                                 result.Result = ResultType.Half;
                                 result.AddInfo("\nElement did not have HelpText");
@@ -1677,13 +1689,14 @@
             List<int> patternIds;
 
             patternNames = element.GetPatterns(out patternIds);
-            if (!patternNames.Contains(patternName))
+            var index = patternNames.IndexOf(patternName);
+            if (index < 0)
             {
                 return default(T);
             }
             else
             {
-                T pattern = (T)((IUIAutomationElement5)element).GetCurrentPattern(patternIds[patternNames.IndexOf(patternName)]);
+                T pattern = (T)((IUIAutomationElement5)element).GetCurrentPattern(patternIds[index]);
                 return pattern;
             }
         }
@@ -1704,7 +1717,7 @@
             var element = parent.GetAllDescendants(e => e.CurrentName.Contains(name)).First();
             while (!(bool)element.GetCurrentPropertyValue(GetPropertyCode(UIAProperty.HasKeyboardFocus)))
             {
-                driver.SendSpecialKeys(tabId, WebDriverKey.Tab);
+                driver.SendSpecialKey(tabId, WebDriverKey.Tab);
                 if (++tabs > 20)
                 {
                     Javascript.ClearFocus(driver, 0);
@@ -1729,7 +1742,7 @@
         /// <param name="result">The aggregate result of the testing</param>
         private static void CheckVideoKeyboardInteractions(List<IUIAutomationElement> elements, DriverManager driver, List<string> ids, TestCaseResultExt result)
         {
-            string videoId = "video1";
+            const string videoId = "video1";
 
             Func<bool> videoPlaying = () => (bool)driver.ExecuteScript("return !document.getElementById('" + videoId + "').paused", 0);
             Func<object> pauseVideo = () => driver.ExecuteScript("document.getElementById('" + videoId + "').pause()", 0);
@@ -1751,7 +1764,7 @@
 
             // Case 1: tab to play button and play/pause
             TabToElementByName(elements[0], "Play", videoId, driver);
-            driver.SendSpecialKeys(videoId, WebDriverKey.Space);
+            driver.SendSpecialKey(videoId, WebDriverKey.Space);
             if (!WaitForCondition(videoPlaying))
             {
                 result.Result = ResultType.Half;
@@ -1759,7 +1772,7 @@
                 playVideo();
             }
 
-            driver.SendSpecialKeys(videoId, WebDriverKey.Enter);
+            driver.SendSpecialKey(videoId, WebDriverKey.Enter);
             if (!WaitForCondition(videoPlaying, reverse: true))
             {
                 result.Result = ResultType.Half;
@@ -1774,7 +1787,7 @@
             driver.Screenshot("before_enter_to_mute");
 
             // mute
-            driver.SendSpecialKeys(videoId, WebDriverKey.Enter);
+            driver.SendSpecialKey(videoId, WebDriverKey.Enter);
             driver.Screenshot("after_enter_to_mute");
             if (!WaitForCondition(videoMuted))
             {
@@ -1787,7 +1800,7 @@
             driver.Screenshot("before_enter_to_unmute");
 
             // unmute
-            driver.SendSpecialKeys(videoId, WebDriverKey.Enter);
+            driver.SendSpecialKey(videoId, WebDriverKey.Enter);
             driver.Screenshot("after_enter_to_unmute");
             if (!WaitForCondition(videoMuted, reverse: true))
             {
@@ -1829,7 +1842,7 @@
             initial = getVideoElapsed();
 
             // skip ahead
-            driver.SendSpecialKeys(videoId, WebDriverKey.Arrow_right);
+            driver.SendSpecialKey(videoId, WebDriverKey.Arrow_right);
             if (!WaitForCondition(videoElapsed, initial + 10))
             {
                 result.Result = ResultType.Half;
@@ -1837,7 +1850,7 @@
             }
 
             // skip back
-            driver.SendSpecialKeys(videoId, WebDriverKey.Arrow_left);
+            driver.SendSpecialKey(videoId, WebDriverKey.Arrow_left);
             if (!WaitForCondition(videoElapsed, initial))
             {
                 result.Result = ResultType.Half;
@@ -1857,7 +1870,7 @@
             initial = getVideoElapsed();
 
             // skip ahead
-            driver.SendSpecialKeys(videoId, WebDriverKey.Arrow_right);
+            driver.SendSpecialKey(videoId, WebDriverKey.Arrow_right);
             if (!WaitForCondition(videoElapsed, initial + 10))
             {
                 result.Result = ResultType.Half;
@@ -1865,14 +1878,14 @@
             }
 
             // skip back
-            driver.SendSpecialKeys(videoId, WebDriverKey.Arrow_left);
+            driver.SendSpecialKey(videoId, WebDriverKey.Arrow_left);
             if (!WaitForCondition(videoElapsed, initial))
             {
                 result.Result = ResultType.Half;
                 result.AddInfo("\tVideo did not skip back with arrow left\n");
 
                 // skip back
-                driver.SendSpecialKeys(videoId, WebDriverKey.Arrow_left);
+                driver.SendSpecialKey(videoId, WebDriverKey.Arrow_left);
             }
 
             // Case 6: Full screen
@@ -1881,7 +1894,7 @@
             driver.Screenshot("before_enter_to_fullscreen");
 
             // enter fullscreen mode
-            driver.SendSpecialKeys(videoId, WebDriverKey.Enter);
+            driver.SendSpecialKey(videoId, WebDriverKey.Enter);
             driver.Screenshot("after_enter_to_fullscreen");
             if (!WaitForCondition(isVideoFullScreen))
             {
@@ -1890,7 +1903,7 @@
             }
 
             driver.Screenshot("before_escape_from_fullscreen");
-            driver.SendSpecialKeys(videoId, WebDriverKey.Escape);
+            driver.SendSpecialKey(videoId, WebDriverKey.Escape);
             driver.Screenshot("after_escape_from_fullscreen");
             if (!WaitForCondition(isVideoFullScreen, reverse: true))
             {
@@ -1908,7 +1921,7 @@
         /// <param name="result">The result aggregator</param>
         private static void CheckAudioKeyboardInteractions(List<IUIAutomationElement> elements, DriverManager driver, List<string> ids, TestCaseResultExt result)
         {
-            string audioId = "audio1";
+            const string audioId = "audio1";
             Func<bool> audioPlaying = () => (bool)driver.ExecuteScript("return !document.getElementById('" + audioId + "').paused", 0);
             Func<object> pauseAudio = () => driver.ExecuteScript("!document.getElementById('" + audioId + "').pause()", 0);
             Func<object> playAudio = () => driver.ExecuteScript("!document.getElementById('" + audioId + "').play()", 0);
@@ -1930,7 +1943,7 @@
 
             // Tab to play button
             driver.SendTabs(audioId, 1);
-            driver.SendSpecialKeys(audioId, WebDriverKey.Enter);
+            driver.SendSpecialKey(audioId, WebDriverKey.Enter);
             if (!WaitForCondition(audioPlaying))
             {
                 result.Result = ResultType.Half;
@@ -1938,7 +1951,7 @@
                 playAudio();
             }
 
-            driver.SendSpecialKeys(audioId, WebDriverKey.Space);
+            driver.SendSpecialKey(audioId, WebDriverKey.Space);
             if (!WaitForCondition(audioPlaying, reverse: true))
             {
                 result.Result = ResultType.Half;
@@ -1955,14 +1968,14 @@
 
             driver.SendTabs(audioId, 3);
             var initial = getAudioElapsed();
-            driver.SendSpecialKeys(audioId, WebDriverKey.Arrow_right);
+            driver.SendSpecialKey(audioId, WebDriverKey.Arrow_right);
             if (!WaitForCondition(audioElapsed, initial + 10))
             {
                 result.Result = ResultType.Half;
                 result.AddInfo("\tAudio did not skip forward with arrow right\n");
             }
 
-            driver.SendSpecialKeys(audioId, WebDriverKey.Arrow_left);
+            driver.SendSpecialKey(audioId, WebDriverKey.Arrow_left);
             if (!WaitForCondition(audioElapsed, initial))
             {
                 result.Result = ResultType.Half;
@@ -1973,28 +1986,28 @@
             Javascript.ClearFocus(driver, 0);
             driver.SendTabs(audioId, 5);
             initial = getAudioVolume();
-            driver.SendSpecialKeys(audioId, WebDriverKey.Arrow_down);
+            driver.SendSpecialKey(audioId, WebDriverKey.Arrow_down);
             if (!WaitForCondition(audioVolume, initial - .05))
             {
                 result.Result = ResultType.Half;
                 result.AddInfo("\tVolume did not decrease with arrow down\n");
             }
 
-            driver.SendSpecialKeys(audioId, WebDriverKey.Arrow_up);
+            driver.SendSpecialKey(audioId, WebDriverKey.Arrow_up);
             if (!WaitForCondition(audioVolume, initial))
             {
                 result.Result = ResultType.Half;
                 result.AddInfo("\tVolume did not increase with arrow up\n");
             }
 
-            driver.SendSpecialKeys(audioId, WebDriverKey.Enter);
+            driver.SendSpecialKey(audioId, WebDriverKey.Enter);
             if (!WaitForCondition(audioMuted))
             {
                 result.Result = ResultType.Half;
                 result.AddInfo("\tAudio was not muted by enter on the volume control\n");
             }
 
-            driver.SendSpecialKeys(audioId, WebDriverKey.Enter);
+            driver.SendSpecialKey(audioId, WebDriverKey.Enter);
             if (!WaitForCondition(audioMuted, reverse: true))
             {
                 result.Result = ResultType.Half;
@@ -2046,27 +2059,28 @@
                         });
 
                     // Check ControllerFor
-                    var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().Select(element => elements.IndexOf(element));
+                    var controllerForElements = elements
+                        .Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0)
+                        .Select(element => elements.IndexOf(element));
                     if (controllerForElements.All(element => previousControllerForElements.Contains(element)))
                     {
                         result.Result = ResultType.Half;
                         result.AddInfo("\nElement controller for not set for id: " + id);
                     }
 
+                    var keys = new List<WebDriverKey>(2)
+                    {
+                        WebDriverKey.Arrow_down,
+                        WebDriverKey.Tab
+                    };
                     // Change each field in the calendar
                     for (int i = 0; i < fields; i++)
                     {
-                        driver.SendSpecialKeys(
-                            id,
-                            new List<WebDriverKey>
-                            {
-                                WebDriverKey.Arrow_down,
-                                WebDriverKey.Tab
-                            });
+                        driver.SendSpecialKeys(id, keys);
                     }
 
                     // Close the menu (only necessary for time)
-                    driver.SendSpecialKeys(id, WebDriverKey.Enter);
+                    driver.SendSpecialKey(id, WebDriverKey.Enter);
 
                     // Get the altered value, which should be one off the default
                     // for each field
@@ -2084,13 +2098,13 @@
                         }
                     }
 
-                    var fieldTabs = new List<WebDriverKey>();
+                    var fieldTabs = new List<WebDriverKey>(fields);
                     for (var i = 0; i < fields; i++)
                     {
                         fieldTabs.Add(WebDriverKey.Tab);
                     }
 
-                    var keys = new List<WebDriverKey>
+                    keys = new List<WebDriverKey>(2)
                     {
                         WebDriverKey.Enter,
                         WebDriverKey.Wait
@@ -2237,7 +2251,7 @@
 
                 foreach (var element in elements)
                 {
-                    var patternName = "ValuePattern";
+                    const string patternName = "ValuePattern";
                     var patterned = GetPattern<IUIAutomationValuePattern>(patternName, element);
                     if (patterned == null)
                     {
@@ -2271,7 +2285,7 @@
                     3
                 };
 
-                var outputFields = 5;
+                const int outputFields = 5;
 
                 var previousControllerForElements = new HashSet<int>();
                 foreach (var id in ids.Take(1))
@@ -2314,7 +2328,9 @@
                         });
 
                     // Check ControllerFor
-                    var controllerForElements = elements.Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0).ToList().Select(element => elements.IndexOf(element));
+                    var controllerForElements = elements
+                        .Where(e => e.CurrentControllerFor != null && e.CurrentControllerFor.Length > 0)
+                        .Select(element => elements.IndexOf(element));
                     if (controllerForElements.All(element => previousControllerForElements.Contains(element)))
                     {
                         result.Result = ResultType.Half;
@@ -2349,7 +2365,7 @@
                         if (++i != inputFields.Count)
                         {
                             // expand menu
-                            driver.SendSpecialKeys(id, WebDriverKey.Enter);
+                            driver.SendSpecialKey(id, WebDriverKey.Enter);
                         }
                     }
 
@@ -2371,14 +2387,13 @@
 
                     var initial = string.Empty;
 
-                    for (var i = 0; i < inputFields.Count(); i++)
+                    var fieldTabs = new List<WebDriverKey>(inputFields[0]);
+                    for (var i = 0; i < inputFields[0]; i++)
                     {
-                        var fieldTabs = new List<WebDriverKey>();
-                        for (var j = 0; j < inputFields[0]; j++)
-                        {
-                            fieldTabs.Add(WebDriverKey.Tab);
-                        }
-
+                        fieldTabs.Add(WebDriverKey.Tab);
+                    }
+                    for (var i = 0; i < inputFields.Count; i++)
+                    {
                         var secondPass = i == 1;
 
                         initial = DateValue();
@@ -2624,7 +2639,7 @@
 
                 foreach (var element in elements)
                 {
-                    var patternName = "ValuePattern";
+                    const string patternName = "ValuePattern";
                     var patterned = GetPattern<IUIAutomationValuePattern>(patternName, element);
                     if (patterned == null)
                     {
@@ -2633,7 +2648,7 @@
                     }
                     else
                     {
-                        if (patterned.CurrentValue == null || patterned.CurrentValue == string.Empty)
+                        if (string.IsNullOrEmpty(patterned.CurrentValue))
                         {
                             result.Result = ResultType.Half;
                             result.AddInfo("\nElement did not have value.value set");
@@ -2658,19 +2673,19 @@
                         Javascript.ScrollIntoView(driver, 0);
 
                         driver.SendKeys(id, "invalid");
-                        driver.SendSpecialKeys(id, WebDriverKey.Enter);
+                        driver.SendSpecialKey(id, WebDriverKey.Enter);
 
                         // Everything that is invalid on the page
                         // We search by both with an OR condition because it gives a better chance to
                         // find elements that are partially correct.
-                        var invalid = elements.Where(e => e.CurrentIsDataValidForForm == 0);
+                        var invalid = elements.Where(e => e.CurrentIsDataValidForForm == 0).ToList();
 
-                        if (invalid.Count() > 1)
+                        if (invalid.Count > 1)
                         {
                             throw new Exception("Test assumption failed, multiple elements were invalid");
                         }
 
-                        if (invalid.Count() < 1)
+                        if (invalid.Count < 1)
                         {
                             result.Result = ResultType.Half;
                             result.AddInfo("\nElement failed to validate improper input");
@@ -2678,7 +2693,7 @@
 
                         var invalidElement = invalid.First();
 
-                        if (!WaitForCondition(() => invalidElement.CurrentControllerFor.Length == 1, () => driver.SendSpecialKeys(id, WebDriverKey.Enter)))
+                        if (!WaitForCondition(() => invalidElement.CurrentControllerFor.Length == 1, () => driver.SendSpecialKey(id, WebDriverKey.Enter)))
                         {
                             result.Result = ResultType.Half;
                             result.AddInfo("\n" + id + " did not have 1 ControllerFor " + invalidElement.CurrentControllerFor.Length);
@@ -2691,7 +2706,7 @@
                             result.AddInfo("\nElement did not have IsDataValidForForm set to false");
                         }
 
-                        if (invalidElement.CurrentHelpText == null || invalidElement.CurrentHelpText.Length == 0)
+                        if (string.IsNullOrEmpty(invalidElement.CurrentHelpText))
                         {
                             result.Result = ResultType.Half;
                             result.AddInfo("\nElement did not have HelpText");
@@ -2743,14 +2758,14 @@
                         result.AddInfo(
                             expectedNotFound.Any() ? "\n" +
                                 expectedNotFound.Aggregate((a, b) => a + ", " + b) +
-                                (expectedNotFound.Count() > 1 ?
+                                (expectedNotFound.Count > 1 ?
                                     " were expected as names but not found. " :
                                     " was expected as a name but not found. ")
                                 : string.Empty);
                         result.AddInfo(
                             foundNotExpected.Any() ? "\n" +
                                 foundNotExpected.Aggregate((a, b) => a + ", " + b) +
-                                (foundNotExpected.Count() > 1 ?
+                                (foundNotExpected.Count > 1 ?
                                     " were found as names but not expected. " :
                                     " was found as a name but not expected. ")
                                 : string.Empty);
@@ -2774,7 +2789,7 @@
                 {
                     // Enter something, tab to the clear button, clear with space
                     driver.SendKeys(id, "x");
-                    driver.SendSpecialKeys(id, WebDriverKey.Wait);
+                    driver.SendSpecialKey(id, WebDriverKey.Wait);
                     if (!elements.Any(e => e.GetAllDescendants().Any(d => d.CurrentName.ToLowerInvariant().Contains("clear value"))))
                     {
                         result.Result = ResultType.Half;

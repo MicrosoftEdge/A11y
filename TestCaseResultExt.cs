@@ -21,7 +21,7 @@
         /// <param name="info">A string describing the state of the tests</param>
         public void AddInfo(string info)
         {
-            var stringBuilder = new StringBuilder(MoreInfo);
+            var stringBuilder = new StringBuilder(MoreInfo, MoreInfo.Length + info.Length);
             stringBuilder.Append(info);
             this.MoreInfo = stringBuilder.ToString();
         }

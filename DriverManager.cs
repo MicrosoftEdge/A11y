@@ -22,7 +22,7 @@
         /// <summary>
         /// How long to wait when searching for an element
         /// </summary>
-        private TimeSpan searchTimeout;
+        private readonly TimeSpan searchTimeout;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DriverManager" /> class
@@ -61,13 +61,10 @@
         {
             get
             {
-                var architecture = 
-                    Environment.Is64BitOperatingSystem
-                        ? "DriversExecutables\\AMD64"
-                        : "DriversExecutables\\X86";
+                var architecture = Environment.Is64BitOperatingSystem ? "AMD64" : "X86";
 
                 // TODO support for linux/mac paths
-                return Path.Combine(ProjectRootFolder, architecture);
+                return Path.Combine(ProjectRootFolder, "DriversExecutables", architecture);
             }
         }
 
@@ -130,7 +127,7 @@
                     this.driver.Quit();
                     this.driver.Dispose();
                 }
-                catch (Exception)
+                catch
                 {
                     // Don't throw here
                 }
