@@ -9,11 +9,11 @@ namespace Microsoft.Edge.A11y
 {
     static class JSONParser
     {
-        public static IEnumerable<TestData> SampleJsonTest()
+        public static IEnumerable<TestData> SampleJsonTest(string jsonText)
         {
             try
             {
-                var sample = File.ReadAllText("sample.json");
+                var sample = jsonText;
                 dynamic converted = JsonConvert.DeserializeObject(sample);
                 var UIA = converted.UIA;
                 var toreturn = new List<TestData>();
@@ -36,7 +36,9 @@ namespace Microsoft.Edge.A11y
             {
                 controlType = Enum.Parse(typeof(UIAControlType), element.ControlType.ToString());
             }
-            catch { }
+            catch
+            {
+            }
 
             if (recursive)
             {
@@ -44,10 +46,12 @@ namespace Microsoft.Edge.A11y
                 {
                     name = element.name;
                 }
-                catch { }
+                catch
+                {
+                }
             }
 
-            if(controlType == UIAControlType.Unknown && !recursive)
+            if (controlType == UIAControlType.Unknown && !recursive)
             {
                 throw new Exception("Element did not have control type");
             }
@@ -57,7 +61,9 @@ namespace Microsoft.Edge.A11y
             {
                 localizedControlType = element.LocalizedControlType;
             }
-            catch { }
+            catch
+            {
+            }
 
             List<UIAPattern> patterns = null;
             try
@@ -68,7 +74,9 @@ namespace Microsoft.Edge.A11y
                     patterns.Add(Enum.Parse(typeof(UIAPattern), pattern.name.ToString()));
                 }
             }
-            catch { }
+            catch
+            {
+            }
 
             List<TestData> children = null;
             try
@@ -79,9 +87,35 @@ namespace Microsoft.Edge.A11y
                     children.Add(ParseElement(child, name, true));
                 }
             }
-            catch { }
+            catch
+            {
+            }
 
             return new TestData(name, controlType, localizedControlType, requiredPatterns: patterns, children: children);
+        }
+
+        public static string ResultsToJSON(List<TestCaseResult> results, double score)
+        {
+            JSONResponse j = new JSONResponse();
+            j.status = "OK";
+            j.statusText = string.Empty;
+
+            foreach (TestCaseResult t in results)
+            {
+                if (t.Result == ResultType.Pass)
+                {
+                    j.data.Add("PASS", t.MoreInfo ?? "\"\"");
+                }
+                else if (t.Result == ResultType.Half)
+                {
+                    j.data.Add("HALF", t.MoreInfo ?? "\"\"");
+                }
+                else
+                {
+                    j.data.Add("FAIL", t.MoreInfo ?? "\"\"");
+                }
+            }
+            return JsonConvert.SerializeObject(j);
         }
     }
 }
