@@ -39,9 +39,9 @@
       <EmbedInteropTypes>True</EmbedInteropTypes>
       <HintPath>A11y\Interop.UIAutomationCore.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL" />
-    <Reference Include="Selenium.WebDriverBackedSelenium">
-      <HintPath>C:\Users\stahon.REDMOND\Downloads\selenium-dotnet-3.0.0-beta3\net40\Selenium.WebDriverBackedSelenium.dll</HintPath>
+    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -52,14 +52,13 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="ThoughtWorks.Selenium.Core">
-      <HintPath>C:\Users\stahon.REDMOND\Downloads\selenium-dotnet-3.0.0-beta3\net40\ThoughtWorks.Selenium.Core.dll</HintPath>
+    <Reference Include="WebDriver, Version=2.52.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\Selenium.WebDriver.2.52.0\lib\net40\WebDriver.dll</HintPath>
+      <Private>True</Private>
     </Reference>
-    <Reference Include="WebDriver">
-      <HintPath>C:\Users\stahon.REDMOND\Downloads\selenium-dotnet-3.0.0-beta3\net40\WebDriver.dll</HintPath>
-    </Reference>
-    <Reference Include="WebDriver.Support">
-      <HintPath>C:\Users\stahon.REDMOND\Downloads\selenium-dotnet-3.0.0-beta3\net40\WebDriver.Support.dll</HintPath>
+    <Reference Include="WebDriver.Support, Version=2.52.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\Selenium.Support.2.52.0\lib\net40\WebDriver.Support.dll</HintPath>
+      <Private>True</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -69,7 +68,6 @@
     <Compile Include="DriverManager.cs" />
     <Compile Include="Javascript.cs" />
     <Compile Include="JSONParser.cs" />
-    <Compile Include="JSONResponse.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="TestCaseResult.cs" />
     <Compile Include="TestData.cs" />
