@@ -68,6 +68,7 @@
     <Compile Include="DriverManager.cs" />
     <Compile Include="Javascript.cs" />
     <Compile Include="JSONParser.cs" />
+    <Compile Include="JSONResponse.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="TestCaseResult.cs" />
     <Compile Include="TestData.cs" />
